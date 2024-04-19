@@ -1,0 +1,19 @@
+.container{
+    width: 100%;
+    font-size: 100%;
+}
+table{
+ width: 100%;
+}
+th{
+    font-size: 70%;
+}
+td{
+    font-size: 70%;
+}
+.toast-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}

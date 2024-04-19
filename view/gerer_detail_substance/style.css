@@ -1,0 +1,60 @@
+
+        .container {
+            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+        }
+        .btn {
+            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+        } 
+        .dropdown-item {
+            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+        }
+        .form-control {
+            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+        } 
+        .form-select {
+            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+        }
+        .h4 {
+            font-size: 20px; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+        }
+        .modal {
+            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+        }
+        .modal-dialog {
+            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+        }
+        th{
+            font-weight: 700;
+        }
+    .modal-dialog1{
+        width: 1000px;
+    }
+
+.modal.show .modal-dialog1 {
+    transform: none;
+}
+.modal.fade .modal-dialog1 {
+    transition: transform .3s ease-out;
+    transform: translate(0, -50px);
+}
+.modal .modal-dialog1 {
+    max-width: 400px;
+}
+@media (min-width: 576px){
+    .modal-dialog {
+    max-width: var(--bs-modal-width);
+    margin-right: auto;
+    margin-left: auto;
+}
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - var(--bs-modal-margin)* 2);
+}
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: var(--bs-modal-margin);
+    pointer-events: none;
+}
+} 

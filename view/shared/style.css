@@ -1,0 +1,16 @@
+.container{
+    width: 100%;
+    font-size: 100%;
+}
+table{
+ width: 100%;
+}
+th{
+    font-size: 70%;
+}
+td{
+    font-size: 7%;
+}
+.obli{
+    color:rgb(247, 62, 6)
+}
