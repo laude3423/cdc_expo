@@ -239,7 +239,7 @@ if (!empty($edit_societe_id)) {
                     <td><?php echo $row['nom_societe_importateur'] ?></td>
                     <td>
                         <a class="link-dark detail_pv_scellage"
-                            href="../pv_controle/detail.php? echo $row['id_data_cc']?>">détails</a>
+                            href="../pv_controle/detail.php?id=<?php echo $row['id_data_cc']?>">détails</a>
 
                     </td>
                 </tr>

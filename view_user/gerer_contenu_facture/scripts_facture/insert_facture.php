@@ -24,17 +24,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Exécution de la requête
     if ($stmt->execute()) {
-        // Utilisation de la fonction urlencode pour éviter les problèmes avec les espaces dans l'URL
-        header("Location: ../liste_facture.php?success_district=" . urlencode("Le facture a été ajoutée avec succès."));
+        $_SESSION['toast_message'] = "Insertion réussie.";
+            header("Location: ../liste_facture.php");
         exit();
     } else {
-        // En cas d'échec, afficher une erreur ou rediriger vers une page d'erreur
-        header("Location: ../pages/error.php");
-        exit();
+            echo "Erreur d'enregistrement" . mysqli_error($conn);
     }
 } else {
     // Redirection vers la page d'accueil ou une autre page si le formulaire n'a pas été soumis
     header("Location: ../view/commune_region.php");
     exit();
 }
-

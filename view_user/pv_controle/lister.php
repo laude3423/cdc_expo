@@ -8,7 +8,7 @@ require('../../scripts/session.php');
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $expediteur = $_POST['expediteur'];
         $importateur = $_POST["importateur"];
-        $id_data = $_POST["facture"];
+        $id_data = $_POST["id"];
         $mode_emballage = $_POST["mode_emballage"];
         $lieu_controle = $_POST["lieu_controle"];
         $lieu_embarquement = $_POST["lieu_emb"];
@@ -57,15 +57,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $moisFacture = date('m', strtotime($date_creation));
             echo $nouvelle_incrementation_formattee;
             if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
-                $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/PCC/".$sigle;
-                $num_cc = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/CDC/.$sigle";
+                $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/$sigle/PCC";
+                $num_cc = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/$sigle/CDC";
             }else{
-                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/PCC/.$sigle";
-                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/CDC/.$sigle";
+                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle/PCC";
+                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle/CDC";
             }
         }else{
-            $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/PCC/.$sigle";
-            $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/CDC/.$sigle";
+            $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle/PCC";
+            $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle/CDC";
         }
         // recherche
         $requette="SELECT num_pv_controle FROM data_cc WHERE id_data_cc=$id_data";
@@ -204,7 +204,7 @@ if (!empty($edit_societe_id)) {
                 LEFT JOIN users us ON dcc.id_user = us.id_user
                 LEFT JOIN direction di ON us.id_direction=di.id_direction
                 WHERE dcc.num_pv_controle IS NOT NULL
-            ORDER BY datacc.date_modification_pv_controle DESC";
+            ORDER BY dcc.date_modification_pv_controle DESC";
         } else {
             $sql="SELECT dcc.*, societe_imp.*, societe_exp.*
                 FROM data_cc dcc
@@ -213,9 +213,10 @@ if (!empty($edit_societe_id)) {
                 LEFT JOIN users us ON dcc.id_user = us.id_user
                 LEFT JOIN direction di ON us.id_direction=di.id_direction
                 WHERE dcc.num_pv_controle IS NOT NULL AND di.id_direction=$id_direction 
-                ORDER BY datacc.date_modification_pv_controle DESC";
+                ORDER BY dcc.date_modification_pv_controle DESC";
         }
             $result= mysqli_query($conn, $sql);
+            if ($result->num_rows > 0) {
             ?><table class="table table-hover text-center">
             <thead class="table-dark">
                 <tr>
@@ -230,7 +231,6 @@ if (!empty($edit_societe_id)) {
             </thead>
             <tbody>
                 <?php 
-                if ($result->num_rows > 0) {
                     while($row = mysqli_fetch_assoc($result)){
                         ?>
                 <tr>
@@ -241,7 +241,8 @@ if (!empty($edit_societe_id)) {
                     <td><?php echo $row['num_domiciliation'] ?></td>
                     <td><?php echo $row['nom_societe_importateur'] ?></td>
                     <td>
-                        <a class="link-dark" href="detail.php?id=<?php echo $row['id_data_cc']?>">détails</a>
+                        <a class="link-dark"
+                            href="../pv_controle_gu/detail.php?id=<?php echo $row['id_data_cc']; ?>">détails</a>
                         <a href="#" class="link-dark btn_edit_pv_controle"
                             data-id="<?= htmlspecialchars($row["id_data_cc"])?>"><i
                                 class="fa-solid fa-pen-to-square me-3"></i></a>

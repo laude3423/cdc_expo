@@ -8,6 +8,14 @@ include 'recherche_substance.php';
 $agent = array();
  $dateFormat = "d-m-Y";
 $dateMaintenant = date($dateFormat);
+$date = new DateTime();
+$dateFormate = $date->format("d F Y");
+$date_maintenant = strftime("%e %B %Y", $date->getTimestamp());
+
+// Remplacer le nom du mois anglais par le nom du mois français
+$mois_anglais = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
+$mois_francais = array('janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre');
+$date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
     $agent[]=$chef;
     $agent[]=$qualite;
      //données utilisés
@@ -40,6 +48,7 @@ $dateMaintenant = date($dateFormat);
     $rowS1 = mysqli_fetch_assoc($resultS1);
     $nom_societe_expediteur = $rowS1['nom_societe_expediteur'];
     $adresse_societe_expediteur = $rowS1['adresse_societe_expediteur'];
+    $nom_responsable = $rowS1['responsable'];
     
     $queryS2 = "SELECT * FROM societe_importateur WHERE id_societe_importateur=$importateur";
     $resultS2 = mysqli_query($conn, $queryS2);
@@ -63,7 +72,7 @@ $dateMaintenant = date($dateFormat);
     $queryR2 = "SELECT c.nom_categorie FROM data_cc dcc 
         INNER JOIN contenu_facture cfac ON dcc.id_data_cc = cfac.id_data_cc
         LEFT JOIN substance_detaille_substance sds ON cfac.id_detaille_substance = sds.id_detaille_substance
-        LEFT JOIN categorie c ON c.id_categorie = sds.id_categorie WHERE c.nom_categorie ='Taillé' AND dcc.id_data_cc=$id_data";
+        LEFT JOIN categorie c ON c.id_categorie = sds.id_categorie WHERE c.nom_categorie ='Taillée' AND dcc.id_data_cc=$id_data";
         $result1= mysqli_query($conn, $queryR2);
         if(mysqli_num_rows($result1)> 0){
             $categorie_taille="existe";
@@ -76,10 +85,6 @@ $dateMaintenant = date($dateFormat);
     if(!empty($categorie_brute)&&!empty($categorie_taille)){
         $templatePathScan =  '../template/model_controleScan2.docx';
         $templatePath =  '../template/model_controle2.docx';
-        
-    }elseif(!empty($categorie_taille)){
-        $templatePathScan =  '../template/model_controleScan.docx';
-        $templatePath =  '../template/model_controle.docx';
     }else{
         $templatePathScan =  '../template/model_controleScan.docx';
         $templatePath =  '../template/model_controle.docx';
@@ -301,8 +306,17 @@ $dateMaintenant = date($dateFormat);
     }
     $categorie_existe=$type_categorie1.$type_categorie2;
     //pv
+    $entete="
+            MINISTERE DES MINES                
+            -----------------------                
+                SECRETARIAT GENERAL DES MINES                 
+                                ----------------------
+                                            DIRECTION ".$typeDirection." ".$nomDirection."
+                                                                ---------------------
+";
     $templateScan->setValue('num_pv', $num_pv);
     $templateScan->setValue('num_pv2', $num_pv);
+    $templateScan->setValue('entete', $entete);
     //societe
     $templateScan->setValue('nom_societe_exp', $nom_societe_expediteur);
     $templateScan->setValue('nom_societe_imp', $nom_societe_importateur);
@@ -355,8 +369,9 @@ $dateMaintenant = date($dateFormat);
 
         //------------------------------------------------------------------------------------------
          //Deuxieme template
-        
+         
          //societe
+    $template->setValue('entete', $entete);
     $template->setValue('num_pv', $num_pv);
     $template->setValue('num_pv2', $num_pv);
     //societe
@@ -431,17 +446,21 @@ $dateMaintenant = date($dateFormat);
         unlink($pathToSaveNew);
     //-------------------------------------------------------
     //generate file certificat de conformité
+    $templateCdcScan->setValue('entete', $entete);
     $templateCdcScan->setValue('num_cc', $num_cc);
-    $templateCdcScan->setValue('date_maintenant', $dateMaintenant);
+    $templateCdcScan->setValue('date_maintenant', $date_maintenant);
     $templateCdcScan->setValue('num_declaration', $num_fiche_declaration);
     $templateCdcScan->setValue('date_declaration', $date_format_declaration);
     $templateCdcScan->setValue('num_pv_controle', $num_pv);
     $templateCdcScan->setValue('date_pv_controle', $dateMaintenant);
-    $templateCdcScan->setValue('nom_responsable', '');
     $templateCdcScan->setValue('nom_societe_exp', $nom_societe_expediteur);
-    $templateCdcScan->setValue('responsable_mandate', '');
+    $templateCdcScan->setValue('adresse_societe_exp', $adresse_societe_expediteur);
+    $templateCdcScan->setValue('nom_societe_imp', $nom_societe_importateur);
+    $templateCdcScan->setValue('adresse_societe_imp', $adresse_societe_importateur);
+    $templateCdcScan->setValue('nom_responsable', $nom_responsable);
     $templateCdcScan->setValue('type_categorie1', $type_categorie1);
     $templateCdcScan->setValue('type_categorie2', $type_categorie2);
+    $templateCdcScan->setValue('destination', $pays_destination);
     $numCCClear=preg_replace('/[^a-zA-Z0-9]/', '-', $num_cc);
     $nouveau_nom = $numCCClear . '.docx';
 
@@ -458,17 +477,21 @@ $dateMaintenant = date($dateFormat);
         echo 'Le publipostage a ét généré avec succès : <a href="' . $outputFilePathCC . '" download>Télécharger ici DOCX 1 </a>';
         unlink($outputFilePathCC);
         //deuxième fichier
+        $templateCdc->setValue('entete', $entete);
         $templateCdc->setValue('num_cc', $num_cc);
-        $templateCdc->setValue('date_maintenant', $dateMaintenant);
+        $templateCdc->setValue('date_maintenant', $date_maintenant);
         $templateCdc->setValue('num_declaration', $num_fiche_declaration);
         $templateCdc->setValue('date_declaration', $date_format_declaration);
         $templateCdc->setValue('num_pv_controle', $num_pv);
         $templateCdc->setValue('date_pv_controle', $dateMaintenant);
-        $templateCdc->setValue('nom_responsable', '');
         $templateCdc->setValue('nom_societe_exp', $nom_societe_expediteur);
-        $templateCdc->setValue('responsable_mandate', '');
+        $templateCdc->setValue('adresse_societe_exp', $adresse_societe_expediteur);
+        $templateCdc->setValue('nom_societe_imp', $nom_societe_importateur);
+        $templateCdc->setValue('adresse_societe_imp', $adresse_societe_importateur);
+        $templateCdc->setValue('nom_responsable', $nom_responsable);
         $templateCdc->setValue('type_categorie1', $type_categorie1);
         $templateCdc->setValue('type_categorie2', $type_categorie2);
+        $templateCdc->setValue('destination', $pays_destination);
         $nouveau_nom2 = $numCCClear  . '.docx';
         $fileCdc = $destinationFolder . $nouveau_nom2;
         $templateCdc->saveAs($fileCdc);

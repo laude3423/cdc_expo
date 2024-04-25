@@ -51,7 +51,8 @@ if (isset($_GET['id'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <!--Bootstrap JS-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
@@ -105,11 +106,11 @@ if (isset($_GET['id'])) {
             </div>
             <div class="col text-end dropdown">
                 <?php 
-                if($groupeID === 3){
-                    echo '<a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_scellage" data-id="' . $id_data_cc . '">Générer PV scellage</a>';
-                } else {
-                    echo '<a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_controle" data-id="' . $id_data_cc . '">Générer PV controle</a>';
-                }
+                // if($groupeID === 3){
+                //     echo '<a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_scellage" data-id="' . $id_data_cc . '">Générer PV scellage</a>';
+                // } else if($groupeID===1) {
+                //     echo '<a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_controle" data-id="' . $id_data_cc . '">Générer PV controle</a>';
+                // }
                 ?>
                 <a class="btn btn-success rounded-pill px-3"
                     href="./exporter_contenu.php?id_data_cc=<?= $id_data_cc ?>">Exporter en
@@ -172,6 +173,14 @@ if (isset($_GET['id'])) {
         </div>
         <hr>
         <?php
+        $sql="SELECT cfac.prix_unitaire_facture, cfac.poids_facture
+        FROM contenu_facture cfac INNER JOIN data_cc dcc ON dcc.id_data_cc = cfac.id_data_cc WHERE dcc.id_data_cc = $id_data_cc";
+        $result = $conn->query($sql);
+        $row1 = mysqli_fetch_assoc($result);
+        $montant=0;
+        while($row1 = mysqli_fetch_assoc($result)){
+            $montant += floatval($row1['prix_unitaire_facture']*$row1['poids_facture']);
+        }
         $query = "
         SELECT dcc.*, cfac.*, sds.*, s.*, g.*, sds.prix_substance
         FROM contenu_facture cfac
@@ -233,6 +242,7 @@ if (isset($_GET['id'])) {
                 ?>
             </tbody>
         </table>
+        <?php echo "MONTANT TOTAL: ".number_format($montant, 3, ',', ' ') . ' US $' ?>
         <?php
         $conn->close();
         ?>

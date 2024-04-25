@@ -83,7 +83,7 @@ if ($police) {
                 $pp="existe"; $unite2=''; $categorie_brute='';  $categorie_taille="";
                 $sommePoids_ct_pp = 0;$sommePoids_kg_pp = 0;$sommePoids_g_pp=0;
                 while($rowpp = mysqli_fetch_assoc($resultpp)){
-                    $unite_poids_facture = intval($rowpp['poids_facture']);
+                    $unite_poids_facture = floatval($rowpp['poids_facture']);
                     if($rowpp['unite_poids_facture']=='ct'){
                         $sommePoids_ct_pp += $unite_poids_facture;
                         $unite_pp ="GRAMMES"; $unite2='grammes';
@@ -129,7 +129,7 @@ if ($police) {
                 $pf="existe";$unite2='';$categorie_brute='';  $categorie_taille="";
                 $sommePoids_ct_pf = 0;$sommePoids_kg_pf = 0;$sommePoids_g_pf=0;
                 while($rowpf = mysqli_fetch_assoc($resultpf)){
-                    $unite_poids_facture = intval($rowpf['poids_facture']);
+                    $unite_poids_facture = floatval($rowpf['poids_facture']);
                     if($rowpf['unite_poids_facture']=='ct'){
                         $sommePoids_ct_pf += $unite_poids_facture;
                         $unite_pf ="GRAMMES";$_pf2='grammes';
@@ -175,7 +175,7 @@ if ($police) {
                 $pim="existe";$unite2=""; $categorie_brute='';  $categorie_taille="";
                 $sommePoids_ct_pim = 0;$sommePoids_kg_pim = 0;$sommePoids_g_pim=0;
                 while($rowpim = mysqli_fetch_assoc($resultpim)){
-                    $unite_poids_facture = intval($rowpim['poids_facture']);
+                    $unite_poids_facture = floatval($rowpim['poids_facture']);
                     if($rowpim['unite_poids_facture']=='ct'){
                         $sommePoids_ct_pim += $unite_poids_facture;
                         $unite_pim ="GRAMMES";$unite2='grammes';
@@ -221,7 +221,7 @@ if ($police) {
                 $mp="existe";$categorie_brute='';  $categorie_taille="";
                 $sommePoids_ct_mp = 0;$sommePoids_kg_mp = 0;$sommePoids_g_mp=0;
                 while($rowMP = mysqli_fetch_assoc($resultMP)){
-                    $unite_poids_facture = intval($rowMP['poids_facture']);
+                    $unite_poids_facture = floatval($rowMP['poids_facture']);
                     if($rowMP['unite_poids_facture']=='ct'){
                         $sommePoids_ct_mp += $unite_poids_facture;
                         $unite_mp ="GRAMMES";$unite2='grammes';
@@ -358,7 +358,6 @@ if ($police) {
         $templateScan->setValue('contenu', $contenu);
         $templateScan->setValue('afficheWord',$affiche_word);
         $templateScan->setValue('poidsTotal', $totalePoids);
-        echo "Consulter";
         $template->setValue('contenu', $contenu);
         $template->setValue('afficheWord',$affiche_word);
         $template->setValue('poidsTotal', $totalePoids);
@@ -425,7 +424,20 @@ if ($police) {
         $template->setValue('afficheWord','');
         $template->setValue('poidsTotal', '');
     }
+    $entete="
+            MINISTERE DES MINES                
+            -----------------------                
+                SECRETARIAT GENERAL DES MINES                 
+                                ----------------------                
+                                        DIRECTION GENERALE DES MINES
+                                                ---------------------
+                                                    DIRECTION DES EXPORTATIONS ET VALEURS
+                                                        --------------------- 
+                                                            GUICHET UNIQUE
+                                                                ---------------------
+";
     //societe
+    $templateScan->setValue('entete', $entete);
     $templateScan->setValue('num_pv', $num_pv);
     $templateScan->setValue('nom_societe', $nom_societe_expediteur);
     $templateScan->setValue('adresse_societe', $adresse_societe_expediteur);
@@ -461,10 +473,11 @@ if ($police) {
     $nouveau_nom_fichier2 = $numPVClear . '.docx';
 
     $outputFilePath = $destinationFolder . $nouveau_nom_fichier2;
-    $templateScan->saveAs($outputFilePath);
+    
 
         $directory = "../fichier";
         $pathToSave = $directory . '/' . $numPVClear . '.pdf';
+        $templateScan->saveAs($outputFilePath);
     // Utiliser soffice pour convertir le DOCX en PDF
         $commande = 'soffice --headless --convert-to pdf --outdir "' . $directory . '" "' . $outputFilePath . '"';
         shell_exec($commande);
@@ -472,11 +485,17 @@ if ($police) {
         // Générer un lien de tléchargement vers le fichier PDF
         echo 'Le publipostage a été généré avec succès : <a href="' . $pathToSave . '" download>Télécharger ici PDF</a>';
         echo 'Le publipostage a ét généré avec succès : <a href="' . $outputFilePath . '" download>Télécharger ici DOCX 1 </a>';
-        unlink($outputFilePath);
+        echo $outputFilePath;
+        if (unlink($outputFilePath)) {
+            echo 'Le fichier a été supprimé avec succès.';
+        } else {
+            echo 'Une erreur s\'est produite lors de la suppression du fichier.';
+        }
 
         //------------------------------------------------------------------------------------------
         
          //societe
+        $template->setValue('entete', $entete);
         $template->setValue('num_pv', $num_pv);
         $template->setValue('nom_societe', $nom_societe_expediteur);
         $template->setValue('adresse_societe', $adresse_societe_expediteur);
@@ -500,7 +519,7 @@ if ($police) {
         $template->cloneBlock('block_name', 0, true, false, $remplace_agent);
 
         // Enregistrer le nouveau document DOCX
-        $nouveau_nom_fichierQR = $numPVClear  . '.docx';
+        $nouveau_nom_fichierQR = $numPVClear  . '_QR.docx';
         $outputFilePathQR = $destinationFolder . $nouveau_nom_fichierQR;
         $template->saveAs($outputFilePathQR);
 

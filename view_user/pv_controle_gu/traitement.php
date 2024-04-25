@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($resu->num_rows === 0) {
             //construction de num pv de controle
             $dateFormat = "Y-m-d";
-            $date = date($dateFormat);
+            $dateInsert = date($dateFormat);
             $anneeActuelle = date('Y');
             $moisActuel = date('m');
             $codeSql="SELECT date_creation_pv_controle, num_pv_controle FROM data_cc WHERE id_data_cc = (SELECT MAX(id_data_cc) FROM
@@ -41,25 +41,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $anneeFacture = date('Y', strtotime($date_creation));
                 $moisFacture = date('m', strtotime($date_creation));
                 if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
-                $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PCC/GU";
-                $num_cc = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GU/CDC/GU";
+                $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PCC";
+                $num_cc = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GU/CDC";
                 }else{
-                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PCC/GU";
-                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/CDC/GU";
+                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PCC";
+                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/CDC";
                 }
             }else{
-                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PCC/GU";
-                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/CDC/GU";
+                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PCC";
+                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/CDC";
             }
             //appelle de création de fichier
             include '../generate_fichier/generate_insert_controle.php';
              // Mise à jour
-            $sql = "UPDATE `data_cc` SET `lieu_controle_pv`='$lieu_controle',`lien_pv_controle`='$pathToSave',`pj_pv_controle`='$pathToSavePDF',`mode_emballage`='$mode_emballage',`date_creation_pv_controle`='$date',
-            `date_modification_pv_controle`='$date',`num_pv_controle`='$num_pv',
-            `num_cc`='$num_cc',`date_cc`='$date',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc' WHERE id_data_cc='$id_data'";
+            $sql = "UPDATE `data_cc` SET `lieu_controle_pv`='$lieu_controle',`lien_pv_controle`='$pathToSave',`pj_pv_controle`='$pathToSavePDF',`mode_emballage`='$mode_emballage',`date_creation_pv_controle`='$dateInsert',
+            `date_modification_pv_controle`='$dateInsert',`num_pv_controle`='$num_pv',
+            `num_cc`='$num_cc',`date_cc`='$dateInsert',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc' WHERE id_data_cc='$id_data'";
             $result = mysqli_query($conn, $sql);
             if ($result) {
-                        $_SESSION['toast_message'] = "Modification réussie.";
+                        $_SESSION['toast_message'] = "Inertion réussie.";
                         header("Location: ./lister.php");
                         exit();
                 } else {

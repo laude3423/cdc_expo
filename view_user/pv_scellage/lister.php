@@ -57,12 +57,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $anneeFacture = date('Y', strtotime($date_creation));
                 $moisFacture = date('m', strtotime($date_creation));
                 if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
-                $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/PSC/GU";
+                $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PSC";
                 }else{
-                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/PSC/GU";
+                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PSC";
                 }
             }else{
-                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/PSC/GU";
+                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PSC";
             }
             echo $num_pv;
         // recherche
@@ -189,8 +189,6 @@ if (!empty($edit_societe_id)) {
             <div class="col md-10 text-end">
                 <a class="btn btn-success btn-sm rounded-pill px-3 mb-3" href="../cdc/exporter.php?">Exporter en
                     excel</a>
-                <a class="btn btn-dark btn-sm rounded-pill px-3 mb-3" href="#" onclick="openModal()"><i
-                        class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
             </div>
         </div>
         <?php 

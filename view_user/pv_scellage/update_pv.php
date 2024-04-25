@@ -5,7 +5,7 @@
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $expediteur = htmlspecialchars($_POST['expediteur_edit']);
         $destination = htmlspecialchars($_POST["destination_edit"]);
-        $facture = htmlspecialchars($_POST["facture_edit"]);
+        $facture = htmlspecialchars($_POST["id_edit"]);
         $nombre = htmlspecialchars($_POST["nombre_edit"]);
         $lieu_sce = htmlspecialchars($_POST["lieu_sce_edit"]);
         $lieu_emb = htmlspecialchars($_POST["lieu_emb_edit"]);

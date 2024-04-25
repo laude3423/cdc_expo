@@ -12,23 +12,25 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
         $mode_emballage = $_POST["nombre"];
         $lieu_controle = $_POST["lieu_controle"];
         $num_pv='';
+        $num_cc='';
             //construction de num pv de controle
         $dateFormat = "Y-m-d";
-        $date = date($dateFormat);
-        $codeSql="SELECT date_creation_pv_controle, num_pv_controle FROM data_cc WHERE id_data_cc = $id_data";
+        $dateInsert = date($dateFormat);
+        $codeSql="SELECT date_creation_pv_controle, num_cc, num_pv_controle FROM data_cc WHERE id_data_cc = $id_data";
             $stmt1 = $conn->prepare($codeSql);
             $stmt1->execute();
             $resu1 = $stmt1->get_result();
             if($resu1->num_rows !== 0){
                 $row = $resu1->fetch_assoc();
                 $num_pv = $row['num_pv_controle'];
+                $num_cc = $row['num_cc'];
             }
             //appelle de création de fichier
             include '../generate_fichier/generate_insert_controle.php';
              // Mise à jour
             $sql = "UPDATE `data_cc` SET `lieu_controle_pv`='$lieu_controle',`lien_pv_controle`='$pathToSave',`pj_pv_controle`='$pathToSavePDF',`mode_emballage`='$mode_emballage',
-            `date_modification_pv_controle`='$date',`num_pv_controle`='$num_pv',
-            `num_cc`='$num_cc',`date_cc`='$date',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc' WHERE id_data_cc=$id_data";
+            `date_modification_pv_controle`='$dateInsert',`num_pv_controle`='$num_pv',
+            `num_cc`='$num_cc',`date_cc`='$dateInsert',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc' WHERE id_data_cc=$id_data";
             $result = mysqli_query($conn, $sql);
              if ($result) {
                 $_SESSION['toast_message'] = "Modification réussie.";
@@ -147,8 +149,6 @@ if (!empty($edit_societe_id)) {
             <div class="col md-10 text-end">
                 <a class="btn btn-success btn-sm rounded-pill px-3 mb-3" href="../cdc/exporter.php?">Exporter en
                     excel</a>
-                <a class="btn btn-dark btn-sm rounded-pill px-3 mb-3" href="#" onclick="openModal()"><i
-                        class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
             </div>
         </div>
         <?php 
@@ -201,8 +201,6 @@ if (!empty($edit_societe_id)) {
                             href="detail.php?id=<?php echo $row['id_data_cc']?>">détails</a>
                         <a href="#" class="link-dark" onclick="openModal(<?php echo $row['id_data_cc']?>)"><i
                                 class="fa-solid fa-pen-to-square me-3"></i></a>
-                        <a href="#" class="link-dark" onclick="confirmerSuppression(<?php echo $row['id_data_cc']?>)"><i
-                                class="fa-solid fa-trash "></i></a>
                     </td>
                 </tr>
                 <?php   

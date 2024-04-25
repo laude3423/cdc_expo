@@ -94,7 +94,7 @@
 
             <div class="modal-body">
                 <form action="./update_pv.php" method="post" enctype="multipart/form-data">
-                    <div class="row">
+                    <div class="row" style="display: none;">
                         <div class="col">
                             <label for="expediteur" name="expediteur" class="col-form-label">Société
                                 expéditeur:</label>
@@ -139,7 +139,7 @@
                             <label for="facture" name="facture" class="col-form-label">Numéro de la
                                 facture:</label>
                             <select id="facture" name="facture" placeholder="Choisir ..." autocomplete="off" required
-                                style="font-size:90%">
+                                style="font-size:90%" disabled>
                                 <option value="">Choisir ...</option>
                                 <?php    
                                     $query = "SELECT id_data_cc, num_facture FROM data_cc WHERE id_data_cc=$id_data_cc";

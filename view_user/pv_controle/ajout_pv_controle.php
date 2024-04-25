@@ -27,7 +27,7 @@ require(__DIR__ . '/../../scripts/session.php');
             </div>
 
             <div class="modal-body">
-                <form action="./lister.php" method="post" enctype="multipart/form-data">
+                <form action="../pv_controle/lister.php" method="post" enctype="multipart/form-data">
                     <div class="row" style="display: none;">
                         <div class="col">
                             <label for="expediteur" name="expediteur" class="col-form-label">Société
@@ -133,7 +133,7 @@ require(__DIR__ . '/../../scripts/session.php');
                                 fiche de déclaration:</label>
                             <input type="date" class="form-control" name="date_declaration" id="date_declaration"
                                 required style="font-size:90%">
-                            <input type="hidden" id="id" name="id">
+                            <input type="hidden" id="id" value="<?php echo $id_data_cc; ?>" name="id">
                         </div>
                     </div>
                     <div class="row">

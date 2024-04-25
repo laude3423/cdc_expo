@@ -113,7 +113,7 @@ $pdp = $rowUsers['photo_profil'];
 </head>
 <div class="container">
     <hr>
-    <!-- <header class="py-3 mb-4 border-bottom">
+    <header class="py-3 mb-4 border-bottom">
         <div class="container d-flex flex-wrap justify-content-between">
             <a href="/" class="d-flex align-items-center mb-3 mb-lg-0 link-body-emphasis text-decoration-none">
                 <svg class="bi me-2" width="40" height="32">
@@ -134,14 +134,14 @@ $pdp = $rowUsers['photo_profil'];
 
 
             <a href="/" class="d-flex align-items-center mb-3 mb-lg-0 link-body-emphasis text-decoration-none">
-    <span class="fs-4"><img src="logo/mmrs.jfif" alt="Logo" height="100" class="mr-3"></span>
-    </a>
+                <span class="fs-4"><img src="../../logo/mmrs.jfif" alt="Logo" height="70" class="mr-3"></span>
+            </a>
 
         </div>
 
-    </header> -->
-    <img src="https://test.mines.gov.mg/website/static/media/banner.0b521befd115407fbf17.webp" alt="banner"
-        width="100%">
+    </header>
+    <!-- <img src="https://test.mines.gov.mg/website/static/media/banner.0b521befd115407fbf17.webp" alt="banner"
+        width="100%"> -->
     <header
         class="text-bg-dark d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -151,16 +151,19 @@ $pdp = $rowUsers['photo_profil'];
         </script>
         <div class="col-md-3 mb-2 mb-md-0 text-end">
             <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
-                <!-- <svg class="bi" width="40" height="32" role="img" aria-label="Bootstrap">
+                <svg class="bi" width="40" height="32" role="img" aria-label="Bootstrap">
                     <use xlink:href="../../logo/logo.png"></use>
-                </svg> -->
-                <!-- <img src='../../logo/logo.png' alt='MIM' width="40" height="32"> -->
+                </svg>
+                <img src='../../logo/logo.png' alt='MIM' width="40" height="32">
             </a>
         </div>
 
         <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
             <?php if($groupeID === 1) {?>
-            <li><a href="#" class="nav-link px-2 text-white">Home</a></li>
+            <li><a href="https://cdc.minesmada.org/view_user/Home/condition_utilisation.php"
+                    class="nav-link px-2 text-white">Home</a></li>
+            <li><a href="https://cdc.minesmada.org/view_user/cdc/lister.php" class="nav-link px-2 text-white">CDC</a>
+            </li>
             <li><a href="https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php"
                     class="nav-link px-2 text-white">Facture</a></li>
             <li><a href="https://cdc.minesmada.org/view_user/pv_controle/lister.php"
@@ -168,12 +171,13 @@ $pdp = $rowUsers['photo_profil'];
             </li>
             <?php }?>
             <?php if($groupeID === 2) {?>
-            <li><a href="#" class="nav-link px-2 text-white">Home</a></li>
+            <li><a href="https://cdc.minesmada.org/view_user/Home/condition_utilisation.php"
+                    class="nav-link px-2 text-white">Home</a></li>
             <li><a href="https://cdc.minesmada.org/view_user/cdc/lister.php" class="nav-link px-2 text-white">CDC</a>
             </li>
             <li><a href="https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php"
                     class="nav-link px-2 text-white">Facture</a></li>
-            <li><a href="https://cdc.minesmada.org/view_user/pv_controle_gu/lister.php"
+            <li><a href="https://cdc.minesmada.org/view_user/pv_controle/lister.php"
                     class="nav-link px-2 text-white">Controle</a>
             </li>
             <li><a href="https://cdc.minesmada.org/view_user/pv_scellage/lister.php"
@@ -232,7 +236,8 @@ $pdp = $rowUsers['photo_profil'];
         </li>
         <?php }?>
         <?php if($groupeID === 3) {?>
-        <li><a href="#" class="nav-link px-2 text-white">Home</a></li>
+        <li><a href="https://cdc.minesmada.org/view_user/Home/condition_utilisation.php"
+                class="nav-link px-2 text-white">Home</a></li>
         <li><a href="https://cdc.minesmada.org/view_user/cdc/lister.php" class="nav-link px-2 text-white">CDC</a></li>
         <li><a href="https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php"
                 class="nav-link px-2 text-white">Facture</a></li>

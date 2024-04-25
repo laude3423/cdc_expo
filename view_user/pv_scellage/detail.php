@@ -212,10 +212,14 @@
     ?>
     <div class="info">
         <div class="info1">
-            <div class="d-flex justify-content-center mt-3">
-                <a class="btn btn-outline-success" onclick="openModal()">Cliquer ici pour créér le pv de
-                    controle</a>
-            </div>
+            <?php 
+            if(($groupeID===1)||($groupeID==3)){
+                echo '<div class="d-flex justify-content-center mt-3">
+                    <a class="btn btn-outline-success" onclick="openModal()">Cliquer ici pour créér le pv de
+                        controle</a>
+                </div>';
+            }
+            ?>
             <div class="alert alert-light" role="alert">
                 <h5 id="list-item-1">Information sur le PV de scellage</h5>
                 <hr>
@@ -274,7 +278,7 @@
                             FROM substance_detaille_substance AS detail
                             LEFT JOIN substance AS sub ON sub.id_substance = detail.id_substance
                             LEFT JOIN couleur_substance AS couleur ON couleur.id_couleur_substance = detail.id_couleur_substance 
-                            LEFT JOIN categorie AS cate ON cate.id_categorie = detail.id_categorie WHERE cate.nom_categorie='Taillé' AND detail.id_detaille_substance = " . $id_detaille_substance[$i] . " GROUP BY couleur.nom_couleur_substance";
+                            LEFT JOIN categorie AS cate ON cate.id_categorie = detail.id_categorie WHERE cate.nom_categorie='Taillée' AND detail.id_detaille_substance = " . $id_detaille_substance[$i] . " GROUP BY couleur.nom_couleur_substance";
                             $resultD = mysqli_query($conn, $queryD);
                             if ($rowD = mysqli_fetch_assoc($resultD)) {
                                 $nom_substance[] = $rowD['nom_substance'];
@@ -412,33 +416,31 @@
                     if(!empty($rowDetaille_kg['sommePoids'])){
                         $sommePoids_kg = $rowDetaille_kg['sommePoids'];
                     }
-                    $totalEnGramme = $sommePoids_ct * 5 + $sommePoids_g;
+                    $totalEnGramme = $sommePoids_ct * 0.2+ $sommePoids_g;
                     $totalePoidsFormate = number_format($totalEnGramme, 2, '.', '');
-                    $partieDecimale = fmod($totalePoidsFormate, 1);
-                    $nombreApres=0;
-                    $parts = explode(".", $partieDecimale);
-                
-                    $nombreApres = substr($partieDecimale, 2);
+
+                    $nombreExplode = explode(".", $totalePoidsFormate);
+                    $nombreAvant = $nombreExplode[0];
+                    $nombreApres = $nombreExplode[1];
                     $nombreCompare='';
                     $nombreCompareLettre='';
                     if($nombreApres > 0) {
                         $nombreCompare = comparer($nombreApres);
                         $nombreCompareLettre=nombreEnLettres($nombreCompare);
                     }
-                    $totalePoidsEnLettres = nombreEnLettres($totalePoidsFormate);
-                    $poidsEnLettre = $totalePoidsFormate.'('. $totalePoidsEnLettres.' '.$nombreCompareLettre.' de Pierres gemmes)';
+                    
+                    $totalePoidsEnLettres = nombreEnLettres($nombreAvant);
+                    $poidsEnLettre = $totalePoidsFormate.'('. $totalePoidsEnLettres.' virgule '.$nombreCompareLettre.' de Pierres gemmes)';
                     echo 'Poids:'.$poidsEnLettre;
                     if($sommePoids_kg !=0){
                         $totalePoidsFormate_kg = number_format($sommePoids_kg, 2, '.', '');
-                        $partieDecimale_kg = fmod($totalePoidsFormate_kg, 1);
-                        $nombreApres_kg=0;
-                        $parts_kg = explode(".", $partieDecimale_kg);
-                    
-                        $nombreApres_kg = substr($partieDecimale_kg, 2);
-                        $nombreCompare_kg='';
-                        $nombreCompareLettre_kg='';
+                        $nombreExplode = explode(".", $totalePoidsFormate_kg);
+                        $nombreAvant = $nombreExplode[0];
+                        $nombreApres = $nombreExplode[1];
+                        $nombreCompare='';
+                        $nombreCompareLettre='';
                         if($nombreApres > 0) {
-                            $nombreCompare_kg = comparer($nombreApres_kg);
+                            $nombreCompare_kg = comparer($nombreApres);
                             $nombreCompareLettre_kg=nombreEnLettres($nombreCompare_kg);
                         }
                         $totalePoidsEnLettres_kg = nombreEnLettres($totalePoidsFormate_kg);
@@ -453,7 +455,7 @@
                 <hr>
                 <p><strong>Numéro de domiciliation:</strong> <?php echo $row['num_domiciliation']; ?></p>
                 <p><strong>Scan du fichier DOM:</strong> <a
-                        href="../<?php echo htmlspecialchars($row['pj_domiciliation_pv'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_domiciliation'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
+                        href="../view_user/<?php echo htmlspecialchars($row['pj_domiciliation_pv'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_domiciliation'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
                 </p>
             </div>
             <div class="alert alert-light" role="alert">
@@ -461,9 +463,10 @@
                 <hr>
                 <p><strong>Numéro de fiche de déclaration :</strong> <?php echo $row['num_fiche_declaration_pv']; ?></p>
                 <p><strong>Scan de fiche de déclaration :</strong> <a
-                        href="../<?php echo $row['pj_fiche_declaration_pv']; ?>">Scan
-                        de fichier de déclaration<?php echo $row['num_fiche_declaration_pv']; ?>.pdf</a>
-                    du <?php echo date('d/m/Y', strtotime($row['date_fiche_declaration_pv'])); ?></p>
+                        href="../view_user/<?php echo $row['pj_fiche_declaration_pv']; ?>"><?php echo $row['num_fiche_declaration_pv']; ?>.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row['date_fiche_declaration_pv']));?>
+                </p>
 
             </div>
 
@@ -472,14 +475,16 @@
                 <hr>
                 <p><strong>Numéro LP3 E:</strong> <?php echo $row['num_lp3e_pv']; ?></p>
                 <p><strong>Scan de LP III E:</strong> <a
-                        href="../<?php echo $row['pj_lp3e_pv']; ?>"><?php echo $row['num_lp3e_pv']; ?>.pdf</a> du
+                        href="../view_user/<?php echo $row['pj_lp3e_pv']; ?>"><?php echo $row['num_lp3e_pv']; ?>.pdf</a>
+                    du
                     <?php echo date('d/m/Y', strtotime($row['date_lp3e'])); ?></p>
 
             </div>
         </div>
         <div class="info2">
             <div class="d-flex justify-content-center mt-3">
-                <button id="refreshButton" class="btn btn-outline-warning">Cliquer ici pour afficher PV en PDF</button>
+                <button onclick="refreshIframe('<?php echo $row['pj_pv_scellage']; ?>')"
+                    class="btn btn-outline-warning">Cliquer ici pour afficher PV en PDF</button>
             </div>
 
             <div class="alert alert-light" role="alert">
@@ -512,33 +517,13 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-    $(document).ready(function() {
-        // Fonction pour actualiser le contenu de l'iframe
-        function refreshIframe() {
-            // Emplacement du fichier PDF
-            var pdfFilePath = 'cdc.minesmada.org/' + <?php echo json_encode($row['pj_pv_scellage']); ?>;
-            var scan_pj_DEC = 'cdc.minesmada.org/' +
-                <?php echo json_encode($row['pj_fiche_declaration_pv']); ?>;
-            var scan_pj_DOM = 'cdc.minesmada.org/' + <?php echo json_encode($row['pj_domiciliation']); ?>;
-            var scan_pj_lp3e = 'cdc.minesmada.org/' + <?php echo json_encode($row['pj_lp3e_pv']); ?>;
-
-            // Mettre à jour l'attribut src de l'iframe avec le nouveau lien PDF
-            $('#pdfIframe').attr('src', 'https://docs.google.com/gview?url=' + encodeURIComponent(pdfFilePath) +
-                '&embedded=true');
-            $('#ovIframe').attr('src', 'https://docs.google.com/gview?url=' + encodeURIComponent(scan_pj_DEC) +
-                '&embedded=true');
-            $('#tresorIframe').attr('src', 'https://docs.google.com/gview?url=' + encodeURIComponent(
-                    scan_pj_DOM) +
-                '&embedded=true');
-            $('#demandeIframe').attr('src', 'https://docs.google.com/gview?url=' + encodeURIComponent(
-                scan_pj_lp3e) + '&embedded=true');
-        }
-
-        // Gérer le clic sur le bouton d'actualisation
-        $('#refreshButton').click(function() {
-            refreshIframe();
-        });
-    });
+    function refreshIframe(pj) {
+        var pj_pv_scellage = pj.replace('../', '');
+        var pdfFilePathSc = 'cdc.minesmada.org/view_user/' + pj_pv_scellage;
+        // Mettre à jour l'attribut src de l'iframe avec le nouveau lien PDF
+        $('#pdfIframe').attr('src', 'https://docs.google.com/gview?url=' + encodeURIComponent(pdfFilePathSc) +
+            '&embedded=true');
+    }
     </script>
 </body>
 

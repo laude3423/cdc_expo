@@ -1,11 +1,11 @@
 <?php
     require_once('../../scripts/db_connect.php');
-    session_start();
+    require('../../scripts/session.php');
     
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $expediteur = htmlspecialchars($_POST['expediteur']);
         $importateur = htmlspecialchars($_POST["importateur"]);
-        $id_data = htmlspecialchars($_POST["facture"]);
+        $id_data = htmlspecialchars($_POST["id"]);
         $mode_emballage = htmlspecialchars($_POST["mode_emballage"]);
         $lieu_controle = htmlspecialchars($_POST["lieu_controle"]);
         $lieu_embarquement = htmlspecialchars($_POST["lieu_emb"]);
@@ -19,8 +19,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $id_data = $_POST['id'];
         $dateFormat = "Y-m-d";
-        $date = date($dateFormat);
+        $dateInsert = date($dateFormat);
 
+        $sql="SELECT * FROM direction WHERE id_direction=$id_direction";
+        $resultD = mysqli_query($conn, $sql);
+        $rowD = mysqli_fetch_assoc($resultD);
+        $typeDirection=$rowD['type_direction'];
+        $nomDirection=$rowD['nom_direction'];
+        
         $uploadPath_DOM="";
         $uploadPath_DEC="";
         $uploadPath_LP3="";
@@ -36,6 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if($num_pv){
             include "../generate_fichier/generate_insertControle.php";
         }
+        
          //prendre l'eure du réseau
         date_default_timezone_set('Indian/Antananarivo');
         $heure_actuelle = date('H:i:s');
@@ -94,10 +101,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $sql = "UPDATE `data_cc` SET `id_societe_expediteur`='$expediteur', `id_societe_importateur`='$importateur',
         `mode_emballage`='$mode_emballage',`lieu_controle_pv`='$lieu_controle',`lieu_embarquement_pv`='$lieu_embarquement', `num_domiciliation`='$num_domiciliation',
-        `num_fiche_declaration_pv`='$declaration',
+        `num_fiche_declaration_pv`='$num_fiche_declaration',
         `date_fiche_declaration_pv`='$date_declaration',`num_lp3e_pv`='$num_lp3e',`date_lp3e`='$date_lp3e',
-        `lien_pv_controle`='$pathToSave',`pj_pv_controle`='$pathToSavePDF',`date_modification_pv_controle`='$date',
-        `num_cc`='$num_cc',`date_cc`='$date',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc' WHERE id_data_cc='$id_data'";
+        `lien_pv_controle`='$pathToSave',`pj_pv_controle`='$pathToSavePDF',`date_modification_pv_controle`='$dateInsert',
+        `num_cc`='$num_cc',`date_cc`='$dateInsert',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc' WHERE id_data_cc='$id_data'";
                 $result = mysqli_query($conn, $sql);
 
                 if ($result) {
