@@ -202,6 +202,8 @@ $pdp = $rowUsers['photo_profil'];
                     <li><a class="dropdown-item"
                             href="https://cdc.minesmada.org/view/gerer_couleur_substance/lister.php">Couleur de
                             substance</a></li>
+                    <li><a class="dropdown-item"
+                            href="https://cdc.minesmada.org/view/gerer_granulo/lister.php">Granulo</a></li>
                     <li><a class="dropdown-item" href="https://cdc.minesmada.org/view/gerer_durete/lister.php">Dureté de
                             substance</a></li>
                     <li><a class="dropdown-item"

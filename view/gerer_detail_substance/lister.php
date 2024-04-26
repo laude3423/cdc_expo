@@ -250,7 +250,7 @@ if (!empty($edit_societe_id)) {
                 </div>
 
                 <div class="modal-body">
-                    <form action="" method="post">
+                    <form action="./add_substance.php" method="post">
                         <div class="row">
                             <div class="col">
                                 <label for="type_substance" name="type_substance" class="col-form-label">Type de la
@@ -282,7 +282,7 @@ if (!empty($edit_societe_id)) {
                                 <label for="couleur" name="couleur" class="col-form-label">Couleur de la
                                     substance:</label>
                                 <select id="couleur" name="couleur[]" placeholder="Choisir ..." autocomplete="off"
-                                    multiple required>
+                                    multiple>
                                     <option value="">Choisir ...</option>
                                     <?php    
                                 $query = "SELECT * FROM couleur_substance";
@@ -298,7 +298,8 @@ if (!empty($edit_societe_id)) {
                             </div>
                             <div class="col">
                                 <label for="categorie" name="categorie" class="col-form-label">Catégorie:</label>
-                                <select id="categorie" name="categorie" placeholder="Choisir ..." autocomplete="off">
+                                <select id="categorie" name="categorie[]" placeholder="Choisir ..." autocomplete="off"
+                                    multiple>
                                     <option value="">Choisir</option>
                                     <?php    
                                 $query = "SELECT id_categorie, nom_categorie FROM categorie";
@@ -316,7 +317,8 @@ if (!empty($edit_societe_id)) {
                         <div class="row">
                             <div class="col">
                                 <label for="granulo" name="granulo" class="col-form-label">Granulomètrie:</label>
-                                <select id="granulo" name="granulo" placeholder="Choisir ..." autocomplete="off">
+                                <select id="granulo" name="granulo[]" placeholder="Choisir ..." multiple
+                                    autocomplete="off">
                                     <option value="">Choisir ...</option>
                                     <?php    
                                 $query = "SELECT id_granulo, nom_granulo FROM granulo";
@@ -333,7 +335,7 @@ if (!empty($edit_societe_id)) {
                             <div class="col">
                                 <label for="transparence" name="transparence"
                                     class="col-form-label">Transparence:</label>
-                                <select id="transparence" name="transparence" placeholder="Choisir ..."
+                                <select id="transparence" name="transparence[]" placeholder="Choisir ..." multiple
                                     autocomplete="off">
                                     <option value="">Choisir ...</option>
                                     <?php    
@@ -353,7 +355,7 @@ if (!empty($edit_societe_id)) {
                             <div class="col">
                                 <label for="degre" name="degre" class="col-form-label">Degré de la
                                     couleur:</label>
-                                <select id="degre" name="degre" placeholder="Choisir ..." autocomplete="off">
+                                <select id="degre" name="degre[]" multiple placeholder="Choisir ..." autocomplete="off">
                                     <option value="">Choisir ...</option>
                                     <?php    
                                 $query = "SELECT id_degre_couleur, nom_degre_couleur FROM degre_couleur";
@@ -369,7 +371,8 @@ if (!empty($edit_societe_id)) {
                             </div>
                             <div class="col">
                                 <label for="durete" name="durete" class="col-form-label">Dureté de la substance:</label>
-                                <select id="durete" name="durete" placeholder="Choisir ..." autocomplete="off">
+                                <select id="durete" name="durete[]" multiple placeholder="Choisir ..."
+                                    autocomplete="off">
                                     <option value="">Choisir ...</option>
                                     <?php    
                                 $query = "SELECT id_durete, nom_durete FROM durete";
@@ -388,7 +391,8 @@ if (!empty($edit_societe_id)) {
                             <div class="col">
                                 <label for="dimension" name="dimension" class="col-form-label">Dimension ou
                                     Diamètre:</label>
-                                <select id="dimension" name="dimension" placeholder="Choisir ..." autocomplete="off">
+                                <select id="dimension" name="dimension[]" multiple placeholder="Choisir ..."
+                                    autocomplete="off">
                                     <option value="">Choisir ...</option>
                                     <?php    
                                 $query = "SELECT id_dimension_diametre, nom_dimension_diametre FROM dimension_diametre";
@@ -404,7 +408,7 @@ if (!empty($edit_societe_id)) {
                             </div>
                             <div class="col">
                                 <label for="forme" name="forme" class="col-form-label">Forme de la substance:</label>
-                                <select id="forme" name="forme" placeholder="Choisir ..." autocomplete="off">
+                                <select id="forme" name="forme[]" multiple placeholder="Choisir ..." autocomplete="off">
                                     <option value="">Choisir...</option>
                                     <?php    
                                 $query = "SELECT id_forme_substance, nom_forme_substance FROM forme_substance";
@@ -431,9 +435,8 @@ if (!empty($edit_societe_id)) {
                                 <select class="form-select" id="unite" name="unite" aria-label="Default select example"
                                     required>
                                     <option selected>Choisir ...</option>
-                                    <option value="Carat">US $ / Carat</option>
-                                    <option value="Gramme">US $ / Gramme</option>
-                                    <option value="Kilogramme">US $ / Kilogramme</option>
+                                    <option value="g">US $ / Gramme</option>
+                                    <option value="kg">US $ / Kilogramme</option>
                                 </select>
                             </div>
                         </div>
