@@ -4,7 +4,7 @@ include "../db_connect.php";
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
 
-    $sql = "SELECT * FROM `agent` WHERE id_agent = $id";
+    $sql = "SELECT * FROM `granulo` WHERE id_granulo = $id";
     $result = mysqli_query($conn, $sql);
 
     if ($result) {

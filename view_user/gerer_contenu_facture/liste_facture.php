@@ -3,32 +3,52 @@
 // Connexion à la base de données
   require_once('../../scripts/db_connect.php');
   require_once('../../scripts/session.php');
-//   require_once('../scripts/session_actif.php');
+  if($groupeID!==2){
+    require_once('../../scripts/session_actif.php');
+}
 
+if(isset($_SESSION['toast_message'])) {
+    echo '
+    <div style="left=50px;top=50px">
+        <div class="toast-container"">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                    <small class="text-muted">Maintenant</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ' . $_SESSION['toast_message'] . '
+                </div>
+            </div>
+        </div>
+    </div>';
 
- 
-        
-// Requête SQL pour récupérer les donnees
-// $sql = "SELECT lp.num_LP, d.nom_direction, c.nom_convoyeur, lp.validation_admin, s.nom_substance FROM lp_info lp
-//         INNER JOIN directions d ON lp.id_direction = d.id_direction
-//         INNER JOIN convoyeurs c ON lp.id_convoyeur = c.id_convoyeur
-//         INNER JOIN produits pr ON lp.id_produit = pr.id_produit
-//         INNER JOIN substance s ON pr.id_substance = s.id_substance
-//         WHERE d.id_direction = $id_direction";
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message']);
+}
+if(isset($_SESSION['toast_message2'])) {
+    echo '
+    <div style="left=50px;top=50px">
+        <div class="toast-container"">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                    <small class="text-muted">Maintenant</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ' . $_SESSION['toast_message2'] . '
+                </div>
+            </div>
+        </div>
+    </div>';
 
-// $result = $conn->query($sql);
-
-// $data = array();
-// if ($result->num_rows > 0) {
-//     while ($row = $result->fetch_assoc()) {
-//         $data[] = $row;
-//     }
-// }
-
-// Fermer la connexion à la base de données
-// $conn->close();
-
-// Inclure le fichier HTML
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message2']);
+}
 ?>
 <!DOCTYPE html>
 <html>

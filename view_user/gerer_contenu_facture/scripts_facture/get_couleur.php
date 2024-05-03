@@ -19,7 +19,7 @@ if (isset($_POST['id_substance'])) {
     // WHERE id_substance = $id_substance";
     $query = "SELECT DISTINCT cs.* FROM substance_detaille_substance sds 
     LEFT JOIN couleur_substance cs ON cs.id_couleur_substance = sds.id_couleur_substance
-    WHERE id_substance = $id_substance";
+    WHERE id_substance = $id_substance AND cs.id_couleur_substance IS NOT NULL";
     
     $result = $conn->query($query);
     
@@ -30,7 +30,7 @@ if (isset($_POST['id_substance'])) {
 
     $query_degre_couleur = "SELECT DISTINCT dc.* FROM substance_detaille_substance sds 
     LEFT JOIN degre_couleur dc ON dc.id_degre_couleur = sds.id_degre_couleur
-    WHERE id_substance = $id_substance";
+    WHERE id_substance = $id_substance AND sds.id_degre_couleur IS NOT NULL";
     
     $result_degre_couleur = $conn->query($query_degre_couleur);
     
@@ -41,7 +41,7 @@ if (isset($_POST['id_substance'])) {
 
     $query_dd = "SELECT DISTINCT dd.* FROM substance_detaille_substance sds 
     LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre
-    WHERE id_substance = $id_substance";
+    WHERE id_substance = $id_substance AND sds.id_dimension_diametre IS NOT NULL";
     
     $result_dd = $conn->query($query_dd);
 
@@ -55,7 +55,7 @@ if (isset($_POST['id_substance'])) {
 
     $query_d = "SELECT DISTINCT d.* FROM substance_detaille_substance sds 
     LEFT JOIN durete d ON d.id_durete = sds.id_durete
-    WHERE id_substance = $id_substance";
+    WHERE id_substance = $id_substance AND sds.durete IS NOT NULL";
     
     $result_d = $conn->query($query_d);
 
@@ -69,7 +69,7 @@ if (isset($_POST['id_substance'])) {
 
     $query_g = "SELECT DISTINCT g.* FROM substance_detaille_substance sds 
     LEFT JOIN granulo g ON g.id_granulo = sds.id_granulo
-    WHERE id_substance = $id_substance";
+    WHERE id_substance = $id_substance AND sds.id_granulo IS NOT NULL";
     
     $result_g = $conn->query($query_g);
 
@@ -83,7 +83,7 @@ if (isset($_POST['id_substance'])) {
 
     $query_fs = "SELECT DISTINCT fs.* FROM substance_detaille_substance sds 
     LEFT JOIN forme_substance fs ON fs.id_forme_substance = sds.id_forme_substance
-    WHERE id_substance = $id_substance";
+    WHERE id_substance = $id_substance AND sds.id_forme_substance IS NOT NULL";
     
     $result_fs = $conn->query($query_fs);
 
@@ -97,7 +97,7 @@ if (isset($_POST['id_substance'])) {
 
     $query_c = "SELECT DISTINCT c.* FROM substance_detaille_substance sds 
     LEFT JOIN categorie  c ON c.id_categorie = sds.id_categorie
-    WHERE id_substance = $id_substance";
+    WHERE id_substance = $id_substance AND sds.id_categorie IS NOT NULL";
     
     $result_c = $conn->query($query_c);
 
@@ -111,7 +111,7 @@ if (isset($_POST['id_substance'])) {
 
     $query_t = "SELECT DISTINCT t.* FROM substance_detaille_substance sds 
     LEFT JOIN transparence t ON t.id_transparence = sds.id_transparence
-    WHERE id_substance = $id_substance";
+    WHERE id_substance = $id_substance AND sds.id_transparence IS NOT NULL";
     
     $result_t = $conn->query($query_t);
     
@@ -157,5 +157,3 @@ if (isset($_POST['id_substance'])) {
 
 $conn->close();
 ?>
-
-

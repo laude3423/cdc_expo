@@ -160,8 +160,8 @@ $pdp = $rowUsers['photo_profil'];
 
         <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
             <?php if($groupeID === 1) {?>
-            <li><a href="https://cdc.minesmada.org/view_user/Home/condition_utilisation.php"
-                    class="nav-link px-2 text-white">Home</a></li>
+            <li><a href="https://cdc.minesmada.org/home/home.php" class="nav-link px-2 text-white">Home</a>
+            </li>
             <li><a href="https://cdc.minesmada.org/view_user/cdc/lister.php" class="nav-link px-2 text-white">CDC</a>
             </li>
             <li><a href="https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php"
@@ -171,8 +171,8 @@ $pdp = $rowUsers['photo_profil'];
             </li>
             <?php }?>
             <?php if($groupeID === 2) {?>
-            <li><a href="https://cdc.minesmada.org/view_user/Home/condition_utilisation.php"
-                    class="nav-link px-2 text-white">Home</a></li>
+            <li><a href="https://cdc.minesmada.org/home/home.php" class="nav-link px-2 text-white">Home</a>
+            </li>
             <li><a href="https://cdc.minesmada.org/view_user/cdc/lister.php" class="nav-link px-2 text-white">CDC</a>
             </li>
             <li><a href="https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php"
@@ -238,8 +238,7 @@ $pdp = $rowUsers['photo_profil'];
         </li>
         <?php }?>
         <?php if($groupeID === 3) {?>
-        <li><a href="https://cdc.minesmada.org/view_user/Home/condition_utilisation.php"
-                class="nav-link px-2 text-white">Home</a></li>
+        <li><a href="https://cdc.minesmada.org/home/home.php" class="nav-link px-2 text-white">Home</a></li>
         <li><a href="https://cdc.minesmada.org/view_user/cdc/lister.php" class="nav-link px-2 text-white">CDC</a></li>
         <li><a href="https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php"
                 class="nav-link px-2 text-white">Facture</a></li>

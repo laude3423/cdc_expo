@@ -1,9 +1,8 @@
 <?php 
 include "../db_connect.php";
+require('../../scripts/session.php');
 ?>
 <?php 
-session_start();
-
 $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
     if (isset($_POST['submit'])) {
@@ -199,8 +198,6 @@ if (!empty($edit_societe_id)) {
     }
     // Fonction pour confirmer la suppression
     function confirmDeletion() {
-        // Ici, vous pouvez ajouter le code PHP pour effectuer la suppression
-        // Par exemple, vous pouvez utiliser une requête AJAX pour appeler un script PHP de suppression
         console.log("Suppression confirmée");
         closeModal(); // Fermer la modale après la confirmation
     }

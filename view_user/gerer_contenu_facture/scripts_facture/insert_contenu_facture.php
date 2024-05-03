@@ -64,25 +64,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             echo "Erreur lors de l'exécution de la requête : " . $stmt_detail_substance->error;
         }
-        
-   
-    // Valider les données (ajoutez d'autres validations si nécessaire)
+    //recherche pour lp1
+    $query = "SELECT lp.*, pd.* FROM lp_info AS lp INNER JOIN produits AS pd ON lp.id_produit= pd.id_produit WHERE id_lp=$num_lp1";
+    $result1 = $conn_lp1->query($query);
+    $row = $result1->fetch_assoc();
+    $quantite_init=$row['quantite_en_chiffre'];
+    $num_lp = $row['num_LP'];
 
-    // Insertion des données dans la base de données
-    $query = "INSERT INTO contenu_facture (id_detaille_substance, id_lp1_info, id_data_cc, prix_unitaire_facture, unite_poids_facture, poids_facture) VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($query);
-
-    // Liaison des paramètres avec bind_param
-    $stmt->bind_param("iiisss", $id_detaille_substance, $id_lp1_info, $id_data_cc, $prix_unitaire_facture, $unite_poids_facture, $poids_facture);
-
-    // Exécution de la requête
-    if ($stmt->execute()) {
-        $_SESSION['toast_message'] = "Insertion réussie.";
+    $queryR = "SELECT id_lp1_info, quantite_lp1_actuel_lp1_suivis FROM contenu_facture WHERE id_lp1_info=$num_lp1";
+    $resultR = $conn_lp1->query($queryR);
+    if ($resultR->num_rows > 0) {
+        $rowR = $resultR->fetch_assoc();
+        $qteR_lp1=$row['quantite_lp1_actuel_lp1_suivis'];
+        $quantite_init=$qteR_lp1;
+    }
+    $qte_actuel =floatval($quantite_init) - floatval($poids_facture);
+    if($qte_actuel < 0){
+        $_SESSION['toast_message2'] = 'La quantité dans le Laissez-passer n°'.$num_lp.'sont exportée!';
             header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
         exit();
-    } else {
-            echo "Erreur d'enregistrement" . mysqli_error($conn);
+    }else{
+        $query = "INSERT INTO contenu_facture (id_detaille_substance, id_lp1_info, id_data_cc, quantite_lp1_initial_lp1_suivis, quantite_lp1_actuel_lp1_suivis, prix_unitaire_facture, unite_poids_facture, poids_facture) VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($query);
+
+        // Liaison des paramètres avec bind_param
+        $stmt->bind_param("iiisss", $id_detaille_substance, $id_lp1_info, $id_data_cc, $quantite_init, $qte_actuel, $prix_unitaire_facture, $unite_poids_facture, $poids_facture);
+
+        // Exécution de la requête
+        if ($stmt->execute()) {
+            $_SESSION['toast_message'] = "Insertion réussie.";
+                header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+            exit();
+        } else {
+                echo "Erreur d'enregistrement" . mysqli_error($conn);
+        }
     }
+
+    
 } else {
     // Redirection vers la page d'accueil ou une autre page si le formulaire n'a pas été soumis
     header("Location: ../view/commune_region.php");

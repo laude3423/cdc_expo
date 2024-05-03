@@ -31,6 +31,7 @@
         $rowUsers = $resultatUsers->fetch_assoc();
         $groupeID = $rowUsers['id_groupe'];
         $status_user = $rowUsers['status_user'];
+        $email_confirm = $rowUsers['email_confirm'];
         $status_condition = $rowUsers['status_condition'];
         $status_politique = $rowUsers['status_politique']; 
         $date_acceptation = date('d/m/Y', strtotime($rowUsers['date_acceptation']));

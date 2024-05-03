@@ -1,9 +1,8 @@
 <?php 
-include "../db_connect.php";
+require_once('../../scripts/db_connect.php');
+require('../../scripts/session.php');
 ?>
-<?php 
-session_start();
-
+<?php
 $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
     if (isset($_POST['submit'])) {

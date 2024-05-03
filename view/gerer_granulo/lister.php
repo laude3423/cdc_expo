@@ -1,5 +1,5 @@
 <?php 
-include "../db_connect.php";
+require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
 ?>
 <?php 

@@ -1,10 +1,14 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
+
+
 ?>
 
 <?php
-
+if($groupeID!==2){
+    require_once('../../scripts/session_actif.php');
+}
 $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
     if (isset($_POST['submit'])) {

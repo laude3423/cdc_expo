@@ -1,6 +1,9 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
+if($groupeID!==2){
+    require_once('../../scripts/session_actif.php');
+}
 
 ?>
 

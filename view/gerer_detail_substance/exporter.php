@@ -7,14 +7,14 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 // Exécution de la requête SQL pour récupérer les données
-$query = "SELECT  cate.nom_categorie, sub.nom_substance, typeSub.nom_type_substance,
+$query = "SELECT sds.id_detaille_substance, typeSub.nom_type_substance, sub.nom_substance, 
     cate.nom_categorie, cou.nom_couleur_substance, gr.nom_granulo, tr.nom_transparence, dg.nom_degre_couleur,
     f.nom_forme_substance, di.nom_durete, dim.nom_dimension_diametre, sds.prix_substance, sds.unite_prix_substance
         FROM substance_detaille_substance AS sds
         LEFT JOIN categorie AS cate ON cate.id_categorie= sds.id_categorie
         LEFT JOIN substance AS sub ON sub.id_substance= sds.id_substance
         LEFT JOIN type_substance AS typeSub ON typeSub.id_type_substance=sub.id_type_substance
-        LEFT JOIN couleur_substance AS cou ON cou.id_couleur_substance=sds.id_detaille_substance
+        LEFT JOIN couleur_substance AS cou ON cou.id_couleur_substance=sds.id_couleur_substance
         LEFT JOIN granulo AS gr ON sds.id_granulo=gr.id_granulo
         LEFT JOIN transparence AS tr ON sds.id_transparence=tr.id_transparence
         LEFT JOIN degre_couleur AS dg ON sds.id_degre_couleur=dg.id_degre_couleur

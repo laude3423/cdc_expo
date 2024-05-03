@@ -218,6 +218,7 @@
     </div>
 </div>
 
+
 <script>
 function selectTom() {
     // Initialisez TomSelect pour chaque élément select
@@ -264,7 +265,7 @@ $(document).ready(function() {
                     if (data.options_dimension_diametre ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#id_dimension_diametre").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord un substance...</option>"
+                            "<option value=''>Aucune dimension ou diamètre...</option>"
                         );
                     } else {
                         $("#id_dimension_diametre").prop("disabled", false).html(data
@@ -274,7 +275,7 @@ $(document).ready(function() {
                     if (data.options_couleur ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#id_couleur_substance").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord une couleur...</option>"
+                            "<option value=''>Aucune couleur...</option>"
                         );
                     } else {
                         $("#id_couleur_substance").prop("disabled", false).html(data
@@ -285,7 +286,7 @@ $(document).ready(function() {
                     if (data.options_degre_couleur ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#id_degre_couleur").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord un degré de couleur...</option>"
+                            "<option value=''>Aucun degré de couleur...</option>"
                         );
                     } else {
                         $("#id_degre_couleur").prop("disabled", false).html(data
@@ -296,7 +297,7 @@ $(document).ready(function() {
                     if (data.options_durete ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#id_durete").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord une dureté...</option>"
+                            "<option value=''>Aucune une dureté...</option>"
                         );
                     } else {
                         $("#id_durete").prop("disabled", false).html(data.options_durete);
@@ -317,7 +318,7 @@ $(document).ready(function() {
                     if (data.options_granulo ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#granulo_facture").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord une granulométrie...</option>"
+                            "<option value=''>Aucune granulométrie...</option>"
                         );
                     } else {
                         $("#granulo_facture").prop("disabled", false).html(data
@@ -328,7 +329,7 @@ $(document).ready(function() {
                     if (data.options_transparence ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#id_transparence").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord une transparence...</option>"
+                            "<option value=''>Aucune transparence...</option>"
                         );
                     } else {
                         $("#id_transparence").prop("disabled", false).html(data
@@ -339,7 +340,7 @@ $(document).ready(function() {
                     if (data.options_categorie ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#id_categorie").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord une catégorie...</option>"
+                            "<option value=''>Aucune catégorie...</option>"
                         );
                     } else {
                         $("#id_categorie").prop("disabled", false).html(data
@@ -350,7 +351,7 @@ $(document).ready(function() {
                     if (data.options_forme_substance ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#id_forme_substance").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord une forme de substance...</option>"
+                            "<option value=''>Aucune forme de substance...</option>"
                         );
                     } else {
                         $("#id_forme_substance").prop("disabled", false).html(data
@@ -361,7 +362,7 @@ $(document).ready(function() {
                     if (data.options_unite ===
                         "<option value=''>Sélectionner...</option>") {
                         $("#unite_poids_facture").prop("disabled", true).html(
-                            "<option value=''>Sélectionner d'abord une forme de substance...</option>"
+                            "<option value=''>Aucune unité...</option>"
                         );
                     } else {
                         $("#unite_poids_facture").prop("disabled", false).html(data
@@ -402,4 +403,5 @@ $(document).ready(function() {
         }
     });
 });
+
 </script>

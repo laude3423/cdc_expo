@@ -3,8 +3,9 @@
 // Connexion à la base de données
 require(__DIR__ . '/../../scripts/db_connect.php');
 require(__DIR__ . '/../../scripts/session.php');
-//   require_once('../scripts/session_actif.php');
-
+if($groupeID!==2){
+    require_once('../../scripts/session_actif.php');
+}
 if (isset($_GET['id'])) {
     $id_data_cc= $_GET['id'];
 
@@ -36,8 +37,49 @@ if (isset($_GET['id'])) {
     }
 
 }
+if(isset($_SESSION['toast_message'])) {
+    echo '
+    <div style="left=50px;top=50px">
+        <div class="toast-container"">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                    <small class="text-muted">Maintenant</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ' . $_SESSION['toast_message'] . '
+                </div>
+            </div>
+        </div>
+    </div>';
 
- 
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message']);
+}
+
+if(isset($_SESSION['toast_message2'])) {
+    echo '
+    <div style="left=50px;top=50px">
+        <div class="toast-container"">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                    <small class="text-muted">Maintenant</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ' . $_SESSION['toast_message2'] . '
+                </div>
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message2']);
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -99,6 +141,7 @@ if (isset($_GET['id'])) {
         <div id="edit_contenu_facture_form"></div>
         <div id="ajout_pv_controle_form"></div>
         <div id="ajout_pv_scellage_form"></div>
+        <div id="sow_contenu_form"></div>
         <hr>
         <div class="row mb-3">
             <div class="col">
@@ -172,6 +215,7 @@ if (isset($_GET['id'])) {
             </div>
         </div>
         <hr>
+
         <?php
         $sql="SELECT cfac.prix_unitaire_facture, cfac.poids_facture
         FROM contenu_facture cfac INNER JOIN data_cc dcc ON dcc.id_data_cc = cfac.id_data_cc WHERE dcc.id_data_cc = $id_data_cc";
@@ -219,13 +263,23 @@ if (isset($_GET['id'])) {
                     <td><?php echo htmlspecialchars($row['nom_granulo']) ?></td>
                     <td><?php echo htmlspecialchars($row['poids_facture']) . ' ' . htmlspecialchars($row['unite_poids_facture']) ?>
                     </td>
-                    <td><?php echo number_format($row['prix_unitaire_facture'], 3, ',', ' ') . ' US $'; ?></td>
+                    <?php
+                    if($row['prix_unitaire_facture']==$row['prix_substance']){
+                       ?><td><?php echo number_format('.$row["prix_unitaire_facture"].', 3, ',', ' ') . ' US $'; ?>
+                    </td>;
+
+                    <?php }else{
+                        ?><td style="color: red;">
+                        <?php echo number_format('.$row["prix_unitaire_facture"].', 3, ',', ' ') . ' US $'; ?></td>;
+                    <?php }
+                    ?>
+                    >
                     <td><?php echo number_format($row['prix_substance'], 2, ',', ' ') . ' US $'; ?></td>
                     <td><?php echo number_format($row['poids_facture'] * $row["prix_unitaire_facture"], 3, ',', ' ') . ' US $' ?>
                     </td>
                     <td>
-                        <a href="liste_contenu_facture.php?id=<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>"
-                            class="link-dark">détails</a>
+                        <a class="link-dark btn-sow-contenu" href="#"
+                            data-id="<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>">détails</a>
                         <a class="link-dark btn-edit-contenu-facture"
                             data-id-contenu-facture="<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>">
                             <i class="fa-solid fa-pen-to-square me-2"></i></a>
@@ -332,9 +386,15 @@ if (isset($_GET['id'])) {
     </script>
     <script>
     $(document).ready(function() {
+        $(".btn-sow-contenu").click(function() {
+            var id_data = $(this).data('id');
+            showEditForm('sow_contenu_form', './sow_contenu.php?id=' +
+                id_data, 'staticBackdrop');
+
+        });
         // Afficher le formulaire modal lorsqu'on clique sur le bouton
         $(".btn-add-contenu-facture").click(function() {
-            id_data_cc = $(this).data('id-data-cc');
+            id_data_cc = $(this).data('id');
             $("#add_contenu_facture").modal('show');
             $("#id_data_cc").val(id_data_cc);
         });
