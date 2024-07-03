@@ -37,7 +37,7 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
             $result = mysqli_query($conn, $sql);
              if ($result) {
                 $_SESSION['toast_message'] = "Modification réussie.";
-                    header("Location: ".$_SERVER['PHP_SELF']);
+                    header("Location: https://cdc.minesmada.org/view_user/pv_controle_gu/detail.php?id=" . $id_data);
                 exit();
             } else {
             echo "Erreur d'enregistrement" . mysqli_error($conn);
@@ -107,7 +107,7 @@ if (!empty($edit_societe_id)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Bootstrap CSS-->
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -120,40 +120,48 @@ if (!empty($edit_societe_id)) {
     </script>
 
     <title>Ministere des mines</title>
-    <?php 
-    include "../../shared/header.php";
-    ?>
+    <?php include_once('../../view/shared/navBar.php'); ?>
     <style>
-    #spinner {
-        border: 4px solid rgba(0, 0, 0, 0.1);
-        border-left-color: #7983ff;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
+    #agentTable {
+        display: none;
     }
     </style>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('loadingSpinner');
+        const table = document.getElementById('agentTable');
+
+        // Afficher le spinner
+        spinner.style.display = 'block';
+        table.style.display = 'none';
+
+        // Simulation de chargement des données
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }, 2000); // Changer le délai selon vos besoins
+    });
+    </script>
 
 
 </head>
 
 <body>
     <div class="container">
+        <hr>
         <div class="row mb-3" style="margin-top: 30px;">
-            <div class="col md-8 mb-3">
-                <h5>Liste des Procès-Verbal de constantation et de contrôle</h5>
+            <div class="col">
+                <h5>Liste des P.V de constantation et de contrôle</h5>
+            </div>
+            <div class="col">
+                <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
             </div>
             <div class="col md-10 text-end">
-                <a class="btn btn-success btn-sm rounded-pill px-3 mb-3" href="../cdc/exporter.php?">Exporter en
-                    excel</a>
+                <a class="btn btn-success btn-sm rounded-pill px-3 mb-3" href="../cdc/exporter.php?"
+                    style="font-size: 90%;"><i class="fas fa-file-excel"></i> Exporter en excel</a>
             </div>
         </div>
+        <hr>
         <?php 
         $sql='';
         if($groupeID===2){
@@ -177,15 +185,22 @@ if (!empty($edit_societe_id)) {
         }
         $result= mysqli_query($conn, $sql);
             if ($result->num_rows > 0) {
-            ?><table class="table table-hover text-center">
+            ?>
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <table id="agentTable" class="table table-hover text-center">
             <thead class="table-dark">
                 <tr>
                     <th scope="col"></th>
-                    <th scope="col">Numéro de PV de contrôle</th>
-                    <th scope="col">Société expéditeur</th>
-                    <th scope="col">Numéro Facture</th>
-                    <th scope="col">Numéro DOM</th>
-                    <th scope="col">Société importateur</th>
+                    <th scope="col">Numéro de PV</th>
+                    <th class="masque2" scope="col">Date</th>
+                    <th class="masque2" scope="col">Numéro Facture</th>
+                    <th class="masque1" scope="col">Société expéditeur</th>
+                    <th class="masque1" scope="col">Destination</th>
+                    <th scope="col">Status</th>
                     <th scope="col">Actions</th>
                 </tr>
             </thead>
@@ -193,17 +208,38 @@ if (!empty($edit_societe_id)) {
                 <?php  while($row = mysqli_fetch_assoc($result)){
                     ?>
                 <tr>
+                    <?php  if( $row['validation_controle']=='Validé'){
+                    ?>
                     <td>✅</td>
+                    <?php  }else {?>
+                    <td>⚠️</td>
+                    <?php }?>
                     <td><?php echo $row['num_pv_controle'] ?></td>
-                    <td><?php echo $row['nom_societe_expediteur'] ?></td>
-                    <td><?php echo $row['num_facture'] ?></td>
-                    <td><?php echo $row['num_domiciliation'] ?></td>
-                    <td><?php echo $row['nom_societe_importateur'] ?></td>
+                    <td class="masque2"><?php echo $row['date_creation_pv_controle'] ?></td>
+                    <td class="masque2"><?php echo $row['num_facture'] ?></td>
+                    <td class="masque1"><?php echo $row['nom_societe_expediteur'] ?></td>
+                    <td class="masque1"><?php echo $row['pays_destination'] ?></td>
+                    <td><?php echo $row['validation_controle'] ?></td>
                     <td>
                         <a class="link-dark detail_pv_scellage"
                             href="detail.php?id=<?php echo $row['id_data_cc']?>">détails</a>
-                        <a href="#" class="link-dark" onclick="openModal(<?php echo $row['id_data_cc']?>)"><i
+                        <?php if($groupeID !=2){
+                            if ($row['validation_controle'] != 'Validé') {
+                                ?>
+                        <a href="#" class="link-dark btn_edit_pv_controle"
+                            data-id="<?= htmlspecialchars($row["id_data_cc"])?>"><i
                                 class="fa-solid fa-pen-to-square me-3"></i></a>
+                        <?php
+                            } else {
+                                    ?>
+                        <a href="#" class="link-dark" data-toggle="tooltip"
+                            title="Modification non autorisée : PP déjà validé">
+                            <i class="fa-solid fa-pen-to-square me-3"></i>
+                        </a>
+                        <?php
+                            }
+                        }
+                        ?>
                     </td>
                 </tr>
                 <?php   
@@ -217,6 +253,11 @@ if (!empty($edit_societe_id)) {
                 <tr>
             </tbody>
         </table>
+        <div>
+            <?php
+                include('../../shared/pied_page.php');
+            ?>
+        </div>
     </div>
     <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false"
         aria-labelledby="staticBackdropLabel" style="font-size:90%; font-weight:bold">
@@ -252,7 +293,7 @@ if (!empty($edit_societe_id)) {
         </div>
     </div>
 
-
+    <div id="edit_pv_controle_form"></div>
     <!--Bootstrap-->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -286,6 +327,21 @@ if (!empty($edit_societe_id)) {
     }
     $(document).ready(function() {
         $('.toast').toast('show');
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $(".btn_edit_pv_controle").click(function() {
+            var id_data_cc = $(this).data('id');
+            showEditForm('edit_pv_controle_form', './edit_pv.php?id=' + id_data_cc,
+                'staticBackdrop2');
+
+        });
+
+        function showEditForm(editFormId, scriptPath, modalId) {
+            $("#" + editFormId).load(scriptPath, function() {
+                // Après le chargement du contenu, initialisez le modal manuellement
+                $("#" + modalId).modal('show');
+            });
+        }
     });
 
     function confirmerSuppression(id) {

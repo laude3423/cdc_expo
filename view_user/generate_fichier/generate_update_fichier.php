@@ -3,7 +3,7 @@ require_once('../../scripts/db_connect.php');
 require '../../vendor/autoload.php';
 use PhpOffice\PhpWord\TemplateProcessor;
 include '../../mylibs/phpqrcode/qrlib.php';
-include 'nombreEnLettre.php';
+include 'nombre_en_lettre.php';
 
 $agent = array();
 // Vérification et traitement de $chef

@@ -109,20 +109,19 @@ if (!empty($edit_societe_id)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Bootstrap CSS-->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!--Font awesome-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Ministère des mines</title>
+    <link rel="icon" href="../../logo/favicon.ico">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- CSS personnalisé -->
     <link rel="stylesheet" type="text/css" href="style.css">
-    <!--Bootstrap JS-->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
-    </script>
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <!-- Règles CSS pour la responsivité -->
     <style>
-    /* Ajout de règles CSS pour la responsivité */
     @media (max-width: 500px) {
         .modal-lg {
             max-width: 100% !important;
@@ -130,54 +129,87 @@ if (!empty($edit_societe_id)) {
         }
     }
     </style>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('loadingSpinner');
+        const table = document.getElementById('agentTable');
+
+        // Afficher le spinner
+        spinner.style.display = 'block';
+        table.style.display = 'none';
+
+        // Simulation de chargement des données
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }, 2000); // Changer le délai selon vos besoins
+    });
+    </script>
     <script>
     $(document).ready(function() {
         // Écoutez les changements dans le menu déroulant
         $('#substance').change(function() {
             // Récupérez la valeur sélectionnée
             var selectedValue = $(this).val();
-            //id_saphir: 8-9-10-11-12-13
-            //id_rubis:3-4-5-6-7-
-            //id_emeraude:2
-            // Si l'option "Saisir manuellement..." est sélectionnée
-            if ((selectedValue == "Saphir") || (selectedValue == "Saphir")) {
-                // Rendez le champ input visible et le menu déroulant invisible
-                console.log(selectedValue);
-                $('#select-granulo').show();
-                $('#transparence').show();
-                $('#categorie').show();
-                $('#degre').show();
-                $('#granulo_input_label input').attr('required', 'required');
-                $('#transparence_input_label input').attr('required', 'required');
-                $('#categorie_input_label input').attr('required', 'required');
-                $('#degre_input_label input').attr('required', 'required');
-                //$(this).hide();
+            // Si l'option "Saphir" est sélectionnée
+            if (selectedValue == "Saphir") {
+                // Rendez les champs input visibles
+                $('#select-granulo, #transparence, #categorie, #degre').show();
+                // Ajoutez l'attribut 'required' aux champs input
+                $('#granulo_input_label input, #transparence_input_label input, #categorie_input_label input, #degre_input_label input')
+                    .attr('required', 'required');
+            } else {
+                // Cachez les champs input
+                $('#select-granulo, #transparence, #categorie, #degre').hide();
+                // Retirez l'attribut 'required' des champs input
+                $('#granulo_input_label input, #transparence_input_label input, #categorie_input_label input, #degre_input_label input')
+                    .removeAttr('required');
             }
         });
     });
     </script>
+    <style>
+    #agentTable {
+        display: none;
+    }
+    </style>
 
-    <title>Ministere des mines</title>
-    <?php 
-    include "../../shared/header.php";
-    ?>
-
+    <?php include "../shared/navBar.php"; ?>
 </head>
 
+
 <body>
+
     <div class="container">
-        <div class="row mb-3" style="margin-top: 30px;">
-            <div class="col md-8 mb-3">
+        <hr>
+        <div class="row">
+            <div class="col">
                 <h5>Liste des substances</h5>
             </div>
-            <div class="col md-10 text-end">
-                <a class="btn btn-success btn-sm rounded-pill px-3 mb-3" href="./exporter.php?">Exporter en
-                    excel</a>
-                <a class="btn btn-dark btn-sm rounded-pill px-3 mb-3" href="#" onclick="openModal()"><i
+            <div class="col">
+                <input type="text" id="search" class="form-control mb-3" placeholder="Recherche...">
+            </div>
+            <div class="col text-end">
+                <a class="btn btn-success btn-sm rounded-pill px-3 " href="./exporter.php?"><i
+                        class="fas fa-file-excel"></i> Exporter en excel</a>
+                <a class="btn btn-dark btn-sm rounded-pill px-3 " href="#" onclick="openModal()"><i
                         class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
             </div>
         </div>
-        <table class="table table-hover text-center">
+        <hr>
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <table id="agentTable" class="table table-hover text-center">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Substance</th>
@@ -193,71 +225,44 @@ if (!empty($edit_societe_id)) {
                     <th scope="col">Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php
-                $sql="SELECT sub_detail.*, sub.*, trans.*, dure.*, forme.*, cate.*, diam.*,gra.*, degre.*
-                  FROM substance_detaille_substance sub_detail
-                  INNER JOIN substance sub ON sub_detail.id_substance= sub.id_substance
-                  LEFT JOIN transparence trans ON sub_detail.id_transparence= trans.id_transparence
-                  LEFT JOIN categorie cate ON sub_detail.id_categorie= cate.id_categorie
-                  LEFT JOIN durete dure ON sub_detail.id_durete= dure.id_durete
-                  LEFT JOIN forme_substance forme ON sub_detail.id_forme_substance= forme.id_forme_substance
-                  LEFT JOIN dimension_diametre diam ON sub_detail.id_dimension_diametre= diam.id_dimension_diametre
-                  LEFT JOIN granulo gra  ON sub_detail.id_granulo= gra.id_granulo
-                  LEFT JOIN degre_couleur degre  ON sub_detail.id_degre_couleur= degre.id_degre_couleur";
-                $result= mysqli_query($conn, $sql);
-                while($row = mysqli_fetch_assoc($result)){
-                    
-                  ?>
-                <tr>
-                    <td><?php echo $row['nom_substance'] ?></td>
-                    <td><?php echo $row['nom_granulo'] ?></td>
-                    <td><?php echo $row['nom_transparence'] ?></td>
-                    <td><?php echo $row['nom_degre_couleur'] ?></td>
-                    <td><?php echo $row['nom_forme_substance'] ?></td>
-                    <td><?php echo $row['nom_durete'] ?></td>
-                    <td><?php echo $row['nom_categorie'] ?></td>
-                    <td><?php echo $row['nom_dimension_diametre'] ?></td>
-                    <td><?php echo $row['prix_substance'] ?></td>
-                    <td><?php echo $row['unite_prix_substance'] ?></td>
-                    <td>
-                        <a href="#" class="link-dark" onclick="openModal(<?php echo $row['id_substance']?>)"><i
-                                class="fa-solid fa-pen-to-square me-3"></i></a>
-                        <a href="#" class="link-dark"
-                            onclick="confirmerSuppression(<?php echo $row['id_substance']?>)"><i
-                                class="fa-solid fa-trash "></i></a>
-                    </td>
-                </tr>
-                <?php   
-                }
-
-                ?>
-
-
-                <tr>
+            <tbody id="substanceTable">
+                <!-- Contenu généré par PHP -->
             </tbody>
         </table>
-    </div>
-    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false"
-        aria-labelledby="staticBackdropLabel" style="font-size:90%; font-weight:bold">
-        <div class=" modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Nouvelle substance</h1>
-                    <button type="button" class="btn-close" onclick="closeModal()" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
+        <div class="container">
+            <ul class="pagination" id="pagination">
+                <!-- Pagination générée par PHP -->
+            </ul>
+            <ul class="pagination" id="pagination2">
+                <!-- Pagination générée par PHP -->
+            </ul>
+        </div>
+        <div>
+            <?php
+                include('../../shared/pied_page.php');
+            ?>
+        </div>
 
-                <div class="modal-body">
-                    <form action="./add_substance.php" method="post">
-                        <div class="row">
-                            <div class="col">
-                                <label for="type_substance" name="type_substance" class="col-form-label">Type de la
-                                    substance: <span style="color:rgb(247, 62, 6)">*</span></label>
-                                <select id="type_substance" name="type_substance" placeholder="Choisir ..."
-                                    autocomplete="off" required>
-                                    <option value="">Choisir ...</option>
-                                    <?php    
+        <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false"
+            aria-labelledby="staticBackdropLabel" style="font-size:90%; font-weight:bold">
+            <div class=" modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Nouvelle substance</h1>
+                        <button type="button" class="btn-close" onclick="closeModal()" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <form action="./add_substance.php" method="post">
+                            <div class="row">
+                                <div class="col">
+                                    <label for="type_substance" name="type_substance" class="col-form-label">Type de la
+                                        substance: <span style="color:rgb(247, 62, 6)">*</span></label>
+                                    <select id="type_substance" name="type_substance" placeholder="Choisir ..."
+                                        autocomplete="off" required>
+                                        <option value="">Choisir ...</option>
+                                        <?php    
                                 $query = "SELECT * FROM type_substance";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -267,23 +272,23 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_type_substance'] . "'>" . $rowSub['nom_type_substance'] . "</option>";
                                 }
                                 ?>
-                                </select>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="substance" name="substance" class="col-form-label">Nom de la
+                                        substance:</label>
+                                    <input type="text" class="form-control" name="substance" id="substance"
+                                        placeholder="Nom de la substance" required>
+                                </div>
                             </div>
-                            <div class="col">
-                                <label for="substance" name="substance" class="col-form-label">Nom de la
-                                    substance:</label>
-                                <input type="text" class="form-control" name="substance" id="substance"
-                                    placeholder="Nom de la substance" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <label for="couleur" name="couleur" class="col-form-label">Couleur de la
-                                    substance:</label>
-                                <select id="couleur" name="couleur[]" placeholder="Choisir ..." autocomplete="off"
-                                    multiple>
-                                    <option value="">Choisir ...</option>
-                                    <?php    
+                            <div class="row">
+                                <div class="col">
+                                    <label for="couleur" name="couleur" class="col-form-label">Couleur de la
+                                        substance:</label>
+                                    <select id="couleur" name="couleur[]" placeholder="Choisir ..." autocomplete="off"
+                                        multiple>
+                                        <option value="">Choisir ...</option>
+                                        <?php    
                                 $query = "SELECT * FROM couleur_substance";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -293,14 +298,14 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_couleur_substance'] . "'>" . $rowSub['nom_couleur_substance'] . "</option>";
                                 }
                                 ?>
-                                </select>
-                            </div>
-                            <div class="col">
-                                <label for="categorie" name="categorie" class="col-form-label">Catégorie:</label>
-                                <select id="categorie" name="categorie[]" placeholder="Choisir ..." autocomplete="off"
-                                    multiple>
-                                    <option value="">Choisir</option>
-                                    <?php    
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="categorie" name="categorie" class="col-form-label">Catégorie:</label>
+                                    <select id="categorie" name="categorie[]" placeholder="Choisir ..."
+                                        autocomplete="off" multiple>
+                                        <option value="">Choisir</option>
+                                        <?php    
                                 $query = "SELECT id_categorie, nom_categorie FROM categorie";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -310,16 +315,16 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_categorie'] . "'>" . $rowSub['nom_categorie'] . "</option>";
                                 }
                                 ?>
-                                </select>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <label for="granulo" name="granulo" class="col-form-label">Granulomètrie:</label>
-                                <select id="granulo" name="granulo[]" placeholder="Choisir ..." multiple
-                                    autocomplete="off">
-                                    <option value="">Choisir ...</option>
-                                    <?php    
+                            <div class="row">
+                                <div class="col">
+                                    <label for="granulo" name="granulo" class="col-form-label">Granulomètrie:</label>
+                                    <select id="granulo" name="granulo[]" placeholder="Choisir ..." multiple
+                                        autocomplete="off">
+                                        <option value="">Choisir ...</option>
+                                        <?php    
                                 $query = "SELECT id_granulo, nom_granulo FROM granulo";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -329,15 +334,15 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_granulo'] . "'>" . $rowSub['nom_granulo'] . "</option>";
                                 }
                                 ?>
-                                </select>
-                            </div>
-                            <div class="col">
-                                <label for="transparence" name="transparence"
-                                    class="col-form-label">Transparence:</label>
-                                <select id="transparence" name="transparence[]" placeholder="Choisir ..." multiple
-                                    autocomplete="off">
-                                    <option value="">Choisir ...</option>
-                                    <?php    
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="transparence" name="transparence"
+                                        class="col-form-label">Transparence:</label>
+                                    <select id="transparence" name="transparence[]" placeholder="Choisir ..." multiple
+                                        autocomplete="off">
+                                        <option value="">Choisir ...</option>
+                                        <?php    
                                 $query = "SELECT id_transparence, nom_transparence FROM transparence";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -347,16 +352,17 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_transparence'] . "'>" . $rowSub['nom_transparence'] . "</option>";
                                 }
                                 ?>
-                                </select>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <label for="degre" name="degre" class="col-form-label">Degré de la
-                                    couleur:</label>
-                                <select id="degre" name="degre[]" multiple placeholder="Choisir ..." autocomplete="off">
-                                    <option value="">Choisir ...</option>
-                                    <?php    
+                            <div class="row">
+                                <div class="col">
+                                    <label for="degre" name="degre" class="col-form-label">Degré de la
+                                        couleur:</label>
+                                    <select id="degre" name="degre[]" multiple placeholder="Choisir ..."
+                                        autocomplete="off">
+                                        <option value="">Choisir ...</option>
+                                        <?php    
                                 $query = "SELECT id_degre_couleur, nom_degre_couleur FROM degre_couleur";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -366,14 +372,15 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_degre_couleur'] . "'>" . $rowSub['nom_degre_couleur'] . "</option>";
                                 }
                                 ?>
-                                </select>
-                            </div>
-                            <div class="col">
-                                <label for="durete" name="durete" class="col-form-label">Dureté de la substance:</label>
-                                <select id="durete" name="durete[]" multiple placeholder="Choisir ..."
-                                    autocomplete="off">
-                                    <option value="">Choisir ...</option>
-                                    <?php    
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="durete" name="durete" class="col-form-label">Dureté de la
+                                        substance:</label>
+                                    <select id="durete" name="durete[]" multiple placeholder="Choisir ..."
+                                        autocomplete="off">
+                                        <option value="">Choisir ...</option>
+                                        <?php    
                                 $query = "SELECT id_durete, nom_durete FROM durete";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -383,17 +390,17 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_durete'] . "'>" . $rowSub['nom_durete'] . "</option>";
                                 }
                                 ?>
-                                </select>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <label for="dimension" name="dimension" class="col-form-label">Dimension ou
-                                    Diamètre:</label>
-                                <select id="dimension" name="dimension[]" multiple placeholder="Choisir ..."
-                                    autocomplete="off">
-                                    <option value="">Choisir ...</option>
-                                    <?php    
+                            <div class="row">
+                                <div class="col">
+                                    <label for="dimension" name="dimension" class="col-form-label">Dimension ou
+                                        Diamètre:</label>
+                                    <select id="dimension" name="dimension[]" multiple placeholder="Choisir ..."
+                                        autocomplete="off">
+                                        <option value="">Choisir ...</option>
+                                        <?php    
                                 $query = "SELECT id_dimension_diametre, nom_dimension_diametre FROM dimension_diametre";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -403,13 +410,15 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_dimension_diametre'] . "'>" . $rowSub['nom_dimension_diametre'] . "</option>";
                                 }
                                 ?>
-                                </select>
-                            </div>
-                            <div class="col">
-                                <label for="forme" name="forme" class="col-form-label">Forme de la substance:</label>
-                                <select id="forme" name="forme[]" multiple placeholder="Choisir ..." autocomplete="off">
-                                    <option value="">Choisir...</option>
-                                    <?php    
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="forme" name="forme" class="col-form-label">Forme de la
+                                        substance:</label>
+                                    <select id="forme" name="forme[]" multiple placeholder="Choisir ..."
+                                        autocomplete="off">
+                                        <option value="">Choisir...</option>
+                                        <?php    
                                 $query = "SELECT id_forme_substance, nom_forme_substance FROM forme_substance";
                                 $stmt = $conn->prepare($query);
                                 $stmt->execute();
@@ -419,46 +428,126 @@ if (!empty($edit_societe_id)) {
                                     echo "<option value='" . $rowSub['id_forme_substance'] . "'>" . $rowSub['nom_forme_substance'] . "</option>";
                                 }
                                 ?>
-                                </select>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <label for="prix" name="prix" class="col-form-label">Prix unitaire (en US $):</label>
-                                <input type="text" class="form-control" name="prix" id="prix"
-                                    placeholder="Prix unitaire en US $" required>
-                                <input type="hidden" id="id" name="id">
+                            <div class="row">
+                                <div class="col">
+                                    <label for="prix" name="prix" class="col-form-label">Prix unitaire (en US
+                                        $):</label>
+                                    <input type="text" class="form-control" name="prix" id="prix"
+                                        placeholder="Prix unitaire en US $" required>
+                                    <input type="hidden" id="id" name="id">
+                                </div>
+                                <div class="col">
+                                    <label for="unite" name="unite" class="col-form-label">Unité de la
+                                        substance:</label>
+                                    <select class="form-select" id="unite" name="unite"
+                                        aria-label="Default select example" required>
+                                        <option selected>Choisir ...</option>
+                                        <option value="g">US $ / Gramme</option>
+                                        <option value="kg">US $ / Kilogramme</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col">
-                                <label for="unite" name="unite" class="col-form-label">Unité de la substance:</label>
-                                <select class="form-select" id="unite" name="unite" aria-label="Default select example"
-                                    required>
-                                    <option selected>Choisir ...</option>
-                                    <option value="g">US $ / Gramme</option>
-                                    <option value="kg">US $ / Kilogramme</option>
-                                </select>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary"
+                                    onclick="closeModal()">Close</button>
+                                <button class="btn btn-sm btn-primary" type="submit" name="submit">Enregistrer</button>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="closeModal()">Close</button>
-                            <button class="btn btn-sm btn-primary" type="submit" name="submit">Enregistrer</button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+        <!-- Edit Substance Modal -->
+        <div class="modal fade" id="editSubstanceModal" data-bs-backdrop="static" data-bs-keyboard="false"
+            aria-labelledby="staticBackdropLabel" style="font-size:90%; font-weight:bold">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Modifier prix de la substance</h1>
+                        <button type="button" class="btn-close" onclick="closeModal()" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
+                    <div class="modal-body">
+                        <form id="editSubstanceForm">
+                            <input type="hidden" id="editSubstanceId">
+                            <div class="row">
+                                <div class="col">
+                                    <label for="type_substance " class="fw-bold">Type de la substance :</label>
+                                    <input class="form-control" type="text" id="type_substance" name="type_substance">
+                                </div>
+                                <div class="col">
+                                    <label for="id_substance " class="fw-bold">Nom de la substance :</label>
+                                    <input type="text" class="form-control" id="id_substance" name="id_substance">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="id_couleur_substance " class="fw-bold">Couleur de la substance :</label>
+                                    <input type="text" class="form-control" id="id_couleur_substance"
+                                        name="id_couleur_substance">
+                                </div>
+                                <div class="col">
+                                    <label for="id_granulo " class="fw-bold">Granulomètrie :</label>
+                                    <input type="text" class="form-control" id="id_granulo" name="id_granulo">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="id_transparence " class="fw-bold">Transparence de la substance
+                                        :</label>
+                                    <input type="text" class="form-control" id="id_transparence" name="id_transparence">
+                                </div>
+                                <div class="col">
+                                    <label for="id_degre_couleur " class="fw-bold">Degré de couleur:</label>
+                                    <input type="text" class="form-control" id="id_degre_couleur"
+                                        name="id_degre_couleur">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="id_forme_substance " class="fw-bold">Forme de la substance :</label>
+                                    <input type="text" class="form-control" id="id_forme_substance"
+                                        name="id_forme_substance">
+                                </div>
+                                <div class="col">
+                                    <label for="id_durete " class="fw-bold">Dureté de la substance :</label>
+                                    <input type="text" class="form-control" id="id_durete" name="id_durete">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="id_categorie " class="fw-bold">Catégorie de la substance :</label>
+                                    <input type="text" class="form-control" id="id_categorie" name="id_categorie">
+                                </div>
+                                <div class="col">
+                                    <label for="id_dimension_diametre " class="fw-bold">Dimension ou diamètre de la
+                                        substance :</label>
+                                    <input type="text" class="form-control" id="id_dimension_diametre"
+                                        name="id_dimension_diametre">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="mb-3">
+                                    <label for="prix_substance " class="fw-bold">Prix de la substance :</label>
+                                    <input type="number" class="form-control" name="prix_substance" id="prix_substance"
+                                        step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary"
+                                    onclick="closeModal()">Close</button>
+                                <button class="btn btn-sm btn-primary" type="submit" name="submit">Enregistrer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>div
     <!-- TomSelect JS -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
@@ -641,7 +730,7 @@ if (!empty($edit_societe_id)) {
     function closeModal() {
         if (myModal) {
             myModal.hide();
-            location.reload();
+            // location.reload();
 
         }
     }
@@ -687,6 +776,7 @@ if (!empty($edit_societe_id)) {
     <!-- <script>
         new TomSelect('select[multiple]', {plugins:{remove_button:{title: 'Supprimer'}}})
     </script> -->
+    <script src="search-pagination.js"></script>
 </body>
 
 </html>

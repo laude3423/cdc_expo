@@ -6,16 +6,17 @@ require(__DIR__ . '/../../scripts/session.php');
 if($groupeID!==2){
     require_once('../../scripts/session_actif.php');
 }
+$id_data_cc='';
 if (isset($_GET['id'])) {
     $id_data_cc= $_GET['id'];
 
-    $sql = "SELECT dcc.*, sexp.*, simp.*
+    $sql = "SELECT dcc.*, sexp.*, simp.*, user.*
     FROM data_cc dcc
+    LEFT JOIN users AS user ON user.id_user= dcc.id_user
     LEFT JOIN societe_expediteur sexp ON dcc.id_societe_expediteur = sexp.id_societe_expediteur
     LEFT JOIN societe_importateur simp ON dcc.id_societe_importateur = simp.id_societe_importateur
     WHERE dcc.id_data_cc = $id_data_cc;
     ";
-
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
@@ -33,10 +34,31 @@ if (isset($_GET['id'])) {
         $adresse_societe_importateur = $row_1["adresse_societe_importateur"];
         $contact_societe_importateur = $row_1["contact_societe_importateur"];
         $email_societe_importateur = $row_1["email_societe_importateur"]; 
-        $pays_destination = $row_1["pays_destination"]; 
+        $pays_destination = $row_1["pays_destination"];
+        $num_pv_scellage=$row_1['num_pv_scellage'];
+        $num_pv_controle=$row_1['num_pv_controle'];
+        $pj_facture=$row_1['pj_facture'];
+        $id_contenu_fact= $row_1['id_contenu_facture']?? "";
+        $validation_facture=$row_1['validation_facture'] ?? "";
+        $nom_users = $row_1['fonction'] ?? "";
+        $nom_utilisateur = $row_1['nom_user']. ' '.$row_1['prenom_user'];
     }
 
 }
+if (isset($_POST['submit'])) {
+        $id_data_cc = $_POST['id_data'];
+        $action = $_POST['action'];
+        $sql="UPDATE `data_cc` SET `validation_facture`='$action', `id_user`='$userID' WHERE id_data_cc=$id_data_cc";
+        $result = mysqli_query($conn, $sql);
+        if ($result) {
+            $_SESSION['toast_message'] = "Modification réussie.";
+             header("Location: ./liste_contenu_facture.php?id=" . $id_data_cc);
+             //header("Location: ".$_SERVER['PHP_SELF']);
+            exit();
+        } else {
+            echo "Erreur d'enregistrement" . mysqli_error($conn);
+        }
+    }
 if(isset($_SESSION['toast_message'])) {
     echo '
     <div style="left=50px;top=50px">
@@ -81,13 +103,23 @@ if(isset($_SESSION['toast_message2'])) {
     unset($_SESSION['toast_message2']);
 }
 ?>
+<?php 
+$date_depart="";
+    $reqte="SELECT cfac.*, dcc.date_depart FROM contenu_facture cfac LEFT JOIN data_cc dcc ON dcc.id_data_cc=cfac.id_data_cc WHERE cfac.id_data_cc=$id_data_cc";
+    $results = $conn->query($reqte);
+
+    if ($results->num_rows > 0) {
+        $row_1 = $results->fetch_assoc();
+        $date_depart = $row_1["date_depart"];
+    }
+?>
 <!DOCTYPE html>
 <html>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Bootstrap CSS-->
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -101,10 +133,23 @@ if(isset($_SESSION['toast_message2'])) {
     </script>
     <title>Ministere des mines</title>
     <style>
+    .partie {
+        display: inline;
+    }
+
+    .partie1 .partie2 {
+        display: inline;
+    }
+
+    #agentTable {
+        display: none;
+    }
+
     .container {
         font-size: small;
         /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
     }
+
 
     .btn {
         font-size: small;
@@ -126,44 +171,277 @@ if(isset($_SESSION['toast_message2'])) {
         /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
     }
 
+    .th .td {
+        font-size: small;
+    }
+
     .h4 {
         font-size: 20px;
         /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
     }
+
+    #infon1 #info2 {
+        display: inline-block;
+    }
+
+    .info1 {
+        width: 49%;
+        float: left;
+
+    }
+
+    .link-dark {
+        margin: 0;
+        padding: 0;
+    }
+
+    .btn-sow-contenu,
+    .btn-edit-contenu-facture,
+    .link-dark {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .info2 {
+        width: 49%;
+        float: right;
+
+    }
+
+    @media screen and (max-width: 800px) {
+
+        .infon1,
+        .info2 {
+            display: block;
+        }
+
+        .info1 {
+            width: 100%;
+        }
+
+        .info2 {
+            width: 100%;
+        }
+    }
+
+    .bfooter {
+        margin-left: 40%;
+        position: fixed;
+    }
     </style>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('loadingSpinner');
+        const table = document.getElementById('agentTable');
+
+        // Afficher le spinner
+        spinner.style.display = 'block';
+        table.style.display = 'none';
+
+        // Simulation de chargement des données
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }, 2000); // Changer le délai selon vos besoins
+    });
+    </script>
 </head>
 
 <body>
-    <?php include_once('../../shared/header.php'); ?>
+    <?php include_once('../../view/shared/navBar.php'); 
+    $compte="";?>
 
-    <div class="container">
+    <div class=" info container">
         <?php include('./add_contenu_facture.php'); ?>
         <div id="edit_contenu_facture_form"></div>
         <div id="ajout_pv_controle_form"></div>
         <div id="ajout_pv_scellage_form"></div>
         <div id="sow_contenu_form"></div>
+        <h6 style="text-align: center;">Liste des contenus de factures N° <?php echo $num_facture;?> du
+            <?php echo date('d/m/Y', strtotime($date_facture));?></h6>
         <hr>
-        <div class="row mb-3">
-            <div class="col">
-                <h5>Factures <?php echo $num_facture;?> du <?php echo date('d/m/Y', strtotime($date_facture));?></h5>
-            </div>
-            <div class="col text-end dropdown">
+        <div class="partie d-flex justify-content-between align-items-center">
+            <div class="partie1">
                 <?php 
-                // if($groupeID === 3){
-                //     echo '<a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_scellage" data-id="' . $id_data_cc . '">Générer PV scellage</a>';
-                // } else if($groupeID===1) {
-                //     echo '<a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_controle" data-id="' . $id_data_cc . '">Générer PV controle</a>';
-                // }
-                ?>
-                <a class="btn btn-success rounded-pill px-3"
-                    href="./exporter_contenu.php?id_data_cc=<?= $id_data_cc ?>">Exporter en
-                    excel</a>
-                <!-- <a class="btn btn-dark rounded-pill px-3" href="../insert_lp1_permis_e.php">Ajouter une demande</a> -->
-                <a class="btn btn-dark rounded-pill px-3 btn-add-contenu-facture"
-                    data-id-data-cc="<?= $id_data_cc ?>">Ajouter un contenu</a>
+                    $query12 = "SELECT dcc.id_data_cc FROM contenu_facture cfac
+                        INNER JOIN data_cc dcc ON dcc.id_data_cc = cfac.id_data_cc
+                        WHERE dcc.id_data_cc = $id_data_cc";
+                        
+                        $result = $conn->query($query12);
+                        if ($result->num_rows > 0) {
+                            $compte="existe";
+                            if($groupeID === 3){
+                                if(!empty($num_pv_controle)&&!empty($num_pv_scellage)){
+                                    echo '
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>
+                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de controle</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir la certificat de conformité</a></li>
+                                            </ul>
+                                        </div>
+                                    ';
+                                }else if(!empty($num_pv_controle)){
+                                    echo '
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de controle</a></li>
+                                            </ul>
+                                        </div>
+                                    ';
+                                }else{
+                                    if($validation_facture == 'Validé'){
+                                        echo '<a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_controle" data-id="' . $id_data_cc . '">Générer PV contrôle</a>';
+                                    }
+                                }
+                            } else if($groupeID===1) {
+                                if((empty($num_pv_controle) &&($validation_facture=='Validé'))){
+                                    echo '
+                                            <a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_controle" data-id="' . $id_data_cc . '">Générer PV contrôle</a>
+                                        ';
+                                }else if($num_pv_controle){
+                                    echo '<div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de controle</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir la certificat de conformité</a></li>
+                                            </ul>
+                                        </div>';
+                                }
+                            }else{
+                                if(!empty($num_pv_controle)&&!empty($num_pv_scellage)){
+                                    echo '
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>
+                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de controle</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir la certificat de conformité</a></li>
+                                            </ul>
+                                        </div>
+                                    ';
+                                }else if(!empty($num_pv_controle)){
+                                    echo '
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de controle</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir la certificat de conformité</a></li>
+                                            </ul>
+                                        </div>
+                                    ';
+                                }
+                            }
+                        }
+                    
+                    ?>
+            </div>
 
+            <div class=" partie2 text-end">
+                <a class="btn btn-success rounded-pill px-3"
+                    href="./exporter_contenu.php?id_data_cc=<?= $id_data_cc ?>"><i class="fas fa-file-excel"></i>
+                    Exporter en excel</a>
+
+                <?php
+                        if ($groupeID !== 2) {
+                            // $date_depart_obj = empty($date_depart) ? (new DateTime())->modify('+2 days') : new DateTime($date_depart);
+                            // $date_today_obj = new DateTime('now');
+                            //         // Comparer les dates
+                            // if ( $date_depart_obj >  $date_today_obj ) {
+                                if($validation_facture !='Validé'){
+                                     echo '
+                                    <a class="btn btn-dark rounded-pill px-3  btn-add-contenu-facture"
+                                    data-id-data-cc="' . $id_data_cc . '"><i
+                                    class="fa-solid fa-add me-1"></i>Ajouter un contenu</a>';
+                                }
+                            // }
+                            
+                        }
+                        ?>
             </div>
         </div>
+        <hr>
+        <?php if(!empty($compte)){
+        if((empty($num_pv_controle)&&(($code_fonction=='A')||$code_fonction=='B')&&(($validation_facture =='En attente')||(empty($validation_facture))))){
+        ?>
+        <form action="" method="post">
+            <?php
+            // Supposons que $selectedValue contient la valeur récupérée de la base de données.
+            $selectedValue = $validation_facture; // Exemple de valeur
+            function isSelected($value, $selectedValue) {
+                return $value === $selectedValue ? 'selected' : '';
+            }
+            ?>
+            <div class="row">
+                <div class="col">
+                    <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
+                    <select class="form-control" name="action" id="action" required>
+                        <option value="">Séléctionner</option>
+                        <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                        <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
+                        <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente
+                        </option>
+                    </select>
+                </div>
+                <div class="col text-end">
+                    <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
+                        name="submit">Enregistrer</button>
+                </div>
+            </div>
+        </form>
+        <?php
+        }else {
+            if($groupeID===2){
+               ?>
+        <form action="" method="post">
+            <?php
+             function isSelected($value, $selectedValue) {
+                return $value === $selectedValue ? 'selected' : '';
+            }
+                    // Supposons que $selectedValue contient la valeur récupérée de la base de données.
+                    $selectedValue = $validation_facture; // Exemple de valeur
+                    ?>
+            <div class="row">
+                <div class="col">
+                    <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
+                    <select class="form-control" name="action" id="action" required>
+                        <option value="">Séléctionner</option>
+                        <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                        <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
+                        <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente
+                        </option>
+                    </select>
+                </div>
+                <div class="col text-end">
+                    <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
+                        name="submit">Enregistrer</button>
+                </div>
+            </div>
+        </form>
+        <?php 
+            }else if(empty($validation_facture)||($validation_facture=='En attente')){
+                echo '<p class="alert alert-info">Status: En attente.</p>';
+            }else {
+                echo '<p class="alert alert-info">Status: '.$validation_facture.' par '.$nom_users.': '.$nom_utilisateur.'.</p>';
+            }
+        }
+    }?>
         <hr>
         <div class="row">
             <div class="col-md-6">
@@ -220,13 +498,12 @@ if(isset($_SESSION['toast_message2'])) {
         $sql="SELECT cfac.prix_unitaire_facture, cfac.poids_facture
         FROM contenu_facture cfac INNER JOIN data_cc dcc ON dcc.id_data_cc = cfac.id_data_cc WHERE dcc.id_data_cc = $id_data_cc";
         $result = $conn->query($sql);
-        $row1 = mysqli_fetch_assoc($result);
         $montant=0;
         while($row1 = mysqli_fetch_assoc($result)){
             $montant += floatval($row1['prix_unitaire_facture']*$row1['poids_facture']);
         }
         $query = "
-        SELECT dcc.*, cfac.*, sds.*, s.*, g.*, sds.prix_substance
+        SELECT dcc.date_depart, cfac.*, sds.*, s.*, g.*, sds.prix_substance
         FROM contenu_facture cfac
         INNER JOIN data_cc dcc ON dcc.id_data_cc = cfac.id_data_cc
         INNER JOIN substance_detaille_substance sds ON cfac.id_detaille_substance = sds.id_detaille_substance
@@ -239,67 +516,92 @@ if(isset($_SESSION['toast_message2'])) {
         $result = $conn->query($query);
         if ($result->num_rows > 0) {
          ?>
-
-        <table class="table table-hover text-center">
-            <thead class="table-dark">
-                <tr>
-                    <th scope="col" id=""> </th>
-                    <th scope="col" id="numLP">Designation</th>
-                    <th scope="col" id="nomDirection">Granulo</th>
-                    <th scope="col" id="nom_prenom">Poids</th>
-                    <th scope="col" id="nomSubstance">Prix unitaire</th>
-                    <th scope="col" id="nomSubstance">Prix normale</th>
-                    <th scope="col" id="status">Prix total</th>
-                    <th scope="col" class="text-center">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                while($row = mysqli_fetch_assoc($result)){
-                ?>
-                <tr>
-                    <td>✅</td>
-                    <td><?php echo htmlspecialchars($row['nom_substance']) ?></td>
-                    <td><?php echo htmlspecialchars($row['nom_granulo']) ?></td>
-                    <td><?php echo htmlspecialchars($row['poids_facture']) . ' ' . htmlspecialchars($row['unite_poids_facture']) ?>
-                    </td>
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div class="info1">
+            <table id="agentTable" class="table  table-hover text-center" style="font-size: small;">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col"> </th>
+                        <th scope="col">Designation</th>
+                        <th scope="col">Poids</th>
+                        <th class="masque2" scope="col">Prix unitaire</th>
+                        <th class="masque2" scope="col">Prix total</th>
+                        <th class="masque" scope="col">P.U</th>
+                        <th class="masque" scope="col">P.T</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
                     <?php
-                    if($row['prix_unitaire_facture']==$row['prix_substance']){
-                       ?><td><?php echo number_format('.$row["prix_unitaire_facture"].', 3, ',', ' ') . ' US $'; ?>
-                    </td>;
-
-                    <?php }else{
-                        ?><td style="color: red;">
-                        <?php echo number_format('.$row["prix_unitaire_facture"].', 3, ',', ' ') . ' US $'; ?></td>;
-                    <?php }
-                    ?>
-                    >
-                    <td><?php echo number_format($row['prix_substance'], 2, ',', ' ') . ' US $'; ?></td>
-                    <td><?php echo number_format($row['poids_facture'] * $row["prix_unitaire_facture"], 3, ',', ' ') . ' US $' ?>
-                    </td>
-                    <td>
-                        <a class="link-dark btn-sow-contenu" href="#"
-                            data-id="<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>">détails</a>
-                        <a class="link-dark btn-edit-contenu-facture"
-                            data-id-contenu-facture="<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>">
-                            <i class="fa-solid fa-pen-to-square me-2"></i></a>
-                        <a href="#" class="link-dark"
-                            onclick="confirmerSuppression(<?php echo htmlspecialchars($row['id_contenu_facture']) ?>)"><i
-                                class="fa-solid fa-trash"></i></a>
-                    </td>
-                </tr>
-                <?php   
-                    }
-                } else {
-                    echo '<p class="alert alert-info">Aucun résultat trouvé.</p>';
-                }
-                ?>
-            </tbody>
-        </table>
-        <?php echo "MONTANT TOTAL: ".number_format($montant, 3, ',', ' ') . ' US $' ?>
-        <?php
-        $conn->close();
+        while($row = mysqli_fetch_assoc($result)){
         ?>
+                    <tr>
+                        <td>✅</td>
+                        <td><?php echo htmlspecialchars($row['nom_substance']) ?></td>
+                        <td><?php echo htmlspecialchars($row['poids_facture']) . ' ' . htmlspecialchars($row['unite_poids_facture']) ?>
+                        </td>
+                        <?php
+                if ($row['prix_unitaire_facture'] == $row['prix_substance']) {
+                    echo '<td>' . number_format($row["prix_unitaire_facture"], 3, ',', ' ') . ' US $</td>';
+                } else if($row['prix_unitaire_facture'] > $row['prix_substance']){
+                    echo '<td style="color: green;">' . number_format($row["prix_unitaire_facture"], 2, ',', ' ') . ' US $</td>';
+                } else {
+                    echo '<td style="color: red;">' . number_format($row["prix_unitaire_facture"], 2, ',', ' ') . ' US $</td>';
+                }
+            ?>
+                        <td><?php echo number_format($row['poids_facture'] * $row["prix_unitaire_facture"], 2, ',', ' ') . ' US $'; ?>
+                        </td>
+                        <td>
+                            <?php if($validation_facture !='Validé') { ?>
+                            <a class="link-dark btn-sow-contenu" href="#"
+                                data-id="<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>">détails</a>
+                            <a class="link-dark btn-edit-contenu-facture"
+                                data-id-contenu-facture="<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>">
+                                <i class="fa-solid fa-pen-to-square me-2"></i>
+                            </a><a href="#" onclick="confirmerSuppression(<?php echo $row['id_contenu_facture']?>)"
+                                class="link-dark">
+                                <i class="fa-solid fa-trash"></i></a>
+                            <?php } else { ?>
+                            <a href="#" class="link-dark" data-toggle="tooltip" title="La facture est déjà validée">
+                                <i class="fa-solid fa-pen-to-square me-3"></i>
+                            </a>
+                            <a href="#" data-toggle="tooltip" title="La facture est déjà validée" class="link-dark">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+
+
+            <?php echo "MONTANT TOTAL: ".number_format($montant, 3, ',', ' ') . ' US $' ?>
+        </div>
+        <?php
+                    $conn->close();
+                    } else {
+                        echo '<div class="info1"><p class="alert alert-info">Aucune contenu de la facture.</p></div>';
+                    }
+                    ?>
+
+        <div class="info2">
+            <div class="alert alert-light" role="alert">
+                <?php
+                                if(!empty($pj_facture)){
+                                     $pdfFilePath = $pj_facture;
+                                include "../cdc/convert.php";
+                                }else{
+                                   echo ' <p class="alert alert-info">Aucun scan de la facture trouvé.</p>';
+                                }
+                               
+                            ?>
+            </div>
+        </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script>
@@ -326,10 +628,30 @@ if(isset($_SESSION['toast_message2'])) {
             }
         }
     }
+
+    function toggleStatus(userId) {
+        var confirmation = confirm("Voulez-vous vraiment terminer la mise à jour de la facture ?");
+        if (confirmation) {
+            $.ajax({
+                url: 'update_validation.php',
+                type: 'POST',
+                data: {
+                    userId: userId
+                },
+                success: function(response) {
+                    location.reload(); // Par exemple, recharger la page pour refléter les changements
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erreur lors de la mise à jour du statut:', error);
+                }
+            });
+        }
+    }
     </script>
     <script>
     $(document).ready(function() {
-        // Fonction pour trier la table
+        $('[data-toggle="tooltip"]').tooltip();
+
         function sortTable(columnIndex) {
             var table, rows, switching, i, x, y, shouldSwitch;
             table = document.querySelector('.table');
@@ -420,36 +742,29 @@ if(isset($_SESSION['toast_message2'])) {
     }
 
     function confirmerSuppression(id) {
-        // Utilisation de la fonction confirm pour afficher une boîte de dialogue
         var confirmation = confirm("Êtes-vous sûr de vouloir supprimer cet élément ?");
-
-        // Si l'utilisateur clique sur "OK", la suppression est effectuée
+        console.log(id);
         if (confirmation) {
             $.ajax({
                 url: 'delete.php',
-                method: 'POST', // Utilisez la méthode POST pour la suppression
+                method: 'POST',
                 data: {
                     id: id
                 },
                 dataType: 'json',
                 success: function(response) {
-                    // Traitez la réponse du serveur ici
                     if (response.success) {
-                        // La suppression a réussi
                         alert('Suppression réussie.');
-                        // Vous pouvez également effectuer d'autres actions nécessaires après la suppression
                         location.reload();
                     } else {
-                        // La suppression a échoué
                         alert('Erreur lors de la suppression : ' + response.message);
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('Erreur lors de la suppression : ' + error);
+                    alert('Erreur lors de la suppression : ' + error);
                 }
             });
-        } else {
-            // Sinon, rien ne se passe
         }
     }
     </script>
@@ -547,6 +862,8 @@ $(document).ready(function() {
 </script> -->
     <script>
     $(document).ready(function() {
+        $('.toast').toast('show');
+
         $(".btn-edit-contenu-facture").click(function() {
             var id_contenu_facture = $(this).data('id-contenu-facture');
             // Assure-toi que les éléments HTML existent avant d'appeler showEditForm

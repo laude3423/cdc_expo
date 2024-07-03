@@ -79,7 +79,7 @@ if (!empty($edit_societe_id)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Bootstrap CSS-->
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -90,10 +90,31 @@ if (!empty($edit_societe_id)) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('loadingSpinner');
+        const table = document.getElementById('agentTable');
+
+        // Afficher le spinner
+        spinner.style.display = 'block';
+        table.style.display = 'none';
+
+        // Simulation de chargement des données
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }, 2000); // Changer le délai selon vos besoins
+    });
+    </script>
+    <style>
+    #agentTable {
+        display: none;
+    }
+    </style>
 
     <title>Ministere des mines</title>
     <?php 
-    include "../../shared/header.php";
+    include "../shared/navBar.php";
     ?>
 
 
@@ -101,18 +122,29 @@ if (!empty($edit_societe_id)) {
 
 <body>
     <div class="container">
-        <div class="row mb-3" style="margin-top: 30px;">
-            <div class="col md-8 mb-3">
-                <h5>Liste de degré des couleurs</h5>
+        <hr>
+        <div class="row">
+            <div class="col">
+                <h5>Liste des degrés de couleur des substances</h5>
             </div>
-            <div class="col md-10 text-end">
-                <a class="btn btn-dark btn-sm rounded-pill px-3 mb-3" href="#" onclick="openModal()"><i
+            <div class="col">
+                <input type="text" id="search" class="form-control" placeholder="Recherche...">
+            </div>
+            <div class="col text-end">
+                <a class="btn btn-dark btn-sm rounded-pill px-3 " href="#" onclick="openModal()"><i
                         class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
             </div>
         </div>
-        <table class="table table-hover text-center">
+        <hr>
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <table id="agentTable" class="table table-hover text-center">
             <thead class="table-dark">
                 <tr>
+                    <th scope="col"></th>
                     <th scope="col">Degré de la couleur</th>
                     <th scope="col">Actions</th>
                 </tr>
@@ -124,6 +156,7 @@ if (!empty($edit_societe_id)) {
                 while($row = mysqli_fetch_assoc($result)){
                   ?>
                 <tr>
+                    <td>✅</td>
                     <td><?php echo $row['nom_degre_couleur'] ?></td>
                     <td>
                         <a href="#" class="link-dark" onclick="openModal(<?php echo $row['id_degre_couleur']?>)"><i

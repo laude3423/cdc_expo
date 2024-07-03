@@ -2,6 +2,7 @@
     require_once('../../scripts/db_connect.php');
     require_once('../generate_fichier/nombreEnLettre.php');
     require('../../scripts/session.php');
+    $validation_cont = $fonctionUsers. ' ' . $nom_user. ' '.$prenom_user;
     if (isset($_GET['id'])) {
         $id_data_cc = $_GET['id'];
         $sql = "SELECT datacc.*, societe_imp.*, societe_exp.*
@@ -65,8 +66,10 @@
         $id_societe_importateur = $row["id_societe_importateur"] ?? "";
         $num_cc = $row['num_cc'] ?? "";
         $date_cc = $row['date_cc'] ?? "";
+        $scan = $row['scan_controle'] ?? "";
         $lien_cc = $row['lien_cc'] ?? "";
         $pj_cc = $row['pj_cc'] ?? "";
+        $date_depart = $row['date_depart'] ?? "";
         $num_pv_scellage=$row['num_pv_scellage'] ?? "";
         
         $num_pv_controle = $row["num_pv_controle"] ?? "";
@@ -75,6 +78,9 @@
         $pj_pv_controle = $row["pj_pv_controle"] ?? "";
         $date_creation_controle_pv = $row["date_creation_controle_pv"] ?? "";
         $date_modification_controle_pv = $row["date_modification_controle_pv"] ?? "";
+        $validation_controle = $row['validation_controle'] ?? "En attente";
+        $users_validation_controle = $row['users_validation_controle'];
+        $validation_scellage=$row['validation_scellage'] ?? "En attente";
 
         //
         $id_agent_chef = $row1["id_agent"] ?? "";
@@ -95,7 +101,44 @@
         $stmt2->close();
         $stmt4->close();
         $stmt5->close();
+    } else {
+        echo "<p>Aucune information trouvée pour cet ID.</p>";
+    }
+    if (isset($_POST['submit'])) {
+        $id = $_POST['id_data'];
+        $action = $_POST['action'];
+        $sql="UPDATE `data_cc` SET `validation_controle`='$action', `users_validation_controle`='$validation_cont' WHERE id_data_cc=$id";
+        $result = mysqli_query($conn, $sql);
+        if ($result) {
+            $_SESSION['toast_message'] = "Modification réussie.";
+             header("Location: https://cdc.minesmada.org/view_user/pv_controle_gu/detail.php?id=" . $id);
+            exit();
+        } else {
+            echo "Erreur d'enregistrement" . mysqli_error($conn);
+        }
+    }  
     
+    if(isset($_SESSION['toast_message'])) {
+    echo '
+    <div style="left=50px;top=50px">
+        <div class="toast-container"">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                    <small class="text-muted">Maintenant</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ' . $_SESSION['toast_message'] . '
+                </div>
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message']);
+}
 
 ?>
 <!DOCTYPE html>
@@ -104,6 +147,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -114,33 +158,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
     </script>
-    <script>
-    var myModal;
-    var closeModalAfterSubmit = false; // Variable pour vérifier si la modal doit être fermée
 
-    // Fonction pour fermer la modal et actualiser la page si nécessaire
-    function closeModal() {
-        console.log("Fermeture de la modal");
-        if (myModal) {
-            myModal.hide();
-            if (closeModalAfterSubmit) {
-                location.reload(); // Actualiser la page après la fermeture de la modal
-            }
-        }
-    }
-
-    function openModal() {
-        myModal = new bootstrap.Modal(document.getElementById('staticBackdrop'), {
-            backdrop: 'static',
-            keyboard: false
-        });
-        document.getElementById('staticBackdropLabel').innerText = 'Nouveau PV de controle';
-        document.getElementById('nombre').value = '';
-        document.getElementById('lieu_controle').value = '';
-
-        myModal.show();
-    }
-    </script>
     <style>
     body {
         margin: 0;
@@ -184,13 +202,13 @@
     }
 
     .info1 {
-        width: 47%;
+        width: 40%;
         float: left;
 
     }
 
     .info2 {
-        width: 50%;
+        width: 57%;
         float: right;
 
     }
@@ -212,46 +230,257 @@
     }
     </style>
     <title>Information sur un PV</title>
-    <?php 
-    include "../../shared/header.php";
-    ?>
+    <?php include_once('../../view/shared/navBar.php'); ?>
 </head>
 
 
 <body>
     <?php 
-    include "../pv_controle_gu/ajout_pv_controle.php";
+    function ecrire($totalEnGramme, $type_substance, $unite1, $unite){
+        $totalePoidsFormate = number_format($totalEnGramme, 2, '.', '');
+
+        $nombreExplode = explode(".", $totalePoidsFormate);
+        $nombreAvant = $nombreExplode[0];
+        $nombreApres = $nombreExplode[1];
+        $nombreCompare='';
+        $nombreCompareLettre='';
+        if($nombreApres > 0) {
+            $nombreCompare = comparer($nombreApres);
+            $nombreCompareLettre=nombreEnLettres($nombreCompare);
+        }
+        
+        $totalePoidsEnLettres = nombreEnLettres($nombreAvant);
+        if($nombreApres=='00'){
+            $poidsEnLettre = $totalePoidsFormate.$unite1.'('. $totalePoidsEnLettres.''.$nombreCompareLettre.' '.$unite.' de '.$type_substance.')';
+        }else{
+            $poidsEnLettre = $totalePoidsFormate.$unite1.'('. $totalePoidsEnLettres.' virgule '.$nombreCompareLettre.' '.$unite.' de '.$type_substance.')';
+        }
+
+        return $poidsEnLettre;
+    }
     ?>
-    <div class="info">
+    <div class="info container">
+        <hr>
+        <div class="partie d-flex justify-content-between align-items-center">
+            <div class="partie1">
+                <?php 
+                        if($groupeID === 2){
+                            if($validation_controle !='Validé'){
+                                    echo'<a class="btn btn-dark rounded-pill px-3" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                }else{
+                                    if(!empty($num_pv_controle)&&!empty($num_pv_scellage)){
+                                    echo '
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
+                                            </ul>
+                                        </div>
+                                    ';
+                            }else{
+                                echo '
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
+                                            </ul>
+                                        </div>
+                                    ';
+                                }
+                            }
+                        } else if($groupeID===1) {
+                            if($validation_controle !='Validé'){
+                                    echo'<a class="btn btn-dark rounded-pill px-3" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                }else{
+                                    echo '<div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
+                                            </ul>
+                                        </div>';
+                                }
+                        }else{
+                                if(empty($num_pv_scellage)){
+                                    $date_today_obj = new DateTime('now');
+                                    $date_depart_obj = new DateTime($date_depart);
+                                    // Comparer les dates
+                                    if ($date_depart_obj>= $date_today_obj) {
+                                        if($validation_controle=='Validé'){
+                                            echo '<a class="btn btn-dark rounded-pill px-3 btn_add_pv_scellage" data-id="' . $id_data_cc . '">Générer PV de scellage</a>';
+                                        }else{
+                                            echo'<a class="btn btn-dark rounded-pill px-3" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                        }
+                                    }else{
+                                        echo'<div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
+                                            </ul>
+                                        </div>';
+                                    }
+                                }else{
+                                    echo '<div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV scellage</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
+                                            </ul>
+                                        </div>';
+
+                                }
+                            }
+                    
+                    ?>
+            </div>
+            <div class=" partie2 text-end">
+                <?php
+                    if ($groupeID !== 2) {
+                        if(($validation_controle!='Validé')&&(($code_fonction=='B')||($code_fonction=='A'))){ ?>
+                <div class="row">
+                    <div class="col">
+                        <form action="" method="post">
+                            <?php
+                                    $selectedValue = $validation_controle; // Exemple de valeur
+                                    function isSelected($value, $selectedValue) {
+                                        return $value === $selectedValue ? 'selected' : '';
+                                    }
+                                    ?>
+
+                            <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
+                            <select class="form-control" name="action" id="action" required>
+                                <option value="">Séléctionner</option>
+                                <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire
+                                </option>
+                                <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
+                                <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En
+                                    attente
+                                </option>
+                            </select>
+                    </div>
+                    <div class="col text-end">
+                        <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
+                            name="submit">Enregistrer</button>
+                    </div>
+                    </form>
+                </div>
+                <?php }else if(($validation_controle=="Validé")&&($validation_scellage=="Validé")){
+                    if((!empty($num_pv_scellage))&&(empty($scan))){
+                                     echo '
+                                    <a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan"
+                                    data-id="' . $id_data_cc . '">Insérer scan</a>';
+                        }
+                }
+                        
+                            
+                    }else{
+                        ?>
+                <div class="row">
+                    <div class="col">
+                        <form action="" method="post">
+                            <?php
+                                    $selectedValue = $validation_controle; // Exemple de valeur
+                                    function isSelected($value, $selectedValue) {
+                                        return $value === $selectedValue ? 'selected' : '';
+                                    }
+                                    ?>
+
+                            <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
+                            <select class="form-control" name="action" id="action" required>
+                                <option value="">Séléctionner</option>
+                                <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire
+                                </option>
+                                <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
+                                <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En
+                                    attente
+                                </option>
+                            </select>
+                    </div>
+                    <div class="col text-end">
+                        <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
+                            name="submit">Enregistrer</button>
+                    </div>
+                    </form>
+                </div>
+                <?php
+                    }
+                        ?>
+            </div>
+        </div>
+        <hr>
+        <?php 
+          if(($validation_controle=='Validé')&&($groupeID != 2)){
+            echo '<p class="alert alert-info">Status:'.$validation_controle.' par '.$users_validation_controle.'.</p><hr>';
+          }else if(($validation_controle!='Validé')&&($code_fonction=='C')){
+            echo '<p class="alert alert-info">Status:En attente.</p><hr>';
+          }
+            ?>
         <div class="info1">
+
+            <?php 
+                // if (!empty($num_cc)) {
+                //     echo '<div class="alert alert-light" role="alert">
+                //             <h5 id="list-item-1">Information sur le certificat de conformité</h5>
+                //             <hr>
+                //             <p><strong>Numéro de certificat de conformité:</strong> ' . $row["num_cc"] . '</p>
+                //             <p><strong>Date de création:</strong> ' . date("d/m/Y", strtotime($row["date_cc"])) . '</p>
+                //             <p><strong>Télécharger:</strong> <a href="../view_user/' . htmlspecialchars($row["pj_cc"], ENT_QUOTES, "UTF-8") . '">' . htmlspecialchars($row["num_cc"], ENT_QUOTES, "UTF-8") . '.pdf</a></p>
+                //         </div>';
+                // }
+            ?>
             <div class="alert alert-light" role="alert">
-                <h5 id="list-item-1">Information sur le PV de controle</h5>
+                <h5 id="list-item-1">Information sur le PV de contrôle</h5>
                 <hr>
-                <p><strong>Numéro de PV de scellage:</strong> <?php echo $row['num_pv_controle']; ?></p>
+                <p><strong>Numéro de PV de contrôle:</strong> <?php echo $row['num_pv_controle']; ?></p>
                 <p><strong>Date de création:</strong>
                     <?php echo date('d/m/Y', strtotime($row['date_creation_pv_controle'])); ?>
                 </p>
                 <p><strong>Date de modification:</strong>
                     <?php echo date('d/m/Y', strtotime($row['date_modification_pv_controle'])); ?>
                 </p>
+                <p><strong>Lieu de contrôle:</strong><?php echo $row['lieu_controle_pv']; ?></p>
+                <p><strong>Nombre et d' emballage:</strong><?php echo $row['mode_emballage']; ?></p>
+                <p><strong>Lien d'mbarquement:</strong><?php echo $row['lieu_embarquement_pv']; ?></p>
+                <?php if ($validation_controle == "Validé") { ?>
                 <p><strong>Télécharger:</strong> <a
                         href="../view_user/<?php echo htmlspecialchars($row['pj_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
                 </p>
+                <?php }?>
             </div>
-            <div class="alert alert-light" role="alert">
-                <h5 id="list-item-1">Information sur le PV de scellage</h5>
-                <hr>
-                <p><strong>Numéro de PV de scellage:</strong> <?php echo $row['num_pv_scellage']; ?></p>
-                <p><strong>Date de création:</strong>
-                    <?php echo date('d/m/Y', strtotime($row['date_creation_pv_scellage'])); ?>
-                </p>
-                <p><strong>Date de modification:</strong>
-                    <?php echo date('d/m/Y', strtotime($row['date_modification_pv_scellage'])); ?>
-                </p>
-                <p><strong>Télécharger:</strong> <a
-                        href="../view_user/<?php echo htmlspecialchars($row['pj_pv_scellage'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_pv_scellage'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
-                </p>
-            </div>
+            <?php 
+                if (!empty($num_pv_scellage)) {
+                    echo '<div class="alert alert-light" role="alert">
+                            <h5 id="list-item-1">Information sur le PV de scellage</h5>
+                            <hr>
+                            <p><strong>Numéro de PV de scellage:</strong> ' . $row["num_pv_scellage"] . '</p>
+                            <p><strong>Date de création:</strong> ' . date("d/m/Y", strtotime($row["date_creation_pv_scellage"])) . '</p>
+                            <p><strong>Date de modification:</strong> ' . date("d/m/Y", strtotime($row["date_modification_pv_scellage"])) . '</p>
+                            <p><strong>Télécharger:</strong> <a href="../view_user/' . htmlspecialchars($row["pj_pv_scellage"], ENT_QUOTES, "UTF-8") . '">' . htmlspecialchars($row["num_pv_scellage"], ENT_QUOTES, "UTF-8") . '.pdf</a></p>
+                        </div>';
+                }
+            ?>
             <div class="alert alert-light" role="alert">
                 <h5 id="list-item-2">Information sur les sociétés</h5>
                 <hr>
@@ -268,7 +497,7 @@
                 <p><strong>Contact de la société:</strong><?php echo $row['contact_societe_importateur']; ?></p>
                 <p><strong>Email de la société:</strong> <?php echo $row['email_societe_importateur']; ?></p>
                 <p><strong>Pays de destination:</strong> <?php echo $row['pays_destination']; ?></p>
-                <p><strong>Visa du responsable:</strong> <?php echo $row['visa']; ?></p>
+                <p><strong>Date de départ:</strong> <?php echo date('d/m/Y', strtotime($row['date_depart'])); ?></p>
 
             </div>
             <div class="alert alert-light" role="alert">
@@ -325,18 +554,13 @@
                         foreach ($substances_couleurs as $substance => $couleurs) {
                             $couleurs_uniques = array_unique($couleurs);
                             if (empty($couleurs_uniques) || in_array('vide', $couleurs_uniques, true)) {
-                                $afficheWord[] = $substance .'(vide)';
+                                $afficheWord[] = $substance;
                             } else {
                                 $afficheWord[] = $substance . '(' . implode(', ', $couleurs_uniques) . ')';
                             }
                         }
                     }
-                    if(count($afficheWord) > 0) {
-                        echo "Catégorie Taillé : ";
-                        for ($i = 0; $i < count($afficheWord); $i++) {
-                            echo $afficheWord[$i] .' ';
-                        }
-                    }
+                    
                     ?>
                     <?php
                     $nom_substance_brute = array();
@@ -388,81 +612,40 @@
                         foreach ($substances_couleurs_brute as $substance_brute => $couleurs_brute) {
                             $couleurs_uniques_brute = array_unique($couleurs_brute);
                             if (empty($couleurs_uniques_brute) || in_array('vide', $couleurs_uniques_brute, true)) {
-                                $afficheWord_brute[] = $substance_brute .'(vide)';
+                                $afficheWord_brute[] = $substance_brute;
                             } else {
                                 $afficheWord_brute[] = $substance_brute . '(' . implode(', ', $couleurs_uniques_brute) . ')';
                             }
                         }
                     }
-                    if(count($afficheWord_brute) > 0) {
-                        echo "Catégorie Brute : ";
-                        for ($i = 0; $i < count($afficheWord_brute); $i++) {
-                            echo $afficheWord_brute[$i] .' ';
-                        }
-                    }
+                    
                     
                     ?>
                 </div>
                 <?php
-                    //affichage de poids
-                    $sommePoids_ct=0;
-                    $sommePoids_g=0;
-                    $sommePoids_kg=0;
-                    //recherche l'id_detaille_substance pour l'unité en carat
-                    $queryDetaille_ct = "SELECT datacc.num_facture, sum(contenu.poids_facture) as sommePoids FROM contenu_facture contenu
-                    INNER JOIN data_cc datacc ON contenu.id_data_cc=datacc.id_data_cc WHERE contenu.id_data_cc = $id_data_cc AND contenu.unite_poids_facture='ct'";
-                    $resultDetaille_ct = mysqli_query($conn, $queryDetaille_ct);
-                    $rowDetaille_ct = mysqli_fetch_assoc($resultDetaille_ct);
-                    $num_facture = $rowDetaille_ct['num_facture'];
-                    if(!empty($rowDetaille_ct['sommePoids'])){
-                        $sommePoids_ct = $rowDetaille_ct['sommePoids'];
-                    }
-                    //recherche l'id_detaille_substance pour l'unité en gramme
-                    $queryDetaille_g = "SELECT  sum(contenu.poids_facture) as sommePoids FROM contenu_facture contenu
-                    INNER JOIN data_cc datacc ON contenu.id_data_cc=datacc.id_data_cc WHERE contenu.id_data_cc = $id_data_cc AND contenu.unite_poids_facture='g'";
-                    $resultDetaille_g = mysqli_query($conn, $queryDetaille_g);
-                    $rowDetaille_g = mysqli_fetch_assoc($resultDetaille_g);
-                    if(!empty($rowDetaille_g['sommePoids'])){
-                        $sommePoids_g = $rowDetaille_g['sommePoids'];
-                    }
-                    //recherche l'id_detaille_substance pour l'unité en kilogramme
-                    $queryDetaille_kg = "SELECT  sum(contenu.poids_facture) as sommePoids, id_detaille_substance FROM contenu_facture contenu
-                    INNER JOIN data_cc datacc ON contenu.id_data_cc=datacc.id_data_cc WHERE contenu.id_data_cc = $id_data_cc AND contenu.unite_poids_facture='kg'";
-                    $resultDetaille_kg = mysqli_query($conn, $queryDetaille_kg);
-                    $rowDetaille_kg = mysqli_fetch_assoc($resultDetaille_kg);
-                    $id_detaille_substance_kg = $rowDetaille_kg['id_detaille_substance'];
-                    if(!empty($rowDetaille_kg['sommePoids'])){
-                        $sommePoids_kg = $rowDetaille_kg['sommePoids'];
-                    }
-                    $totalEnGramme = $sommePoids_ct * 0.2 + $sommePoids_g;
-                    $totalePoidsFormate = number_format($totalEnGramme, 2, '.', '');
-                    $nombreExplode = explode(".", $totalePoidsFormate);
-                    $nombreAvant = $nombreExplode[0];
-                    $nombreApres = $nombreExplode[1];
-                    $nombreCompare='';
-                    $nombreCompareLettre='';
-                    if($nombreApres > 0) {
-                        $nombreCompare = comparer($nombreApres);
-                        $nombreCompareLettre=nombreEnLettres($nombreCompare);
-                    }
-                    $totalePoidsEnLettres = nombreEnLettres($nombreAvant);
-                    $poidsEnLettre = $totalePoidsFormate.'('. $totalePoidsEnLettres.' virgule '.$nombreCompareLettre.' de Pierres gemmes)';
-                    echo 'Poids:'.$poidsEnLettre;
-                    if($sommePoids_kg !=0){
-                        $totalePoidsFormate_kg = number_format($sommePoids_kg, 2, '.', '');
-                        $nombreExplode = explode(".", $totalePoidsFormate_kg);
-                        $nombreAvant = $nombreExplode[0];
-                        $nombreApres = $nombreExplode[1];
-                        $nombreCompare='';
-                        $nombreCompareLettre='';
-                        if($nombreApres > 0) {
-                            $nombreCompare_kg = comparer($nombreApres);
-                            $nombreCompareLettre_kg=nombreEnLettres($nombreCompare_kg);
+                    include '../pv_scellage/recherche.php';
+
+                    
+                    if(count($afficheWord_brute) > 0) {
+                        echo "Catégorie Brute : ";
+                        for ($i = 0; $i < count($afficheWord_brute); $i++) {
+                            echo $afficheWord_brute[$i] .', ';
                         }
-                        $totalePoidsEnLettres_kg = nombreEnLettres($totalePoidsFormate_kg);
-                        $poidsEnLettre_kg = $totalePoidsFormate_kg.'('. $totalePoidsEnLettres_kg.' '.$nombreCompareLettre_kg.' de Pierres ordinaires)';
-                        echo 'Poids :'.$poidsEnLettre_kg;
+                        echo '</br> POIDS: '.$ecrit_b;
                     }
+                    if(count($afficheWord) > 0) {
+                        echo "Catégorie Taillée ou Travaillée : ";
+                        for ($i = 0; $i < count($afficheWord); $i++) {
+                            if($i == count($afficheWord) - 1){
+                                echo $afficheWord[$i];
+                            } else {
+                                echo $afficheWord[$i] . ', ';
+                            }
+                        }
+                        echo '<br> POIDS: '.$ecrit_t;
+                    }
+                    
+           
                 ?>
             </div>
 
@@ -477,7 +660,8 @@
             <div class="alert alert-light" role="alert">
                 <h5 id="list-item-4">Informations sur le fichier de déclaration</h5>
                 <hr>
-                <p><strong>Numéro de fiche de déclaration :</strong> <?php echo $row['num_fiche_declaration_pv']; ?></p>
+                <p><strong>Numéro de fiche de déclaration :</strong> <?php echo $row['num_fiche_declaration_pv']; ?>
+                </p>
                 <p><strong>Scan de fiche de déclaration :</strong> <a
                         href="../view_user/<?php echo $row['pj_fiche_declaration_pv']; ?>"><?php echo $row['num_fiche_declaration_pv']; ?>.pdf</a>
                     du <?php echo date('d/m/Y', strtotime($row['date_fiche_declaration_pv'])); ?></p>
@@ -496,29 +680,22 @@
             </div>
         </div>
         <div class="info2">
-            <div class="d-flex justify-content-center mt-3">
-                <button onclick="refreshIframe('<?php echo $row['pj_pv_controle']; ?>')"
-                    class="btn btn-outline-warning">Cliquer ici pour afficher PV en PDF</button>
-            </div>
-
-
             <div class="alert alert-light" role="alert">
                 <?php
-                                $pj=$row['pj_pv_controle'];
-                                $pj_pv = str_replace('../', '', $pj);
-                                $pdfFilePath = 'cdc.minesmada.org/view_user/' .$pj_pv;
-                            ?>
-                <iframe id="pdfIframe"
-                    src="https://docs.google.com/gview?url=<?php echo urlencode($pdfFilePath); ?>&embedded=true"
-                    style="width:100%; height:800px;" frameborder="0"></iframe>
+                $pdfFilePath="";
+                    if ($validation_controle !="Validé") {
+                            $pdfFilePath = $row['lien_pv_controle'];
+                    }else{
+                         $pdfFilePath = $row['pj_pv_controle'];
+                    }
+                        include "../cdc/convert.php";
+                   
+                ?>
             </div>
         </div>
     </div>
-    <?php
-    } else {
-        echo "<p>Aucune information trouvée pour cet ID LP.</p>";
-    }
-    ?>
+    <div id="add_pv_scellage_form"></div>
+    <div id="nouveau_scan_form"></div>
     <!--Bootstrap-->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -531,14 +708,30 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-    function refreshIframe(pj) {
-        var pj_pv_scellage = pj.replace('../', '');
-        var pdfFilePathSc = 'cdc.minesmada.org/view_user/' + pj_pv_scellage;
-        // Mettre à jour l'attribut src de l'iframe avec le nouveau lien PDF
-        $('#pdfIframe').attr('src', 'https://docs.google.com/gview?url=' + encodeURIComponent(
-                pdfFilePathSc) +
-            '&embedded=true');
-    }
+    $(document).ready(function() {
+        $('.toast').toast('show');
+        $(".btn_add_pv_scellage").click(function() {
+            var id_data_cc = $(this).data('id');
+            showEditForm('add_pv_scellage_form', '../pv_scellage/nouveau_pv.php?id=' + id_data_cc,
+                'staticBackdrop');
+
+        });
+        $(".btn-nouveau-scan").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('nouveau_scan_form', './nouveau_scan.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        });
+
+
+        function showEditForm(editFormId, scriptPath, modalId) {
+            $("#" + editFormId).load(scriptPath, function() {
+                // Après le chargement du contenu, initialisez le modal manuellement
+                $("#" + modalId).modal('show');
+            });
+        }
+    });
     </script>
 </body>
 

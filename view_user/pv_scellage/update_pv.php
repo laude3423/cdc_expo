@@ -3,86 +3,85 @@
     session_start();
     
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $expediteur = htmlspecialchars($_POST['expediteur_edit']);
-        $destination = htmlspecialchars($_POST["destination_edit"]);
-        $facture = htmlspecialchars($_POST["id_edit"]);
-        $nombre = htmlspecialchars($_POST["nombre_edit"]);
-        $lieu_sce = htmlspecialchars($_POST["lieu_sce_edit"]);
-        $lieu_emb = htmlspecialchars($_POST["lieu_emb_edit"]);
-        $numDom = htmlspecialchars($_POST["numDom_edit"]);
-        $declaration = htmlspecialchars($_POST["declaration_edit"]);
-        $date_declaration =$_POST["date_declaration_edit"];
-        $num_lp3 = htmlspecialchars($_POST["num_lp3_edit"]);
-        $date_lp3 = $_POST["date_lp3_edit"];
-        $chef = $_POST["chef_edit"];
-        $police = $_POST["police_edit"];
-        $douane = $_POST["douane_edit"];
-        $qualite = $_POST["qualite_edit"];
-        $agent_scellage= $_POST["agent_scellage_edit"];
-        $type_colis = htmlspecialchars($_POST["type_colis_edit"]);
+    
+        $facture=$_POST['id'];
+        $id_data = $_POST['id'];
+        $lieu_sce = $_POST['lieu_scellage'];
+        $nombre = $_POST['nombre'];
+        $type_colis= $_POST["type_colis"];
+        $agent_scellage= $_POST["agent_scellage"];
+        $police = $_POST["police"];
+        $douane = $_POST["douane"];
 
-        $id_data = $_POST['id_edit'];
+        $requte="SELECT * FROM data_cc WHERE id_data_cc=$facture";
+        $resultC = mysqli_query($conn, $requte);
+        $rowA = mysqli_fetch_assoc($resultC);
+
+        $monde_emballage = $rowA["mode_emballage"];
+        $lieu_emb = $rowA["lieu_embarquement_pv"];
+        $numDom = $rowA["num_domiciliation"];
+        $declaration = $rowA["num_fiche_declaration_pv"];
+        $date_declaration = $rowA["date_fiche_declaration_pv"];
+        $num_lp3 = $rowA["num_lp3e_pv"];
+        $date_lp3 = $rowA["date_lp3e"];
+        $expediteur = $rowA['id_societe_expediteur'];
+        $destination = $rowA['id_societe_importateur'];
         $dateFormat = "Y-m-d";
         $date = date($dateFormat);
 
-        $uploadPath_DOM="";
-        $uploadPath_DEC="";
-        $uploadPath_LP3="";
+$agent1 = array();
+// Vérification et traitement de $chef
+
+
+//vérification et traitement de $agent_scellage
+if(count($agent_scellage)> 0){
+    for ($i = 0; $i < count($agent_scellage); $i++){
+        $agent1[] = $agent_scellage[$i];
+    }
+}
+// Vérification et traitement de $douane
+if ($douane) {
+    $agent1[] = $douane;
+}
+if ($police) {
+    //$agent_scellage = array_push($agent_scellage, $police);
+    $agent1[] = $police;
+}
+
         $num_pv='';
-        $query = "SELECT num_pv_scellage FROM data_cc WHERE id_data_cc=$id_data";
+        $date_depart=null;
+        $query = "SELECT num_pv_scellage, date_depart FROM data_cc WHERE id_data_cc=$id_data";
         $result = mysqli_query($conn, $query);
         $row = mysqli_fetch_assoc($result);
         if(!empty($row['num_pv_scellage'])){
             $num_pv = $row['num_pv_scellage'];
+            $date_depart = $row['date_depart'];
         }
-        if($num_pv){
-            include "../generate_fichier/generate_insert_scellage.php";
-        }
-         //prendre l'eure du réseau
-        date_default_timezone_set('Indian/Antananarivo');
-        $heure_actuelle = date('H:i:s');
-        //renommer l'heure
-        $heureExacte_cleaned = preg_replace('/[^a-zA-Z0-9]/', '-', $heure_actuelle);
-        //pj_DOM
-        if (!empty($_FILES['pj_dom_edit']['name'])) {
-          $numDom_cleaned = preg_replace('/[^a-zA-Z0-9]/', '-', $numDom);
-        $uploadDir = '../upload/';
-         $fileName_DOM = "SCAN_DOM_" .$numDom_cleaned.$heureExacte_cleaned.".". pathinfo($_FILES['pj_dom_edit']['name'], PATHINFO_EXTENSION);
-         $uploadPath_DOM = $uploadDir . $fileName_DOM;  
-         move_uploaded_file($_FILES['pj_dom_edit']['tmp_name'], $uploadPath_DOM);
-        }
-        //pj declaration
-        if (!empty($_FILES['pj_declaration_edit']['name'])) {
-            $numDec_cleaned = preg_replace('/[^a-zA-Z0-9]/', '-', $declaration);
-         $fileName_DEC = "SCAN_DECLARATION_" .$numDec_cleaned.$heureExacte_cleaned.".". pathinfo($_FILES['pj_declaration_edit']['name'], PATHINFO_EXTENSION);
-        $uploadPath_DEC = $uploadDir . $fileName_DEC;
-        move_uploaded_file($_FILES['pj_declaration_edit']['tmp_name'], $uploadPath_DEC);
-        }
-        //pj lp3 e
-        if (!empty($_FILES['pj_lp3_edit']['name'])) {
-            $numLP3_cleaned = preg_replace('/[^a-zA-Z0-9]/', '-', $num_lp3);
-            $fileName_LP3 = "SCAN_LPIIIE_" .$numLP3_cleaned.$heureExacte_cleaned.".". pathinfo($_FILES['pj_lp3_edit']['name'], PATHINFO_EXTENSION);
-            $uploadPath_LP3 = $uploadDir . $fileName_LP3;
-
-            move_uploaded_file($_FILES['pj_lp3_edit']['tmp_name'], $uploadPath_LP3);
-        }
-        
-    
-        
+        include "../generate_fichier/generate_insert_scellage.php";
         //suppression sur la table agent
-        $query = "DELETE FROM `pv_agent_assister` WHERE id_data_cc = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param('i', $facture);
-        $stmt->execute();
+         if (count($agent1) > 0) {
+            $countAgents = count($agent1);
+            for ($i = 0; $i < $countAgents; $i++) {
+                $query = "DELETE FROM `pv_agent_assister` WHERE id_data_cc = ? AND id_agent = ?";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param('ii', $facture, $agent1[$i]);
+                $stmt->execute();
+                
+                $stmt->close(); 
+            }
+        }else{
+            echo 'Tsisy';
+        }
+
         //insertion sur le table agent
-            if(!empty($chef)){
-                $sql = "INSERT INTO `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES ('$chef','$facture')";
-                $result = mysqli_query($conn, $sql);
-            }
-            if(!empty($qualite)){
-                $sql2 = "INSERT INTO `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES ('$qualite','$facture')";
-                $result = mysqli_query($conn, $sql2);
-            }
+            // if(!empty($chef)){
+            //     $sql = "INSERT INTO `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES ('$chef','$facture')";
+            //     $result = mysqli_query($conn, $sql);
+            // }
+            // if(!empty($qualite)){
+            //     $sql2 = "INSERT INTO `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES ('$qualite','$facture')";
+            //     $result = mysqli_query($conn, $sql2);
+            // }
             if(count($agent_scellage) > 0){
                 for ($i = 0; $i < count($agent_scellage); $i++) {
                     $query = "INSERT INTO  `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES (?, ?)";
@@ -113,15 +112,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $result = mysqli_query($conn, $sql);
             }
 
-            $sql = "UPDATE `data_cc` SET `id_societe_expediteur`='$expediteur', `id_societe_importateur`='$destination', `nombre_colis`='$nombre',
-            `type_colis`='$type_colis', `lieu_scellage_pv`='$lieu_sce',`lieu_embarquement_pv`='$lieu_emb',`lien_pv_scellage`='$pathToSave',`pj_pv_scellage`='$pathToSavePDF',
-            `num_domiciliation`='$numDom', `num_fiche_declaration_pv`='$declaration', `date_fiche_declaration_pv`='$date_declaration',`num_lp3e_pv`='$num_lp3',
-            `date_lp3e`='$date_lp3', `date_modification_pv_scellage`='$date' WHERE id_data_cc='$id_data'";
+            $sql = "UPDATE `data_cc` SET  `nombre_colis`='$nombre', `type_colis`='$type_colis', `lieu_scellage_pv`='$lieu_sce',
+            `date_modification_pv_scellage`='$date', `validation_scellage`='En attente' WHERE id_data_cc='$id_data'";
                 $result = mysqli_query($conn, $sql);
 
                 if ($result) {
                         $_SESSION['toast_message'] = "Modification réussie.";
-                        header("Location: ./lister.php");
+                        header("Location: https://cdc.minesmada.org/view_user/pv_scellage/detail.php?id=" . $id_data);
                         exit();
                 } else {
                         echo "Erreur d'enregistrement" . mysqli_error($conn);

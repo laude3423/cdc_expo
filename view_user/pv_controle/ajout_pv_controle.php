@@ -69,23 +69,30 @@ require(__DIR__ . '/../../scripts/session.php');
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col">
+                        <!-- <div class="col">
                             <label for="facture" name="facture" class="col-form-label">Numéro de la facture:</label>
                             <select id="facture" name="facture" placeholder="Choisir ..." autocomplete="off" required
                                 style="font-size:90%" disabled>
                                 <option value="">Choisir ...</option>
                                 <?php    
-                                    $query = "SELECT id_data_cc, num_facture FROM data_cc";
-                                    $stmt = $conn->prepare($query);
-                                    $stmt->execute();
-                                    $resu = $stmt->get_result();
+                                    // $query = "SELECT id_data_cc, num_facture FROM data_cc";
+                                    // $stmt = $conn->prepare($query);
+                                    // $stmt->execute();
+                                    // $resu = $stmt->get_result();
                                     
-                                    while ($rowSub = $resu->fetch_assoc()) {
-                                        $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
-                                        echo "<option value='" . $rowSub['id_data_cc'] ."'$selected>". $rowSub['num_facture'] . "</option>";
-                                    }
+                                    // while ($rowSub = $resu->fetch_assoc()) {
+                                    //     $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
+                                    //     echo "<option value='" . $rowSub['id_data_cc'] ."'$selected>". $rowSub['num_facture'] . "</option>";
+                                    // }
                                     ?>
                             </select>
+                        </div> -->
+                        <div class="col">
+                            <label for="date_depart" name="date_depart" class="col-form-label">Date de départ</label>
+                            <input type="date" class="form-control" name="date_depart" id="date_depart"
+                                placeholder="Date de départ de l'exportation" required style="font-size:90%">
+                            <div id="date_error1" style="color: red; display: none;">Veuillez entrer une date valide.
+                            </div>
                         </div>
                         <div class="col">
                             <label for="numDom" name="numDom" class="col-form-label">Numéro de
@@ -133,6 +140,8 @@ require(__DIR__ . '/../../scripts/session.php');
                                 fiche de déclaration:</label>
                             <input type="date" class="form-control" name="date_declaration" id="date_declaration"
                                 required style="font-size:90%">
+                            <div id="date_error2" style="color: red; display: none;">Veuillez entrer une date valide.
+                            </div>
                             <input type="hidden" id="id" value="<?php echo $id_data_cc; ?>" name="id">
                         </div>
                     </div>
@@ -156,6 +165,8 @@ require(__DIR__ . '/../../scripts/session.php');
                                 E:</label>
                             <input type="date" class="form-control" name="date_lp3" id="date_lp3"
                                 placeholder="Numéro de fiche de déclaration" required style="font-size:90%">
+                            <div id="date_error3" style="color: red; display: none;">Veuillez entrer une date valide.
+                            </div>
                         </div>
                         <div class="col">
                             <label for="pj_lp3e" name="pj_lp3e" class="col-form-label">Pièce joint LP III E:</label>
@@ -219,16 +230,14 @@ $(document).ready(function() {
 function selectTom() {
     // Initialisez TomSelect pour chaque élément select
     var selectOptions = {
-        create: true,
+        create: false,
         sortField: {
             field: "text",
             direction: "asc"
         }
     };
-
     new TomSelect("#expediteur", selectOptions);
     new TomSelect("#importateur", selectOptions);
-    new TomSelect("#facture", selectOptions);
     new TomSelect("#chef", selectOptions);
     new TomSelect("#qualite", selectOptions);
     new TomSelect("#police", selectOptions);
@@ -236,4 +245,42 @@ function selectTom() {
     new TomSelect("#agent_scellage", selectOptions);
 
 };
+document.getElementById('date_depart').addEventListener('input', function() {
+    const dateInput = this.value;
+    const dateError = document.getElementById('date_error1');
+    if (isValidDate(dateInput)) {
+        dateError.style.display = 'none';
+    } else {
+        dateError.style.display = 'block';
+    }
+});
+document.getElementById('date_declaration').addEventListener('input', function() {
+    const dateInput = this.value;
+    const dateError = document.getElementById('date_error2');
+    if (isValidDate(dateInput)) {
+        dateError.style.display = 'none';
+    } else {
+        dateError.style.display = 'block';
+    }
+});
+document.getElementById('date_lp3').addEventListener('input', function() {
+    const dateInput = this.value;
+    const dateError = document.getElementById('date_error3');
+    if (isValidDate(dateInput)) {
+        dateError.style.display = 'none';
+    } else {
+        dateError.style.display = 'block';
+    }
+});
+
+function isValidDate(dateString) {
+    const date = new Date(dateString);
+    const timestamp = date.getTime();
+
+    if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) {
+        return false;
+    }
+
+    return dateString === date.toISOString().split('T')[0];
+}
 </script>

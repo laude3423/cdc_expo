@@ -50,14 +50,15 @@ $uploadPath_LP3 = $uploadDir . $fileName_LP3;
         `num_pv_controle`='$num_pv', `mode_emballage`='$mode_emballage',
         `lieu_controle_pv`='$lieu_controle',`lieu_embarquement_pv`='$lieu_embarquement', `num_domiciliation`='$num_domiciliation',
         `num_fiche_declaration_pv`='$num_fiche_declaration',`pj_domiciliation_pv`='$uploadPath_DOM',
-        `date_fiche_declaration_pv`='$date_declaration',`pj_fiche_declaration_pv`='$uploadPath_DEC',`num_lp3e_pv`='$num_lp3e',`date_lp3e`='$date_lp3e',`pj_lp3e_pv`='$pj_lp3e',
-        `date_creation_pv_controle`='$date',`lien_pv_controle`='$pathToSave',`pj_pv_controle`='$pathToSavePDF',`date_modification_pv_controle`='$date',
-        `num_cc`='$num_cc',`date_cc`='$date',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc' WHERE id_data_cc='$id_data'";
+        `date_fiche_declaration_pv`='$date_declaration',`pj_fiche_declaration_pv`='$uploadPath_DEC',`num_lp3e_pv`='$num_lp3e',`date_lp3e`='$date_lp3e',`pj_lp3e_pv`='$uploadPath_LP3',
+        `date_creation_pv_controle`='$dateInsert',`lien_pv_controle`='$pathToSave',`pj_pv_controle`='$pathToSavePDF',`date_modification_pv_controle`='$dateInsert',
+        `premiere_validation_cdc`='En attente',`deuxieme_validation_cdc`='En attente',`validation_controle`='En attente',
+        `num_cc`='$num_cc',`date_cc`='$dateInsert',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc', `date_depart`='$date_depart' WHERE id_data_cc='$id_data'";
         $result = mysqli_query($conn, $sql);
 
         if ($result) {
         $_SESSION['toast_message'] = "Insertion réussie.";
-        header("Location: ".$_SERVER['PHP_SELF']);
+        header("Location: https://cdc.minesmada.org/view_user/pv_controle_gu/detail.php?id=" . $id_data);
         exit();
         } else {
         echo "Erreur d'enregistrement" . mysqli_error($conn);

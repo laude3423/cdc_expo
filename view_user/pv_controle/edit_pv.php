@@ -61,6 +61,7 @@
         $pj_fiche_declaration = $row["pj_fiche_declaration_pv"] ?? "";
         $id_societe_expediteur = $row["id_societe_expediteur"] ?? "";
         $id_societe_importateur = $row["id_societe_importateur"] ?? "";
+        $date_depart = $row['date_depart'] ?? "";
 
         //
         $id_agent_chef = $row1["id_agent"] ?? "";
@@ -135,115 +136,126 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col">
+                        <!-- <div class="col">
                             <label for="facture" name="facture" class="col-form-label">Numéro de la
                                 facture:</label>
                             <select id="facture" name="facture" placeholder="Choisir ..." autocomplete="off" required
                                 style="font-size:90%" disabled>
                                 <option value="">Choisir ...</option>
                                 <?php    
-                                    $query = "SELECT id_data_cc, num_facture FROM data_cc WHERE id_data_cc=$id_data_cc";
-                                    $stmt = $conn->prepare($query);
-                                    $stmt->execute();
-                                    $resu = $stmt->get_result();
+                                    // $query = "SELECT id_data_cc, num_facture FROM data_cc WHERE id_data_cc=$id_data_cc";
+                                    // $stmt = $conn->prepare($query);
+                                    // $stmt->execute();
+                                    // $resu = $stmt->get_result();
                                     
-                                    while ($rowSub = $resu->fetch_assoc()) {
-                                        $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
-                                        echo "<option value='" . $rowSub['id_data_cc'] ."'$selected>". $rowSub['num_facture'] . "</option>";
-                                    }
+                                    // while ($rowSub = $resu->fetch_assoc()) {
+                                    //     $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
+                                    //     echo "<option value='" . $rowSub['id_data_cc'] ."'$selected>". $rowSub['num_facture'] . "</option>";
+                                    // }
                                     ?>
                             </select>
-                        </div>
+                        </div> -->
                         <div class="col">
-                            <label for="numDom" name="numDom" class="col-form-label">Numéro de
-                                domiciliation:</label>
-                            <input type="text" class="form-control" name="numDom" id="numDom"
-                                value="<?php echo $num_domiciliation; ?>" required style="font-size:90%">
+                            <label for="date_depart" name="date_depart" class="col-form-label">Date de départ</label>
+                            <input type="date" class="form-control" name="date_depart" id="date_depart"
+                                value="<?php echo $date_depart; ?>" required style="font-size:90%">
+                            <div id="date_error1" style="color: red; display: none;">Veuillez entrer une date valide.
+                            </div>
+                            <div class="col">
+                                <label for="numDom" name="numDom" class="col-form-label">Numéro de
+                                    domiciliation:</label>
+                                <input type="text" class="form-control" name="numDom" id="numDom"
+                                    value="<?php echo $num_domiciliation; ?>" required style="font-size:90%">
+                            </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="mode_emballage" name="mode_emballage" class="col-form-label">Nombre et mode
-                                d'emballage:</label>
-                            <input type="text" class="form-control" name="mode_emballage" id="mode_emballage"
-                                value="<?php echo $mode_emballage; ?>" required style="font-size:90%">
+                        <div class="row">
+                            <div class="col">
+                                <label for="mode_emballage" name="mode_emballage" class="col-form-label">Nombre et mode
+                                    d'emballage:</label>
+                                <input type="text" class="form-control" name="mode_emballage" id="mode_emballage"
+                                    value="<?php echo $mode_emballage; ?>" required style="font-size:90%">
+                            </div>
+                            <div class="col">
+                                <label for="pj_dom" name="pj_dom" class="col-form-label">Pièce joint de
+                                    DOM:</label>
+                                <input type="file" class="form-control" name="pj_dom" id="pj_dom"
+                                    placeholder="Nombre de colis" style="font-size:90%">
+                            </div>
                         </div>
-                        <div class="col">
-                            <label for="pj_dom" name="pj_dom" class="col-form-label">Pièce joint de
-                                DOM:</label>
-                            <input type="file" class="form-control" name="pj_dom" id="pj_dom"
-                                placeholder="Nombre de colis" style="font-size:90%">
+                        <div class="row">
+                            <div class="col">
+                                <label for="lieu_controle" name="lieu_controle" class="col-form-label">Lieu de
+                                    controle:</label>
+                                <input type="text" class="form-control" name="lieu_controle" id="lieu_controle"
+                                    value="<?php echo $lieu_controle; ?>" required style="font-size:90%">
+                            </div>
+                            <div class="col">
+                                <label for="lieu_emb" name="lieu_emb" class="col-form-label">Lieu
+                                    d'embarquement:</label>
+                                <input type="text" class="form-control" name="lieu_emb" id="lieu_emb"
+                                    value="<?php echo $lieu_embarquement; ?>" required style="font-size:90%">
+                            </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="lieu_controle" name="lieu_controle" class="col-form-label">Lieu de
-                                controle:</label>
-                            <input type="text" class="form-control" name="lieu_controle" id="lieu_controle"
-                                value="<?php echo $lieu_controle; ?>" required style="font-size:90%">
-                        </div>
-                        <div class="col">
-                            <label for="lieu_emb" name="lieu_emb" class="col-form-label">Lieu
-                                d'embarquement:</label>
-                            <input type="text" class="form-control" name="lieu_emb" id="lieu_emb"
-                                value="<?php echo $lieu_embarquement; ?>" required style="font-size:90%">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="declaration" name="declaration" class="col-form-label">Numéro de fiche
-                                de
-                                déclaration:</label>
-                            <input type="text" class="form-control" name="declaration" id="declaration"
-                                value="<?php echo $num_fiche_declaration; ?>" required style="font-size:90%">
-                        </div>
-                        <div class="col">
-                            <label for="date_declaration" name="date_declaration" class="col-form-label">Date
-                                de
-                                fiche de déclaration:</label>
-                            <input type="date" class="form-control" name="date_declaration"
-                                value="<?php echo $date_fiche_declaration; ?>" id="date_declaration" required
-                                style="font-size:90%">
-                            <input type="hidden" value="<?php echo $id_data_cc; ?>" id="id" name="id">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="pj_declaration" name="pj_declaration" class="col-form-label">Pièce
-                                joint de
-                                fiche de
-                                déclaration:</label>
-                            <input type="file" class="form-control" name="pj_declaration" id="pj_declaration"
-                                placeholder="Numéro de fiche de déclaration" style="font-size:90%">
-                        </div>
-                        <div class="col">
-                            <label for="num_lp3" name="num_lp3" class="col-form-label">Numéro de LP III
-                                E:</label>
-                            <input type="text" value="<?php echo $num_lp3e; ?>" class="form-control" name="num_lp3"
-                                id="num_lp3" required style="font-size:90%">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="date_lp3" name="date_lp3" class="col-form-label">Date de création de
-                                LP III
-                                E:</label>
-                            <input type="date" class="form-control" name="date_lp3" id="date_lp3"
-                                value="<?php echo $date_lp3e; ?>" required style="font-size:90%">
-                        </div>
-                        <div class="col">
-                            <label for="pj_lp3" name="pj_lp3" class="col-form-label">Pièce joint LP III
-                                E:</label>
-                            <input type="file" class="form-control" name="pj_lp3" id="pj_lp3" style="font-size:90%">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="chef" name="chef" class="col-form-label">Chef de Division:</label>
-                            <select id="chef" name="chef" placeholder="Choisir ..." autocomplete="off" required
-                                style="font-size:90%">
-                                <option value="">Choisir ...</option>
-                                <?php    
+                        <div class="row">
+                            <div class="col">
+                                <label for="declaration" name="declaration" class="col-form-label">Numéro de fiche
+                                    de
+                                    déclaration:</label>
+                                <input type="text" class="form-control" name="declaration" id="declaration"
+                                    value="<?php echo $num_fiche_declaration; ?>" required style="font-size:90%">
+                            </div>
+                            <div class="col">
+                                <label for="date_declaration" name="date_declaration" class="col-form-label">Date
+                                    de
+                                    fiche de déclaration:</label>
+                                <input type="date" class="form-control" name="date_declaration"
+                                    value="<?php echo $date_fiche_declaration; ?>" id="date_declaration" required
+                                    style="font-size:90%">
+                                <div id="date_error2" style="color: red; display: none;">Veuillez entrer une date
+                                    valide.
+                                    <input type="hidden" value="<?php echo $id_data_cc; ?>" id="id" name="id">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="pj_declaration" name="pj_declaration" class="col-form-label">Pièce
+                                        joint de
+                                        fiche de
+                                        déclaration:</label>
+                                    <input type="file" class="form-control" name="pj_declaration" id="pj_declaration"
+                                        placeholder="Numéro de fiche de déclaration" style="font-size:90%">
+                                </div>
+                                <div class="col">
+                                    <label for="num_lp3" name="num_lp3" class="col-form-label">Numéro de LP III
+                                        E:</label>
+                                    <input type="text" value="<?php echo $num_lp3e; ?>" class="form-control"
+                                        name="num_lp3" id="num_lp3" required style="font-size:90%">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="date_lp3" name="date_lp3" class="col-form-label">Date de création de
+                                        LP III
+                                        E:</label>
+                                    <input type="date" class="form-control" name="date_lp3" id="date_lp3"
+                                        value="<?php echo $date_lp3e; ?>" required style="font-size:90%">
+                                    <div id="date_error3" style="color: red; display: none;">Veuillez entrer une date
+                                        valide.
+                                    </div>
+                                    <div class="col">
+                                        <label for="pj_lp3" name="pj_lp3" class="col-form-label">Pièce joint LP III
+                                            E:</label>
+                                        <input type="file" class="form-control" name="pj_lp3" id="pj_lp3"
+                                            style="font-size:90%">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="chef" name="chef" class="col-form-label">Chef de Division:</label>
+                                        <select id="chef" name="chef" placeholder="Choisir ..." autocomplete="off"
+                                            required style="font-size:90%">
+                                            <option value="">Choisir ...</option>
+                                            <?php    
                                     
                                     if(!empty($id_agent_chef)) {
                                         $query = "SELECT * FROM agent WHERE id_agent=$id_agent_chef";
@@ -252,21 +264,21 @@
                                         $resu = $stmt->get_result();
                                         while ($rowSub = $resu->fetch_assoc()) {
                                             $selected = ($rowSub["id_agent"] == $id_agent_chef) ? "selected" : "";
-                                            echo "<option value='" . $rowSub['id_agent'] ."'$selected>". $rowSub['nom_agent'] . "</option>";
+                                            echo "<option value='" . $rowSub['id_agent'] ."'$selected>". $rowSub['nom_agent'] .' '.$rowSub['prenom_agent']. "</option>";
                                         }
                                         
                                     }?>
 
-                            </select>
-                        </div>
-                        <div class="col">
-                            <label for="qualite" name="qualite" class="col-form-label">Responsable de
-                                qualité
-                                laboratoire:</label>
-                            <select id="qualite" name="qualite" placeholder="Choisir ..." autocomplete="off" required
-                                style="font-size:90%">
-                                <option value="">Choisir ...</option>
-                                <?php 
+                                        </select>
+                                    </div>
+                                    <div class="col">
+                                        <label for="qualite" name="qualite" class="col-form-label">Responsable de
+                                            qualité
+                                            laboratoire:</label>
+                                        <select id="qualite" name="qualite" placeholder="Choisir ..." autocomplete="off"
+                                            required style="font-size:90%">
+                                            <option value="">Choisir ...</option>
+                                            <?php 
                                 if(!empty($id_agent_qualite)){
                                     $query = "SELECT * FROM agent WHERE id_agent=$id_agent_qualite";
                                     $stmt = $conn->prepare($query);
@@ -275,18 +287,20 @@
                                         
                                         while ($rowSub = $resu->fetch_assoc()) {
                                             $selected = ($rowSub["id_agent"] == $id_agent_qualite) ? "selected" : "";
-                                            echo "<option value='" . $rowSub['id_agent'] ."'$selected>". $rowSub['nom_agent'] . "</option>";
+                                            echo "<option value='" . $rowSub['id_agent'] ."'$selected>". $rowSub['nom_agent'] .' '.$rowSub['prenom_agent']. "</option>";
                                         }
                                 }   
                                     
                                         ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="closeModal()">Close</button>
-                        <button class="btn btn-sm btn-primary" type="submit2" name="submit2">Enregistrer</button>
-                    </div>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-sm btn-secondary"
+                                        onclick="closeModal()">Close</button>
+                                    <button class="btn btn-sm btn-primary" type="submit2"
+                                        name="submit2">Enregistrer</button>
+                                </div>
                 </form>
             </div>
         </div>
@@ -312,7 +326,6 @@ function selectTom() {
 
     new TomSelect("#expediteur", selectOptions);
     new TomSelect("#importateur", selectOptions);
-    new TomSelect("#facture", selectOptions);
     new TomSelect("#chef", selectOptions);
     new TomSelect("#qualite", selectOptions);
     new TomSelect("#police", selectOptions);
@@ -320,4 +333,42 @@ function selectTom() {
     new TomSelect("#agent_scellage", selectOptions);
 
 };
+document.getElementById('date_depart').addEventListener('input', function() {
+    const dateInput = this.value;
+    const dateError = document.getElementById('date_error1');
+    if (isValidDate(dateInput)) {
+        dateError.style.display = 'none';
+    } else {
+        dateError.style.display = 'block';
+    }
+});
+document.getElementById('date_declaration').addEventListener('input', function() {
+    const dateInput = this.value;
+    const dateError = document.getElementById('date_error2');
+    if (isValidDate(dateInput)) {
+        dateError.style.display = 'none';
+    } else {
+        dateError.style.display = 'block';
+    }
+});
+document.getElementById('date_lp3').addEventListener('input', function() {
+    const dateInput = this.value;
+    const dateError = document.getElementById('date_error3');
+    if (isValidDate(dateInput)) {
+        dateError.style.display = 'none';
+    } else {
+        dateError.style.display = 'block';
+    }
+});
+
+function isValidDate(dateString) {
+    const date = new Date(dateString);
+    const timestamp = date.getTime();
+
+    if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) {
+        return false;
+    }
+
+    return dateString === date.toISOString().split('T')[0];
+}
 </script>

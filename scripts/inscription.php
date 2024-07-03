@@ -5,7 +5,7 @@ require '../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-
+session_start();
 // Création d'une nouvelle instance de PHPMailer
 $mail = new PHPMailer(true);
 
@@ -19,38 +19,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $contact_user = $_POST["contact_user"];
     $direction = $_POST["direction"];
     $matricule = $_POST["matricule"];
+    $users = $_POST["fonction"];
+    $fonction = "";
+    if($fonction=="Directeur"){
+        $fonction = "A";
+    }else if ($fonction=="Chef de services"){
+        $fonction = "B";
+    }else{
+        $fonction = "C";
+    }
+
 
     //envoie email
-    $mail->isSMTP();
-    $mail->Host = 'mail.minesmada.org'; // Adresse du serveur SMTP
-    $mail->SMTPAuth = true;
-    $mail->Username = 'no-reply@minesmada.org'; // Votre adresse e-mail
-    $mail->Password = 'test@123'; // Votre mot de passe e-mail
-    $mail->SMTPSecure = 'tls'; // Protocole de sécurité
-    $mail->Port = 587; // Port SMTP
-
-
-         // Destinataire
-    $mail->setFrom('no-reply@minesmada.org', 'lp1.minesmada.org');
-    $mail->addAddress($mail_user, 'Nom du destinataire');
-        
-            // Contenu de l'e-mail
-    $mail->isHTML(true);
-    $mail->Subject = 'Vérification email';
-    $mail->Subject = mb_encode_mimeheader($subject, 'UTF-8');
-    $mail->Body = 'Bonjour,<br><br>
-        Pour vérifier que votre email existe, veuillez cliquer sur le lien suivant :<br><br>
-
-    <a href="https://cdc.minesmada.org/scripts/confirme_email.php?id=' . $id_user . '">Cliquer ici</a><br><br>
-            Cordialement.';
-
-
-        // Envoi du message
-    if(!$mail->send()) {
-            echo 'Erreur lors de l\'envoi du message : ' . $mail->ErrorInfo;
-    } else {
-            echo 'Message envoyé avec succès !';
-    }
+    
     
     // Vérification si l'adresse e-mail existe déjà
     $check_query = "SELECT COUNT(*) AS count FROM users WHERE mail_user = '$mail_user'";
@@ -67,11 +48,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Vérification de la case à cocher
         $validation = isset($_POST["validation"]) ? 1 : 0;
 
-        $insert_query = "INSERT INTO users (nom_user, prenom_user, mail_user, phone_user, password_user, matricule_user, status_user, id_direction, id_groupe, confirme_email) VALUES ('$nom_user', '$prenom_user', '$mail_user', '$contact_user', '$mot_de_passe','$matricule', '$validation', '$direction', '$groupe', '0')";
+        $insert_query = "INSERT INTO users (nom_user, prenom_user, mail_user, phone_user, password_user, matricule_user, status_user, id_direction, id_groupe, email_confirme, code_fonction, fonction) VALUES ('$nom_user', '$prenom_user', '$mail_user', '$contact_user', '$mot_de_passe','$matricule', '$validation', '$direction', '$groupe', '0', '$fonction', '$users')";
         
         if ($conn->query($insert_query) === TRUE) {
             $id_user = $conn->insert_id;
-            echo "Utilisateur inséré avec succès.";
+
+            $mail->isSMTP();
+            $mail->Host = 'mail.minesmada.org'; // Adresse du serveur SMTP
+            $mail->SMTPAuth = true;
+            $mail->Username = 'no-reply@minesmada.org'; // Votre adresse e-mail
+            $mail->Password = 'test@123'; // Votre mot de passe e-mail
+            $mail->SMTPSecure = 'tls'; // Protocole de sécurité
+            $mail->Port = 587; // Port SMTP
+
+
+                // Destinataire
+            $mail->setFrom('no-reply@minesmada.org', 'lp1.minesmada.org');
+            $mail->addAddress($mail_user, 'Nom du destinataire');
+                
+                    // Contenu de l'e-mail
+            $id_user_hashed = hash('sha256', $id_user);
+
+            $mail->isHTML(true);
+            $mail->Subject = "=?UTF-8?B?" . base64_encode("Vérification email") . "?=";
+            $mail->Body = 'Bonjour,<br><br>
+                Pour vérifier que votre email existe, veuillez cliquer sur le lien suivant :<br><br>
+
+            <a href="https://cdc.minesmada.org/scripts/confirme_email.php?id=' .$id_user_hashed. '">Cliquer ici</a><br><br>
+                    Cordialement.';
+
+
+                // Envoi du message
+            if(!$mail->send()) {
+                    echo 'Erreur lors de l\'envoi du message : ' . $mail->ErrorInfo;
+            } else {
+                    echo 'Message envoyé avec succès !';
+            }
+            $_SESSION['toast_message'] = "Utilisateur enregistré avec succès.";
             header("Location: ../index.php");
             exit;
         } else {
@@ -265,26 +278,24 @@ $conn->close();
                                         Please enter a valid email address for shipping updates.
                                     </div>
                                 </div>
-                                <div class="row g-3">
-                                    <div class="col-sm-6">
-                                        <label for="mot_de_passe" class="form-label">Mots de Passe</label>
-                                        <input type="password" name="mot_de_passe" id="mot_de_passe"
-                                            class="form-control" required>
-                                        <div class="invalid-feedback">
-                                            Please enter your Password.
-                                        </div>
-
+                                <div class="col-sm-6">
+                                    <label for="mot_de_passe" class="form-label">Mots de Passe</label>
+                                    <input type="password" name="mot_de_passe" id="mot_de_passe" class="form-control"
+                                        required>
+                                    <div class="invalid-feedback">
+                                        Please enter your Password.
                                     </div>
-                                    <div class="col-sm-6">
-                                        <label for="confirmation_mot_de_passe" class="form-label">Confirmation mots de
-                                            Passe</label>
-                                        <input type="password" name="confirmation_mot_de_passe"
-                                            id="confirmation_mot_de_passe" class="form-control" required>
-                                        <div class="invalid-feedback">
-                                            Please enter your Password.
-                                        </div>
 
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="confirmation_mot_de_passe" class="form-label">Confirmation mots de
+                                        Passe</label>
+                                    <input type="password" name="confirmation_mot_de_passe"
+                                        id="confirmation_mot_de_passe" class="form-control" required>
+                                    <div class="invalid-feedback">
+                                        Please enter your Password.
                                     </div>
+
                                 </div>
                                 <div class="col-12">
                                     <label for="contact_user" class="form-label">Telephone <span
@@ -293,10 +304,22 @@ $conn->close();
                                         required pattern="[0-9]+"
                                         title="Veuillez entrer uniquement des chiffres sans espace">
                                 </div>
-
-                                <div class="col-md-5">
-                                    <label for="mtricule" class="form-label">Matricule:</label>
+                                <div class="col-sm-6">
+                                    <label for="matricule" class="form-label">Matricule:</label>
                                     <input type="number" name="matricule" id="matricule" class="form-control" required>
+                                    <div class="invalid-feedback">
+                                        Veuillez sélectionner un matricule.
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="fonction" class="form-label">Fonction:</label>
+                                    <select class="form-control" name="fonction" id="fonction" required>
+                                        <option value="">Séléctionner ...</option>
+                                        <option value="Directeur">Directeur</option>
+                                        <option value="Chef de services"></option>
+                                        <option value="Secrétaire de Direction">Secrétaire de Direction</option>
+                                        <option value="Opérateur de saisie">Opérateur de saisie</option>
+                                    </select>
                                     <div class="invalid-feedback">
                                         Veuillez sélectionner un matricule.
                                     </div>

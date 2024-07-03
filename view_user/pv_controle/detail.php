@@ -2,6 +2,7 @@
     require_once('../../scripts/db_connect.php');
     require_once('../generate_fichier/nombreEnLettre.php');
     require('../../scripts/session.php');
+    $validation_v = $fonctionUsers. ' ' . $nom_user. ' '.$prenom_user;
     if (isset($_GET['id'])) {
         $id_data_cc = $_GET['id'];
         $sql = "SELECT datacc.*, societe_imp.*, societe_exp.*
@@ -68,7 +69,12 @@
         $pj_fiche_declaration = $row["pj_fiche_declaration_pv"] ?? "";
         $id_societe_expediteur = $row["id_societe_expediteur"] ?? "";
         $id_societe_importateur = $row["id_societe_importateur"] ?? "";
-
+        $validation_chef_services =$row['validation_chef'] ?? "En attente";
+        $validation_directeur =$row['validation_directeur'] ?? "En attente";
+        $user_directeur = $row['user_validation_directeur'];
+        $user_chef_services = $row['user_validation_chef'];
+        $scan = $row['scan_controle'];
+        
         //
         $id_agent_chef = $row1["id_agent"] ?? "";
         $id_agent_qualite = $row2["id_agent"] ?? "";
@@ -88,7 +94,57 @@
         $stmt2->close();
         $stmt4->close();
         $stmt5->close();
-    
+   } else {
+        echo "<p>Aucune information trouvée pour cet ID LP.</p>";
+    }
+if (isset($_POST['submit'])) {
+    $id = $_POST['id_data'];
+    $action = $_POST['action'];
+    $sql = "UPDATE `data_cc` SET `validation_chef`='$action', `user_validation_chef`='$validation_v' WHERE id_data_cc=$id";
+    $result = mysqli_query($conn, $sql);
+    if ($result) {
+        $_SESSION['toast_message'] = "Modification réussie.";
+        header("Location: https://cdc.minesmada.org/view_user/pv_controle/detail.php?id=" . $id);
+        exit();
+    } else {
+        echo "Erreur d'enregistrement" . mysqli_error($conn);
+    }
+}  
+
+if (isset($_POST['submit2'])) {
+    $id = $_POST['id_data_v2'];
+    $action = $_POST['action_v2'];
+    $sql = "UPDATE `data_cc` SET `validation_directeur`='$action', `user_validation_directeur`='$validation_v' WHERE id_data_cc=$id";
+    $result = mysqli_query($conn, $sql);
+    if ($result) {
+        $_SESSION['toast_message'] = "Modification réussie.";
+        header("Location: https://cdc.minesmada.org/view_user/pv_controle/detail.php?id=" . $id);
+        exit();
+    } else {
+        echo "Erreur d'enregistrement" . mysqli_error($conn);
+    }
+}
+if(isset($_SESSION['toast_message'])) {
+    echo '
+    <div style="left=50px;top=50px">
+        <div class="toast-container"">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                    <small class="text-muted">Maintenant</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ' . $_SESSION['toast_message'] . '
+                </div>
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message']);
+}
 
 ?>
 <!DOCTYPE html>
@@ -97,6 +153,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
@@ -145,13 +202,13 @@
     }
 
     .info1 {
-        width: 47%;
+        width: 40%;
         float: left;
 
     }
 
     .info2 {
-        width: 50%;
+        width: 57%;
         float: right;
 
     }
@@ -173,14 +230,225 @@
     }
     </style>
     <title>Information sur un PV</title>
+    <?php include_once('../../view/shared/navBar.php'); ?>
     <?php 
-    include "../../shared/header.php";
+    function ecrire($totalEnGramme, $type_substance, $unite1, $unite){
+        $totalePoidsFormate = number_format($totalEnGramme, 2, '.', '');
+
+        $nombreExplode = explode(".", $totalePoidsFormate);
+        $nombreAvant = $nombreExplode[0];
+        $nombreApres = $nombreExplode[1];
+        $nombreCompare='';
+        $nombreCompareLettre='';
+        if($nombreApres > 0) {
+            $nombreCompare = comparer($nombreApres);
+            $nombreCompareLettre=nombreEnLettres($nombreCompare);
+        }
+                        
+        $totalePoidsEnLettres = nombreEnLettres($nombreAvant);
+            if($nombreApres=='00'){
+                $poidsEnLettre = $totalePoidsFormate.$unite1.'('. $totalePoidsEnLettres.''.$nombreCompareLettre.' '.$unite.' de '.$type_substance.')';
+            }else{
+                $poidsEnLettre = $totalePoidsFormate.$unite1.'('. $totalePoidsEnLettres.' virgule '.$nombreCompareLettre.' '.$unite.' de '.$type_substance.')';
+            }
+
+            return $poidsEnLettre;
+    }
     ?>
 </head>
 
 
 <body>
-    <div class="info">
+    <div class="info  container">
+        <hr>
+        <div class="partie1">
+            <?php 
+                        if($groupeID === 2){
+                                    echo '
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">';
+                                            if(!empty($num_pv_scellage)){
+                                                echo '<li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>
+                                                <li><hr class="dropdown-divider"></li>';
+                                            }
+                                                echo '<li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de contrôle</a></li>
+                                            </ul>
+                                        </div>
+                                    ';
+                            } else if($groupeID===1) {
+                                    echo '<div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de contrôle</a></li>
+                                            </ul>
+                                        </div>';
+                            }else{
+                                    echo '<div class="dropdown">
+                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Voir les détails associer
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de contrôle</a></li>
+                                            </ul>
+                                        </div>';
+                            }
+                    
+                    ?>
+        </div>
+        <hr>
+        <?php 
+        if($groupeID !==2){
+            if(!empty($scan)){
+                    if (( $code_fonction == 'B') && ($validation_chef_services != "Validé")) {?>
+        <form action="" method="post">
+            <?php
+                    // Supposons que $selectedValue contient la valeur récupérée de la base de données.
+                    $selectedValueD = $validation_chef_services; // Exemple de valeur
+                    function isSelected($value, $selectedValueD) {
+                        return $value === $selectedValueD ? 'selected' : '';
+                    }
+                    ?>
+            <div class="row">
+                <div class="col">
+                    <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
+                    <select class="form-select" name="action" id="action" required>
+                        <option value="">Séléctionner</option>
+                        <option value="Refaire" <?= isSelected('Refaire', $selectedValueD) ?>>Refaire</option>
+                        <option value="Validé" <?= isSelected('Validé', $selectedValueD) ?>>Validé</option>
+                        <option value="En attente" <?= isSelected('En attente', $selectedValueD) ?>>En attente
+                        </option>
+                    </select>
+                </div>
+                <div class="col text-end">
+                    <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
+                        name="submit">Enregistrer</button>
+                </div>
+            </div>
+        </form>
+        <?php
+            }else if (( $code_fonction == 'A') && ($validation_directeur != "Validé")){
+                ?>
+        <form action="" method="post">
+            <?php
+                    // Supposons que $selectedValue contient la valeur récupérée de la base de données.
+                    $selectedValue = $validation_directeur; // Exemple de valeur
+                    function isSelected($value, $selectedValue) {
+                        return $value === $selectedValue ? 'selected' : '';
+                    }
+                    ?>
+            <div class="row">
+                <div class="col">
+                    <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data_v2" id="id_data_v2">
+                    <select class="form-select" name="action_v2" id="action_v2" required>
+                        <option value="">Séléctionner</option>
+                        <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                        <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
+                        <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente
+                        </option>
+                    </select>
+                </div>
+                <div class="col text-end">
+                    <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit2"
+                        name="submit2">Enregistrer</button>
+                </div>
+            </div>
+        </form>
+        <?php
+            }else if($code_fonction == 'B'){
+                echo '<p class="alert alert-info">Status: '.$validation_chef_services.' par '.$user_chef_services.'.</p>';
+            }else if($code_fonction == 'A'){
+                echo '<p class="alert alert-info">Status: '.$validation_directeur.' par '.$user_directeur.'.</p>';
+            }else if(($code_fonction == 'C') && ($validation_chef_services != "En attente")&&($validation_directeur != "En attente")){
+                echo '<p class="alert alert-info">Status: '.$validation_directeur.' par '.$user_directeur.' et '.$validation_chef_services.' par '.$user_chef_services.'.</p>';
+            }else if(($code_fonction == 'C') && ($validation_chef_services != "En attente")){
+                echo '<p class="alert alert-info">Status: '.$validation_chef_services.' par '.$user_chef_services.'.</p>';
+            }else if(($code_fonction == 'C') && ($validation_directeur != "En attente")){
+                echo '<p class="alert alert-info">Status: '.$validation_directeur.' par '.$user_directeur.' et.</p>';
+            }
+            }else{
+                 echo '<p class="alert alert-info">Aucun scan correspondant!.</p>';
+            }
+            
+    }else if($groupeID ===2){ ?>
+        <div class="row">
+            <div class="col">
+                <form action="" method="post">
+                    <?php
+            // Supposons que $selectedValue contient la valeur récupérée de la base de données.
+            $selectedValue2 = $validation_chef_services; // Exemple de valeur
+            function isSelected($value, $selectedValue2) {
+                return $value === $selectedValue2 ? 'selected' : '';
+            }
+            ?>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-floating">
+                                <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
+                                <select class="form-select" name="action" id="action" required>
+                                    <option value="">Séléctionner</option>
+                                    <option value="Refaire" <?= isSelected('Refaire', $selectedValue2) ?>>Refaire
+                                    </option>
+                                    <option value="Validé" <?= isSelected('Validé', $selectedValue2) ?>>Validé</option>
+                                    <option value="En attente" <?= isSelected('En attente', $selectedValue2) ?>>En
+                                        attente</option>
+                                </select>
+                                <label for="floatingSelectGrid">Chef de services</label>
+                            </div>
+                        </div>
+                        <div class="col text-end">
+                            <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
+                                name="submit">Enregistrer</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col">
+                <form action="" method="post">
+                    <?php
+            // Supposons que $selectedValue contient la valeur récupérée de la base de données.
+            $selectedValue = $validation_directeur; // Exemple de valeur
+            ?>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-floating">
+                                <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data_v2"
+                                    id="id_data_v2">
+                                <select class="form-select" name="action_v2" id="action_v2" required>
+                                    <option value="">Séléctionner</option>
+                                    <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire
+                                    </option>
+                                    <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
+                                    <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En
+                                        attente</option>
+                                </select>
+                                <label for="floatingSelectGrid">Directeur</label>
+                            </div>
+                        </div>
+                        <div class="col text-end">
+                            <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
+                                name="submit2">Enregistrer</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <?php
+    }
+    ?>
+        <hr>
         <div class="info1">
             <?php 
                 if (!empty($num_cc)) {
@@ -188,9 +456,11 @@
                             <h5 id="list-item-1">Information sur le certificat de conformité</h5>
                             <hr>
                             <p><strong>Numéro de certificat de conformité:</strong> ' . $row["num_cc"] . '</p>
-                            <p><strong>Date de création:</strong> ' . date("d/m/Y", strtotime($row["date_cc"])) . '</p>
-                            <p><strong>Télécharger:</strong> <a href="../view_user/' . htmlspecialchars($row["pj_cc"], ENT_QUOTES, "UTF-8") . '">' . htmlspecialchars($row["num_cc"], ENT_QUOTES, "UTF-8") . '.pdf</a></p>
-                        </div>';
+                            <p><strong>Date de création:</strong> ' . date("d/m/Y", strtotime($row["date_cc"])) . '</p>';
+                            if(($validation_chef_services=='Validé')&&($validation_directeur=='Validé')){
+                             echo '<p><strong>Télécharger:</strong> <a href="../view_user/' . htmlspecialchars($row["pj_cc"], ENT_QUOTES, "UTF-8") . '">' . htmlspecialchars($row["num_cc"], ENT_QUOTES, "UTF-8") . '.pdf</a></p>';
+                            }
+                        echo '</div>';
                 }
             ?>
 
@@ -204,6 +474,9 @@
                 <p><strong>Date de modification:</strong>
                     <?php echo date('d/m/Y', strtotime($row['date_modification_pv_controle'])); ?>
                 </p>
+                <p><strong>Lieu de contrôle:</strong><?php echo $row['lieu_controle_pv']; ?></p>
+                <p><strong>Nombre et d'emballage:</strong><?php echo $row['mode_emballage']; ?></p>
+                <p><strong>Lieu d'embarquement:</strong><?php echo $row['lieu_embarquement_pv']; ?></p>
                 <p><strong>Télécharger:</strong> <a
                         href="../view_user/<?php echo htmlspecialchars($row['pj_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
                 </p>
@@ -214,6 +487,9 @@
                             <h5 id="list-item-1">Information sur le PV de scellage</h5>
                             <hr>
                             <p><strong>Numéro de PV de scellage:</strong> ' . $row["num_pv_scellage"] . '</p>
+                            <p><strong>Lieu de scellage:</strong>'.$row["lieu_scellage_pv"]. '</p>
+                            <p><strong>Nombre de colis:</strong>'.$row["nombre_colis"]. '</p>
+                            <p><strong>Type de colis:</strong>'.$row["type_colis"]. '</p>
                             <p><strong>Date de création:</strong> ' . date("d/m/Y", strtotime($row["date_creation_pv_scellage"])) . '</p>
                             <p><strong>Date de modification:</strong> ' . date("d/m/Y", strtotime($row["date_modification_pv_scellage"])) . '</p>
                             <p><strong>Télécharger:</strong> <a href="../view_user/' . htmlspecialchars($row["pj_pv_scellage"], ENT_QUOTES, "UTF-8") . '">' . htmlspecialchars($row["num_pv_scellage"], ENT_QUOTES, "UTF-8") . '.pdf</a></p>
@@ -236,7 +512,7 @@
                 <p><strong>Contact de la société:</strong><?php echo $row['contact_societe_importateur']; ?></p>
                 <p><strong>Email de la société:</strong> <?php echo $row['email_societe_importateur']; ?></p>
                 <p><strong>Pays de destination:</strong> <?php echo $row['pays_destination']; ?></p>
-                <p><strong>Visa du responsable:</strong> <?php echo $row['visa']; ?></p>
+                <p><strong>Date de départ:</strong> <?php echo date('d/m/Y', strtotime($row['date_depart'])); ?></p>
 
             </div>
             <div class="alert alert-light" role="alert">
@@ -244,6 +520,7 @@
                 <hr>
                 <div class="contenu">
                     <?php 
+                    
                     $nom_substance = array();
                     $couleur_substance = array();
                     $afficheWord= array();
@@ -293,18 +570,13 @@
                         foreach ($substances_couleurs as $substance => $couleurs) {
                             $couleurs_uniques = array_unique($couleurs);
                             if (empty($couleurs_uniques) || in_array('vide', $couleurs_uniques, true)) {
-                                $afficheWord[] = $substance .'(vide)';
+                                $afficheWord[] = $substance;
                             } else {
                                 $afficheWord[] = $substance . '(' . implode(', ', $couleurs_uniques) . ')';
                             }
                         }
                     }
-                    if(count($afficheWord) > 0) {
-                        echo "Catégorie Taillé : ";
-                        for ($i = 0; $i < count($afficheWord); $i++) {
-                            echo $afficheWord[$i] .' ';
-                        }
-                    }
+                    
                     ?>
                     <?php
                     $nom_substance_brute = array();
@@ -356,81 +628,49 @@
                         foreach ($substances_couleurs_brute as $substance_brute => $couleurs_brute) {
                             $couleurs_uniques_brute = array_unique($couleurs_brute);
                             if (empty($couleurs_uniques_brute) || in_array('vide', $couleurs_uniques_brute, true)) {
-                                $afficheWord_brute[] = $substance_brute .'(vide)';
+                                $afficheWord_brute[] = $substance_brute;
                             } else {
                                 $afficheWord_brute[] = $substance_brute . '(' . implode(', ', $couleurs_uniques_brute) . ')';
                             }
                         }
                     }
-                    if(count($afficheWord_brute) > 0) {
-                        echo "Catégorie Brute : ";
-                        for ($i = 0; $i < count($afficheWord_brute); $i++) {
-                            echo $afficheWord_brute[$i] .' ';
-                        }
-                    }
+                    
                     
                     ?>
                 </div>
                 <?php
-                    //affichage de poids
-                    $sommePoids_ct=0;
-                    $sommePoids_g=0;
-                    $sommePoids_kg=0;
-                    //recherche l'id_detaille_substance pour l'unité en carat
-                    $queryDetaille_ct = "SELECT datacc.num_facture, sum(contenu.poids_facture) as sommePoids FROM contenu_facture contenu
-                    INNER JOIN data_cc datacc ON contenu.id_data_cc=datacc.id_data_cc WHERE contenu.id_data_cc = $id_data_cc AND contenu.unite_poids_facture='ct'";
-                    $resultDetaille_ct = mysqli_query($conn, $queryDetaille_ct);
-                    $rowDetaille_ct = mysqli_fetch_assoc($resultDetaille_ct);
-                    $num_facture = $rowDetaille_ct['num_facture'];
-                    if(!empty($rowDetaille_ct['sommePoids'])){
-                        $sommePoids_ct = $rowDetaille_ct['sommePoids'];
-                    }
-                    //recherche l'id_detaille_substance pour l'unité en gramme
-                    $queryDetaille_g = "SELECT  sum(contenu.poids_facture) as sommePoids FROM contenu_facture contenu
-                    INNER JOIN data_cc datacc ON contenu.id_data_cc=datacc.id_data_cc WHERE contenu.id_data_cc = $id_data_cc AND contenu.unite_poids_facture='g'";
-                    $resultDetaille_g = mysqli_query($conn, $queryDetaille_g);
-                    $rowDetaille_g = mysqli_fetch_assoc($resultDetaille_g);
-                    if(!empty($rowDetaille_g['sommePoids'])){
-                        $sommePoids_g = $rowDetaille_g['sommePoids'];
-                    }
-                    //recherche l'id_detaille_substance pour l'unité en kilogramme
-                    $queryDetaille_kg = "SELECT  sum(contenu.poids_facture) as sommePoids, id_detaille_substance FROM contenu_facture contenu
-                    INNER JOIN data_cc datacc ON contenu.id_data_cc=datacc.id_data_cc WHERE contenu.id_data_cc = $id_data_cc AND contenu.unite_poids_facture='kg'";
-                    $resultDetaille_kg = mysqli_query($conn, $queryDetaille_kg);
-                    $rowDetaille_kg = mysqli_fetch_assoc($resultDetaille_kg);
-                    $id_detaille_substance_kg = $rowDetaille_kg['id_detaille_substance'];
-                    if(!empty($rowDetaille_kg['sommePoids'])){
-                        $sommePoids_kg = $rowDetaille_kg['sommePoids'];
-                    }
-                    $totalEnGramme = $sommePoids_ct * 0.2 + $sommePoids_g;
-                    $totalePoidsFormate = number_format($totalEnGramme, 2, '.', '');
-                    $nombreExplode = explode(".", $totalePoidsFormate);
-                        $nombreAvant = $nombreExplode[0];
-                        $nombreApres = $nombreExplode[1];
-                        $nombreCompare='';
-                        $nombreCompareLettre='';
-                    if($nombreApres > 0) {
-                        $nombreCompare = comparer($nombreApres);
-                        $nombreCompareLettre=nombreEnLettres($nombreCompare);
-                    }
-                    $totalePoidsEnLettres = nombreEnLettres($nombreAvant);
-                    $poidsEnLettre = $totalePoidsFormate.'('. $totalePoidsEnLettres.' virgule '.$nombreCompareLettre.' de Pierres gemmes)';
-                    echo 'Poids:'.$poidsEnLettre;
-                    if($sommePoids_kg !=0){
-                        $totalePoidsFormate_kg = number_format($sommePoids_kg, 2, '.', '');
-                        $nombreExplode = explode(".", $totalePoidsFormate_kg);
-                        $nombreAvant = $nombreExplode[0];
-                        $nombreApres = $nombreExplode[1];
-                        $nombreCompare='';
-                        $nombreCompareLettre='';
-                        if($nombreApres > 0) {
-                            $nombreCompare_kg = comparer($nombreApres);
-                            $nombreCompareLettre_kg=nombreEnLettres($nombreCompare_kg);
+
+                     include '../pv_scellage/recherche.php';
+                    if((count($afficheWord_brute) > 0)&&(count($afficheWord) > 0)) {
+                        echo "Catégorie Brute : ";
+                        for ($i = 0; $i < count($afficheWord_brute); $i++) {
+                            echo $afficheWord_brute[$i] .' ';
                         }
-                        $totalePoidsEnLettres_kg = nombreEnLettres($nombreAvant);
-                        $poidsEnLettre_kg = $totalePoidsFormate_kg.'('. $totalePoidsEnLettres_kg.' '.$nombreCompareLettre_kg.' de Pierres ordinaires)';
-                        echo 'Poids :'.$poidsEnLettre_kg;
+                        echo '</br> POIDS: '.$ecrit_b;
+                        echo "</br>Catégorie Taillé : ";
+                        for ($i = 0; $i < count($afficheWord); $i++) {
+                            echo $afficheWord[$i] .' ';
+                        }
+                        echo '</br> POIDS: '.$ecrit_t;
+                    }else if(count($afficheWord_brute) > 0) {
+                        echo "Catégorie Brute : ";
+                        for ($i = 0; $i < count($afficheWord_brute); $i++) {
+                            echo $afficheWord_brute[$i] .' ';
+                        }
+                        echo '</br> POIDS: '.$ecrit_b;
+                        echo "</br>Catégorie Taillé : ";
+                        for ($i = 0; $i < count($afficheWord); $i++) {
+                            echo $afficheWord[$i] .' ';
+                        }
+                        echo '</br> POIDS: '.$ecrit_t;
+                    }else if(count($afficheWord) > 0) {
+                        echo "Catégorie Taillé : ";
+                        for ($i = 0; $i < count($afficheWord); $i++) {
+                            echo $afficheWord[$i] .' ';
+                        }
+                        echo '</br> POIDS: '.$ecrit_t;
                     }
+           
                 ?>
             </div>
 
@@ -464,37 +704,28 @@
             </div>
         </div>
         <div class="info2">
-            <div class="d-flex justify-content-center mt-3">
-                <?php if(!empty($num_cc)): ?>
-                <button onclick="refreshIframe('<?php echo $row['pj_cc']; ?>')" class="btn btn-outline-warning">Cliquer
-                    ici pour afficher PV en PDF</button>
-                <?php else: ?>
-                <button onclick="refreshIframe('<?php echo $row['pj_pv_controle']; ?>')"
-                    class="btn btn-outline-warning">Cliquer ici pour afficher PV en PDF</button>
-                <?php endif; ?>
-            </div>
             <div class="alert alert-light" role="alert">
                 <?php
                                 // Emplacement du fichier PDF
                                 $pj="";
                                 if(!empty($pj_cc)){
-                                    $pj=$pj_cc;
+                                    if (($validation_chef_services != "Validé")|| ($validation_directeur != "Validé")) {
+                                        $pj=$row['lien_cc'];
+                                    }else{
+                                        $pj=$pj_cc;
+                                    }
                                 }else{
-                                    $pj=$row['pj_pv_controle'];
+                                   $pj=$row['pj_pv_controle'];
                                 }
-                                $pj_pv = str_replace('../', '', $pj);
-                                $pdfFilePath = 'cdc.minesmada.org/view_user/' .$pj_pv;
+                                $pdfFilePath = $pj;
+                                
+                                include "../cdc/convert.php";
                             ?>
-                <iframe id="pdfIframe"
-                    src="https://docs.google.com/gview?url=<?php echo urlencode($pdfFilePath); ?>&embedded=true"
-                    style="width:100%; height:750px;" frameborder="0"></iframe>
             </div>
         </div>
     </div>
     <?php
-    } else {
-        echo "<p>Aucune information trouvée pour cet ID LP.</p>";
-    }
+    
     ?>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script>

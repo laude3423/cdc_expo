@@ -1,46 +1,54 @@
 <?php 
 // Connexion à la base de données
-require_once('../../scripts/db_connect.php');
-require_once('../../scripts/session.php');
+require_once('../scripts/db_connect.php');
+require_once('../scripts/session.php');
 
+$sql="SELECT * FROM users WHERE id_user=$userID";
+    $result = mysqli_query($conn, $sql);
+    $row = mysqli_fetch_assoc($result);
+    $politique = intval($row['status_politique']);
+    $condition =intval($row['status_condition']);
+    
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // Vérification de la case à cocher
     $acceptation_politique = isset($_POST["acceptation_politique"]) ? 1 : 0;
     $acceptation_condition= isset($_POST["acceptation_condition"]) ? 1 : 0;
     $date_acceptation = date("Y-m-d H:i:s");
-    $sql="SELECT * FROM users";
-    $result = mysqli_query($conn, $sql);
-    $row = mysqli_fetch_assoc($result);
-    $politique = intval($row['status_politique']);
-    $condition =intval($row['status_condition']);
-    if($condition===0){
-        $update_query = "UPDATE users SET status_condition = '$acceptation_condition', status_politique = '$acceptation_politique', date_acceptation = '$date_acceptation'
-            WHERE id_user = '$userID'";
 
-            if ($conn->query($update_query) === TRUE) {
-                $_SESSION['toast_message'] = "Vous avez accépté la condition d'utilisation.";
-                header("Location: ".$_SERVER['PHP_SELF']);
-                exit();
-            } else {
-                echo "Erreur lors de l'insertion de l'utilisateur : " . $conn->error;
-            }
-    }elseif($politique===0){
-        $update_query = "UPDATE users SET status_condition = '$acceptation_condition', status_politique = '$acceptation_politique', date_acceptation = '$date_acceptation'
-            WHERE id_user = '$userID'";
-
-            if ($conn->query($update_query) === TRUE) {
-                $_SESSION['toast_message'] = "Vous avez accépté la politique de confidialité.";
-                header("Location: ".$_SERVER['PHP_SELF']);
-                exit();
-            } else {
-                echo "Erreur lors de l'insertion de l'utilisateur : " . $conn->error;
-            }
+    
+    if(($acceptation_condition === 0 )&&($acceptation_politique === 0)){
+        $_SESSION['toast_message2'] = "Veuillez accepter les deux conditions";
     }else{
-        $_SESSION['toast_message2'] = "Vous avez déjà accépté la condition d'utilisation et la politique de confidialité.";
-                header("Location: ".$_SERVER['PHP_SELF']);
-                exit();
+        if($condition===0){
+            $update_query = "UPDATE users SET status_condition = '$acceptation_condition', status_politique = '$acceptation_politique', date_acceptation = '$date_acceptation'
+                WHERE id_user = '$userID'";
+
+                if ($conn->query($update_query) === TRUE) {
+                    $_SESSION['toast_message'] = "Vous avez accépté la condition d'utilisation.";
+                    header("Location: ./home.php");
+                    exit();
+                } else {
+                    echo "Erreur lors de l'insertion de l'utilisateur : " . $conn->error;
+                }
+        }elseif($politique===0){
+            $update_query = "UPDATE users SET status_condition = '$acceptation_condition', status_politique = '$acceptation_politique', date_acceptation = '$date_acceptation'
+                WHERE id_user = '$userID'";
+
+                if ($conn->query($update_query) === TRUE) {
+                    $_SESSION['toast_message'] = "Vous avez accépté la politique de confidialité.";
+                    header("Location: ./home.php");
+                    exit();
+                } else {
+                    echo "Erreur lors de l'insertion de l'utilisateur : " . $conn->error;
+                }
+        }else{
+            $_SESSION['toast_message2'] = "Vous avez déjà accépté la condition d'utilisation et la politique de confidialité.";
+                    header("Location: ".$_SERVER['PHP_SELF']);
+                    exit();
+        }
     }
+    
 
     
 if(isset($_SESSION['toast_message'])) {
@@ -164,99 +172,118 @@ if(isset($_SESSION['toast_message2'])) {
 </head>
 
 <body>
-    <?php include "../../shared/header.php"; ?>
+    <?php include "../view/shared/navBar.php"; ?>
     <!-- <main> -->
-    <div class="container rounded-border custom-text-justify">
-        <div class="alert" role="alert">
-            <h4 class="text-decoration-underline text-center">Politique de Confidentialité:</h4>
-            <p class="text-justify">Bienvenue sur notre application web de génération des "Procès-verbal de scellage
-                ou contrôle et constantation" et "Certificat de fonformité" avec code QR. La confidentialité de vos
-                informations et des données
-                que vous y intégrez est une priorité pour nous. Cette politique de confidentialité explique quelles
-                informations collectées, leur utilisation et leur protection. En utilisant l'Application, vous consentez
-                à la collecte et à l'utilisation des informations et données que vous y intégrez conformément à cette
-                politique.</p>
+    <div class="container">
+        <div class="container rounded-border custom-text-justify">
+            <div class="alert" role="alert">
+                <h4 class="text-decoration-underline text-center">Politique de Confidentialité:</h4>
+                <p class="text-justify">Bienvenue sur notre application web de génération des "Procès-verbal de scellage
+                    ou contrôle et constantation" et "Certificat de fonformité" avec code QR. La confidentialité de vos
+                    informations et des données
+                    que vous y intégrez est une priorité pour nous. Cette politique de confidentialité explique quelles
+                    informations collectées, leur utilisation et leur protection. En utilisant l'Application, vous
+                    consentez
+                    à la collecte et à l'utilisation des informations et données que vous y intégrez conformément à
+                    cette
+                    politique.</p>
 
-            <h5 class="text-decoration-underline">1. Informations Collectées</h5>
-            <p class="text-justify">Nous collectons les types d'informations suivants lorsque vous utilisez
-                l'Application : <br>
+                <h5 class="text-decoration-underline">1. Informations Collectées</h5>
+                <p class="text-justify">Nous collectons les types d'informations suivants lorsque vous utilisez
+                    l'Application : <br>
 
-                <strong>Informations d'Identification :</strong> Pour générer des documents administratifs
-                personnalisés, l'Application collecte des informations telles que votre nom, votre prénom et d'autres
-                données d'identification ainsi que celles des demandeurs de "Laissez-passer modèle I" ou l'"Attestation
-                de déclaration".
-                <br>
-                <strong>Informations de Contact :</strong> L’application collecte votre adresse e-mail et d'autres
-                informations de contact pour vous envoyer des notifications liées à l'utilisation de l'Application.
-                <br>
-                <strong>Données pour la Génération d'un "Procès-Verbal" ou "Certificat de conformité" avec
-                    Code QR :</strong> Lorsque vous générez des documents tels que le "Procès-Verbal" ou
-                le "Certificat de conformité", l'application collect des données spécifiques nécessaires à la création
-                des codes QR et au remplissage du document.
-            </p>
+                    <strong>Informations d'Identification :</strong> Pour générer des documents administratifs
+                    personnalisés, l'Application collecte des informations telles que votre nom, votre prénom et
+                    d'autres
+                    données d'identification ainsi que celles des demandeurs de "Procès-Verbal" ou de "Certificat de
+                    conformité".
+                    <br>
+                    <strong>Informations de Contact :</strong> L’application collecte votre adresse e-mail et d'autres
+                    informations de contact pour vous envoyer des notifications liées à l'utilisation de l'Application.
+                    <br>
+                    <strong>Données pour la Génération d'un "Procès-Verbal" ou "Certificat de conformité" avec
+                        Code QR :</strong> Lorsque vous générez des documents tels que le "Procès-Verbal" ou
+                    le "Certificat de conformité", l'application collect des données spécifiques nécessaires à la
+                    création
+                    des codes QR et au remplissage du document.
+                </p>
 
-            <h5 class="text-decoration-underline">2. Utilisation des Informations</h5>
-            <p class="text-justify">Les informations collectées par l’Application sont utilisées dans les buts suivants
-                : <br>
+                <h5 class="text-decoration-underline">2. Utilisation des Informations</h5>
+                <p class="text-justify">Les informations collectées par l’Application sont utilisées dans les buts
+                    suivants
+                    : <br>
 
-                <strong>Fournir les Services :</strong> Les informations d'identification et de contact sont utilisées
-                pour personnaliser les documents administratifs et faciliter la communication avec vous.
-                <br>
-                <strong>Améliorer l'Application :</strong> Les informations collectées seront utilisées sous forme de
-                données agrégées et anonymisées afin de pouvoir analyser les tendances d'utilisation de l'Application,
-                améliorer ses fonctionnalités et optimiser l'expérience de ses utilisateurs.
-                <br>
-                <strong>Assurer la sécurité : </strong> Les informations collectées peuvent être utilisées pour assurer
-                la sécurité de l'Application et prévenir les activités frauduleuses.
-            </p>
-            <h5 class="text-decoration-underline">3. Protection des Informations</h5>
-            <p class="text-justify">Nous mettons en place des mesures de sécurité appropriées pour protéger vos
-                informations ainsi que celles des demandeurs de "Procès-Verbal" ou de "Cértificat de conformité" contre
-                tout accès non autorisé, altération, divulgation ou destruction.</p>
+                    <strong>Fournir les Services :</strong> Les informations d'identification et de contact sont
+                    utilisées
+                    pour personnaliser les documents administratifs et faciliter la communication avec vous.
+                    <br>
+                    <strong>Améliorer l'Application :</strong> Les informations collectées seront utilisées sous forme
+                    de
+                    données agrégées et anonymisées afin de pouvoir analyser les tendances d'utilisation de
+                    l'Application,
+                    améliorer ses fonctionnalités et optimiser l'expérience de ses utilisateurs.
+                    <br>
+                    <strong>Assurer la sécurité : </strong> Les informations collectées peuvent être utilisées pour
+                    assurer
+                    la sécurité de l'Application et prévenir les activités frauduleuses.
+                </p>
+                <h5 class="text-decoration-underline">3. Protection des Informations</h5>
+                <p class="text-justify">Nous mettons en place des mesures de sécurité appropriées pour protéger vos
+                    informations ainsi que celles des demandeurs de "Procès-Verbal" ou de "Cértificat de conformité"
+                    contre
+                    tout accès non autorisé, altération, divulgation ou destruction.</p>
 
-            <h5 class="text-decoration-underline">4. Partage des Informations</h5>
-            <p>Les informations collectées ne seront ni vendues ni louées à des tiers.<br>
+                <h5 class="text-decoration-underline">4. Partage des Informations</h5>
+                <p>Les informations collectées ne seront ni vendues ni louées à des tiers.<br>
 
-                <strong>Conformité Légale :</strong> Les informations collectées peuvent être si cela est nécessaire
-                pour respecter les Lois et Règlements en vigueur, pour des éventuelles procédures judiciaires ou pour
-                répondre à des demandes gouvernementales.
-            </p>
-            <h5 class="text-decoration-underline">5. Modifications de la Politique de Confidentialité</h5>
-            <p class="text-justify">Nous nous réservons le droit de mettre à jour cette politique de confidentialité à
-                tout moment. Les modifications seront publiées sur l'Application. Nous vous encourageons à consulter
-                régulièrement cette politique pour rester informé des changements.</p>
-            <h5 class="text-decoration-underline">6. Contact</h5>
+                    <strong>Conformité Légale :</strong> Les informations collectées peuvent être si cela est nécessaire
+                    pour respecter les Lois et Règlements en vigueur, pour des éventuelles procédures judiciaires ou
+                    pour
+                    répondre à des demandes gouvernementales.
+                </p>
+                <h5 class="text-decoration-underline">5. Modifications de la Politique de Confidentialité</h5>
+                <p class="text-justify">Nous nous réservons le droit de mettre à jour cette politique de confidentialité
+                    à
+                    tout moment. Les modifications seront publiées sur l'Application. Nous vous encourageons à consulter
+                    régulièrement cette politique pour rester informé des changements.</p>
+                <h5 class="text-decoration-underline">6. Contact</h5>
 
-            <p class="text-justify">Si vous avez des questions ou des préoccupations concernant cette politique de
-                confidentialité, veuillez contacter le DGM.</p>
+                <p class="text-justify">Si vous avez des questions ou des préoccupations concernant cette politique de
+                    confidentialité, veuillez contacter le DGM.</p>
 
-            <p class="text-justify">En utilisant cette Application, vous acceptez d'être lié par ces Conditions. Merci
-                de votre compréhension et de votre coopération.</p>
+                <p class="text-justify">En utilisant cette Application, vous acceptez d'être lié par ces Conditions.
+                    Merci
+                    de votre compréhension et de votre coopération.</p>
+            </div>
+            <?php if ($condition !='1') { ?>
+            <form method="post" action="" class="needs-validation">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="acceptation_condition"
+                        name="acceptation_condition" required>
+                    <label class="form-check-label" for="same-acceptation_condition">"J'accepte les <a
+                            href="condition_utilisation.php" class="href">conditions d'utilisation</a>"</label>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="acceptation_condition"
+                        name="acceptation_condition" required>
+                    <label class="form-check-label" for="same-acceptation_condition">"J'accepte les politiques de
+                        confidentialité."</label>
+                </div>
+                <hr class="my-4">
+                <button class="btn btn-primary btn-lg" type="submit">J'accepte</button>
+            </form>
+            <?php } ?>
         </div>
-        <?php if ($status_condition != '1') { ?>
-        <form method="post" action="" class="needs-validation">
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="acceptation_condition" name="acceptation_condition"
-                    required>
-                <label class="form-check-label" for="same-acceptation_condition">"J'accepte les <a
-                        href="condition_utilisation.php" class="href">conditions d'utilisation</a>"</label>
-            </div>
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="acceptation_condition" name="acceptation_condition"
-                    required>
-                <label class="form-check-label" for="same-acceptation_condition">"J'accepte les politiques de
-                    confidentialité."</label>
-            </div>
-            <hr class="my-4">
-            <button class="btn btn-primary btn-lg" type="submit">J'accepte</button>
-        </form>
-        <?php } ?>
+        <!-- </main> -->
     </div>
-    <!-- </main> -->
-
 
     <!-- Inclure les fichiers JavaScript de Bootstrap 5 (pour le bon fonctionnement des composants) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Inclure jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    </script>
     <script>
     $(document).ready(function() {
         $('.toast').toast('show');

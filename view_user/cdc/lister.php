@@ -148,7 +148,7 @@ if (!empty($edit_societe_id)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Bootstrap CSS-->
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -159,11 +159,31 @@ if (!empty($edit_societe_id)) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('loadingSpinner');
+        const table = document.getElementById('agentTable');
+
+        // Afficher le spinner
+        spinner.style.display = 'block';
+        table.style.display = 'none';
+
+        // Simulation de chargement des données
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }, 2000); // Changer le délai selon vos besoins
+    });
+    </script>
+    <style>
+    #agentTable {
+        display: none;
+    }
+    </style>
+
 
     <title>Ministere des mines</title>
-    <?php 
-    include "../../shared/header.php";
-    ?>
+    <?php include_once('../../view/shared/navBar.php'); ?>
     <style>
     #spinner {
         border: 4px solid rgba(0, 0, 0, 0.1);
@@ -180,21 +200,59 @@ if (!empty($edit_societe_id)) {
         }
     }
     </style>
+    <style>
+    .container {
+        font-size: small;
+        /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+    }
+
+    .btn {
+        font-size: small;
+        /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+    }
+
+    .dropdown-item {
+        font-size: small;
+        /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+    }
+
+    .form-control {
+        font-size: small;
+        /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+    }
+
+    .form-select {
+        font-size: small;
+        /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+    }
+
+    .h4 {
+        font-size: 20px;
+        /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+    }
+    </style>
 
 
 </head>
 
 <body>
     <div class="container">
-        <div class="row mb-3" style="margin-top: 30px;">
-            <div class="col md-8 mb-3">
+        <hr>
+        <div class="row">
+            <div class="col">
                 <h5>Liste des cértificats de conformité</h5>
             </div>
-            <div class="col md-10 text-end">
-                <a class="btn btn-success btn-sm rounded-pill px-3 mb-3" href="./exporter.php?">Exporter en excel</a>
+            <div class="col">
+                <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
+            </div>
+            <div class="col text-end">
+                <a class="btn btn-success rounded-pill px-3" href="./exporter.php?" style="font-size: 90%;"><i
+                        class="fas fa-file-excel"></i>
+                    Exporter en excel</a>
 
             </div>
         </div>
+        <hr>
         <?php 
             $sql='';
             if($groupeID===2){
@@ -219,15 +277,22 @@ if (!empty($edit_societe_id)) {
                 
                 $result= mysqli_query($conn, $sql);
                  if ($result->num_rows > 0) {
-                    ?><table class=" table table-hover text-center">
+                    ?>
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <table id="agentTable" class=" table table-hover text-center">
             <thead class="table-dark">
                 <tr>
                     <th scope="col"></th>
-                    <th scope="col">Numéro de CDC</th>
-                    <th scope="col">Société expéditeur</th>
-                    <th scope="col">Numéro Facture</th>
-                    <th scope="col">Numéro DOM</th>
-                    <th scope="col">Société importateur</th>
+                    <th scope="col">Numéro de CC</th>
+                    <th class="masque2" scope="col">Date</th>
+                    <th class="masque1" scope="col">Société importateur</th>
+                    <th class="masque1" scope="col">Destination</th>
+                    <th scope="col">Chef de services</th>
+                    <th scope="col">Directeur</th>
                     <th scope="col">Actions</th>
                 </tr>
             </thead>
@@ -235,12 +300,18 @@ if (!empty($edit_societe_id)) {
                 <?php  while($row = mysqli_fetch_assoc($result)){
                     ?>
                 <tr>
+                    <?php if ($row['validation_chef'] == "Validé" && $row['validation_directeur'] == "Validé") { ?>
                     <td>✅</td>
+                    <?php } else { ?>
+                    <td>⚠️</td>
+                    <?php } ?>
                     <td><?php echo $row['num_cc'] ?></td>
-                    <td><?php echo $row['nom_societe_expediteur'] ?></td>
-                    <td><?php echo $row['num_facture'] ?></td>
-                    <td><?php echo $row['num_domiciliation'] ?></td>
-                    <td><?php echo $row['nom_societe_importateur'] ?></td>
+                    <td><?php echo $row['date_cc'] ?></td>
+                    <td class="masque1"><?php echo $row['nom_societe_importateur'] ?></td>
+                    <td class="masque1"><?php echo $row['pays_destination'] ?></td>
+                    <td><?php echo $row['validation_chef'] ?></td>
+                    <td><?php echo $row['validation_directeur'] ?></td>
+                    </td>
                     <td>
                         <a class="link-dark detail_pv_scellage"
                             href="../pv_controle/detail.php?id=<?php echo $row['id_data_cc']?>">détails</a>
@@ -260,6 +331,11 @@ if (!empty($edit_societe_id)) {
                 <tr>
             </tbody>
         </table>
+        <div>
+            <?php
+                include('../../shared/pied_page.php');
+            ?>
+        </div>
     </div>
 
 

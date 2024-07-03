@@ -67,22 +67,27 @@ include_once('../../scripts/db_connect.php');
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col">
+                        <!-- <div class="col">
                             <label for="facture" name="facture" class="col-form-label">Numéro de la facture:</label>
                             <select id="facture" name="facture" placeholder="Choisir ..." autocomplete="off" required
                                 style="font-size:90%" disabled>
                                 <option value="">Choisir ...</option>
                                 <?php    
-                                    $query = "SELECT id_data_cc, num_facture FROM data_cc";
-                                    $stmt = $conn->prepare($query);
-                                    $stmt->execute();
-                                    $resu = $stmt->get_result();
-                                    while ($rowSub = $resu->fetch_assoc()) {
-                                        $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
-                                        echo "<option value='" . $rowSub['id_data_cc'] ."'$selected>". $rowSub['num_facture'] . "</option>";
-                                    }
+                                    // $query = "SELECT id_data_cc, num_facture FROM data_cc";
+                                    // $stmt = $conn->prepare($query);
+                                    // $stmt->execute();
+                                    // $resu = $stmt->get_result();
+                                    // while ($rowSub = $resu->fetch_assoc()) {
+                                    //     $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
+                                    //     echo "<option value='" . $rowSub['id_data_cc'] ."'$selected>". $rowSub['num_facture'] . "</option>";
+                                    // }
                                     ?>
                             </select>
+                        </div> -->
+                        <div class="col">
+                            <label for="date_depart" name="date_depart" class="col-form-label">Date de départ</label>
+                            <input type="date" class="form-control" name="date_depart" id="date_depart"
+                                placeholder="Date de départ de l'exportation" required style="font-size:90%">
                         </div>
                         <div class="col">
                             <label for="numDom" name="numDom" class="col-form-label">Numéro de
@@ -164,49 +169,12 @@ include_once('../../scripts/db_connect.php');
                             <input type="file" class="form-control" name="pj_lp3e" id="pj_lp3e" style="font-size:90%">
                         </div>
                         <div class="col">
-                            <label for="chef" name="chef" class="col-form-label">Chef de Division:</label>
-                            <select id="chef" name="chef" placeholder="Choisir ..." autocomplete="off" required
-                                style="font-size:90%">
-                                <option value="">Choisir ...</option>
-                                <?php    
-                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Chef de Division Exportation Minière'";
-                                        $stmt = $conn->prepare($query);
-                                        $stmt->execute();
-                                        $resu = $stmt->get_result();
-                                        
-                                        while ($rowSub = $resu->fetch_assoc()) {
-                                            echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] . "</option>";
-                                        }
-                                        ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="qualite" name="qualite" class="col-form-label">Responsable de qualité
-                                laboratoire:</label>
-                            <select id="qualite" name="qualite" placeholder="Choisir ..." autocomplete="off" required
-                                style="font-size:90%">
-                                <option value="">Choisir ...</option>
-                                <?php    
-                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Responsable qualité Laboratoire des Mines'";
-                                        $stmt = $conn->prepare($query);
-                                        $stmt->execute();
-                                        $resu = $stmt->get_result();
-                                        
-                                        while ($rowSub = $resu->fetch_assoc()) {
-                                            echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] . "</option>";
-                                        }
-                                        ?>
-                            </select>
-                        </div>
-                        <div class="col">
                             <label for="police" name="police" class="col-form-label">Officier de Police:</label>
                             <select id="police" name="police" placeholder="Choisir ..." autocomplete="off" required
                                 style="font-size:90%">
                                 <option value="">Choisir ...</option>
                                 <?php    
-                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Officier de Police'";
+                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Officier de police judiciaire'";
                                         $stmt = $conn->prepare($query);
                                         $stmt->execute();
                                         $resu = $stmt->get_result();
@@ -225,7 +193,7 @@ include_once('../../scripts/db_connect.php');
                                 style="font-size:90%">
                                 <option value="">Choisir ...</option>
                                 <?php    
-                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Douanier'";
+                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Agent de douane'";
                                         $stmt = $conn->prepare($query);
                                         $stmt->execute();
                                         $resu = $stmt->get_result();
@@ -284,7 +252,6 @@ function selectTom() {
 
     new TomSelect("#expediteur", selectOptions);
     new TomSelect("#destination", selectOptions);
-    new TomSelect("#facture", selectOptions);
     new TomSelect("#agent_scellage", selectOptions);
     new TomSelect("#qualite", selectOptions);
     new TomSelect("#douane", selectOptions);

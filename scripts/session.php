@@ -31,11 +31,15 @@
         $rowUsers = $resultatUsers->fetch_assoc();
         $groupeID = $rowUsers['id_groupe'];
         $status_user = $rowUsers['status_user'];
-        $email_confirm = $rowUsers['email_confirm'];
+        $email_confirm = $rowUsers['email_confirme'];
         $status_condition = $rowUsers['status_condition'];
         $status_politique = $rowUsers['status_politique']; 
         $date_acceptation = date('d/m/Y', strtotime($rowUsers['date_acceptation']));
         $id_direction = $rowUsers['id_direction'];
+        $fonctionUsers = $rowUsers['fonction'];
+        $nom_user= $rowUsers['nom_user'];
+        $prenom_user = $rowUsers['prenom_user'];
+        $code_fonction = $rowUsers['code_fonction'];
         $_SESSION['id_direction'] = $rowUsers['id_direction'];
 
         // switch ($groupeID) {

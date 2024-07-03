@@ -84,22 +84,41 @@ if (!empty($edit_societe_id)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Bootstrap CSS-->
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" type="text/css" href="../shared/stylees.css">
 
     <!--Bootstrap JS-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('loadingSpinner');
+        const table = document.getElementById('agentTable');
 
+        // Afficher le spinner
+        spinner.style.display = 'block';
+        table.style.display = 'none';
+
+        // Simulation de chargement des données
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }, 2000); // Changer le délai selon vos besoins
+    });
+    </script>
+    <style>
+    #agentTable {
+        display: none;
+    }
+    </style>
     <title>Ministere des mines</title>
     <?php 
-    include "../../shared/header.php";
+    include "../shared/navBar.php";
     ?>
 
 
@@ -107,42 +126,53 @@ if (!empty($edit_societe_id)) {
 
 <body>
     <div class="container">
-        <div class="row mb-3" style="margin-top: 30px;">
-            <div class="col md-8 mb-3">
-                <h5>Liste des sociétés importateurs</h5>
+        <hr>
+        <div class="row">
+            <div class="col">
+                <h5>Liste des utilisateurs</h5>
             </div>
-            <div class="col md-10 text-end">
-                <a class="btn btn-dark btn-sm rounded-pill px-3 mb-3" href="#" onclick="openModal()"><i
+            <div class="col">
+                <input type="text" id="search" class="form-control" placeholder="Recherche...">
+            </div>
+            <div class="col text-end">
+                <a class="btn btn-dark btn-sm rounded-pill px-3 " href="#" onclick="openModal()"><i
                         class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
             </div>
         </div>
-        <table class="table table-hover text-center">
+        <hr>
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <table id="agentTable" class="table table-hover text-center">
             <thead class="table-dark">
                 <tr>
                     <th scope="col"></th>
                     <th scope="col">Nom</th>
-                    <th scope="col">prenom</th>
-                    <th scope="col">Téléphone</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Nom de groupe</th>
-                    <th scope="col">password</th>
+                    <th class="masque1" scope="col">prenom</th>
+                    <th class="masque1" scope="col">Téléphone</th>
+                    <th class="masque1" scope="col">Email</th>
+                    <th scope="col">Groupe</th>
+                    <th scope="col">Direction</th>
                     <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php 
-                    $sql="SELECT user.*, gp.* FROM users AS user INNER JOIN groupe gp ON user.id_groupe=gp.id_groupe";
+                    $sql="SELECT user.*, gp.*, dir.* FROM users AS user INNER JOIN groupe gp ON user.id_groupe=gp.id_groupe
+                    LEFT JOIN direction dir ON dir.id_direction=user.id_direction";
                     $result= mysqli_query($conn, $sql);
                     while($row = mysqli_fetch_assoc($result)){
                     ?>
                 <tr>
                     <td><?php echo $row['status_user'] === '1'  ? '✅' : '🔒'; ?></td>
                     <td><?php echo $row['nom_user'] ?></td>
-                    <td><?php echo $row['prenom_user'] ?></td>
-                    <td><?php echo $row['phone_user'] ?></td>
-                    <td><?php echo $row['mail_user'] ?></td>
+                    <td class="masque1"><?php echo $row['prenom_user'] ?></td>
+                    <td class="masque1"><?php echo $row['phone_user'] ?></td>
+                    <td class="masque1"><?php echo $row['mail_user'] ?></td>
                     <td><?php echo $row['nom_groupe'] ?></td>
-                    <td><?php echo $row['password_user'] ?></td>
+                    <td><?php echo $row['nom_direction'] ?></td>
                     <td>
                         <?php if ($row['status_user'] === '1'): ?>
                         <a href="#" class="btn-sm btn btn-success"
@@ -160,6 +190,11 @@ if (!empty($edit_societe_id)) {
                 <tr>
             </tbody>
         </table>
+        <div>
+            <?php
+                include('../../shared/pied_page.php');
+            ?>
+        </div>
     </div>
     <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false"
         aria-labelledby="staticBackdropLabel" style="font-size:90%; font-weight:bold">

@@ -22,8 +22,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $date_lp3e = $_POST["date_lp3"];
         $chef = $_POST["chef"];
         $qualite = $_POST["qualite"];
+        $date_depart=$_POST['date_depart'];
         $dateFormat = "Y-m-d";
         $date = date($dateFormat);
+        $dateInsert = date($dateFormat);
         $anneeActuelle = date('Y');
         $moisActuel = date('m');
 
@@ -36,17 +38,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $rowDir = mysqli_fetch_assoc($resultDir);
         $sigle = $rowDir['sigle_direction'];
         $lieu_emission = $rowDir['lieu_emission'];
-        $codeSql="SELECT dcc.date_creation_pv_controle, dcc.num_pv_controle FROM data_cc AS dcc
+        $typeDirection = $rowDir['type_direction'];
+        $nomDirection = $rowDir['nom_direction'];
+        $codeSql="SELECT dcc.date_creation_pv_controle, dcc.id_data_cc, dcc.num_pv_controle FROM data_cc AS dcc
         INNER JOIN users AS us ON dcc.id_user=us.id_user
         LEFT JOIN direction AS di ON us.id_direction=di.id_direction
-        WHERE id_data_cc = (SELECT MAX(id_data_cc) FROM
-        data_cc)
-        AND dcc.num_pv_controle IS NOT NULL AND di.id_direction=$id_direction";
+        WHERE dcc.num_pv_controle IS NOT NULL AND di.id_direction=$id_direction";
         $resultCode = mysqli_query($conn, $codeSql);
-        $rowss = mysqli_fetch_assoc($resultCode);
-        if(!empty($rowss['num_pv_controle'])){
-            $date_creation = $rowss['date_creation_pv_controle'];
-            $num_pv_controle = $rowss['num_pv_controle'];
+
+        $max_id_data_cc = null;
+        $date_creation = null;
+        $num_pv_controle=null;
+
+        while ($row = mysqli_fetch_assoc($resultCode)) {
+            // Vérifier si c'est le premier élément ou si l'actuel id_data_cc est supérieur au max actuel
+            if ($max_id_data_cc === null || $row['id_data_cc'] > $max_id_data_cc) {
+                $max_id_data_cc = $row['id_data_cc'];
+                $date_creation = $row['date_creation_pv_controle'];
+                $num_pv_controle = $row['num_pv_controle'];
+
+            }
+        }
+        if($max_id_data_cc !== null){
             $parts = explode("-", $num_pv_controle);
             // Si la chaîne a bien été divisée
             if(count($parts) === 2) {
@@ -60,15 +73,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $moisFacture = date('m', strtotime($date_creation));
             echo $nouvelle_incrementation_formattee;
             if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
-                $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/$sigle/PCC";
-                $num_cc = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/$sigle/CDC";
+                if($groupeID ===3){
+                    $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GU.PVCC";
+                    $num_cc = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GU.CC";
+                }else{
+                    $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/$sigle.PVCC";
+                    $num_cc = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/$sigle.CC"; 
+                }
             }else{
-                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle/PCC";
-                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle/CDC";
+                if($groupeID ===3){
+                    $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU.PVCC";
+                    $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU.CC";
+                }else{
+                    $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle.PVCC";
+                    $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle.CC";
+                }
             }
         }else{
-            $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle/PCC";
-            $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle/CDC";
+            if($groupeID===3){
+                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU.PVCC";
+                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU.CC";
+            }else{
+                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle.PVCC";
+                $num_cc = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/$sigle.CC";
+            }
         }
         // recherche
         $requette="SELECT num_pv_controle FROM data_cc WHERE id_data_cc=$id_data";
@@ -148,7 +176,7 @@ if (!empty($edit_societe_id)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Bootstrap CSS-->
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -163,40 +191,50 @@ if (!empty($edit_societe_id)) {
 
     </script>
     <title>Ministere des mines</title>
+    <?php include_once('../../view/shared/navBar.php'); ?>
     <?php 
-    include "../../shared/header.php";
     ?>
     <style>
-    #spinner {
-        border: 4px solid rgba(0, 0, 0, 0.1);
-        border-left-color: #7983ff;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
+    #agentTable {
+        display: none;
     }
     </style>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('loadingSpinner');
+        const table = document.getElementById('agentTable');
+
+        // Afficher le spinner
+        spinner.style.display = 'block';
+        table.style.display = 'none';
+
+        // Simulation de chargement des données
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }, 2000); // Changer le délai selon vos besoins
+    });
+    </script>
 
 
 </head>
 
 <body>
     <div class="container">
-        <div class="row mb-3" style="margin-top: 30px;">
-            <div class="col md-8 mb-3">
-                <h5>Liste des Procès-Verbal de constantation et de controle</h5>
+        <hr>
+        <div class="row mb-3">
+            <div class="col">
+                <h5>Liste des P.V de constantation et de controle</h5>
             </div>
-            <div class="col md-10 text-end">
-                <a class="btn btn-success btn-sm rounded-pill px-3 mb-3" href="../cdc/exporter.php?">Exporter en
-                    excel</a>
+            <div class="col">
+                <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
+            </div>
+            <div class="col text-end">
+                <a class="btn btn-success rounded-pill px-3" href="../cdc/exporter.php?"><i
+                        class="fas fa-file-excel"></i> Exporter en excel</a>
             </div>
         </div>
+        <hr>
         <?php
         $sql = ""; 
         if ($groupeID === 2) {
@@ -220,15 +258,22 @@ if (!empty($edit_societe_id)) {
         }
             $result= mysqli_query($conn, $sql);
             if ($result->num_rows > 0) {
-            ?><table class="table table-hover text-center">
+            ?>
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <table id="agentTable" class="table table-hover text-center">
             <thead class="table-dark">
                 <tr>
                     <th scope="col"></th>
-                    <th scope="col">Numéro de PV de controle</th>
-                    <th scope="col">Société expéditeur</th>
-                    <th scope="col">Numéro Facture</th>
-                    <th scope="col">Numéro DOM</th>
-                    <th scope="col">Société importateur</th>
+                    <th scope="col">Numéro de PV</th>
+                    <th scope="col" class="masque2">Date</th>
+                    <th scope="col" class="masque2">Numéro Facture</th>
+                    <th scope="col" class="masque1">Société expéditeur</th>
+                    <th scope="col" class="masque1">Destination</th>
+                    <th scope="col">Status</th>
                     <th scope="col">Actions</th>
                 </tr>
             </thead>
@@ -237,18 +282,44 @@ if (!empty($edit_societe_id)) {
                     while($row = mysqli_fetch_assoc($result)){
                         ?>
                 <tr>
+                    <?php  if( $row['validation_controle']=='Validé'){
+                    ?>
                     <td>✅</td>
+                    <?php  }else {?>
+                    <td>⚠️</td>
+                    <?php }?>
                     <td><?php echo $row['num_pv_controle'] ?></td>
-                    <td><?php echo $row['nom_societe_expediteur'] ?></td>
-                    <td><?php echo $row['num_facture'] ?></td>
-                    <td><?php echo $row['num_domiciliation'] ?></td>
-                    <td><?php echo $row['nom_societe_importateur'] ?></td>
+                    <td class="masque2"><?php echo $row['date_creation_pv_controle'] ?></td>
+                    <td class="masque2"><?php echo $row['date_facture'] ?></td>
+                    <td class="masque1"><?php echo $row['nom_societe_expediteur'] ?></td>
+                    <td class="masque1"><?php echo $row['pays_destination'] ?></td>
+                    <td><?php echo $row['validation_controle'] ?></td>
                     <td>
                         <a class="link-dark"
                             href="../pv_controle_gu/detail.php?id=<?php echo $row['id_data_cc']; ?>">détails</a>
+                        <?php if($groupeID !=2){
+                            $date_depart = new DateTime($row['date_depart']);
+                            $date_aujourdhui = new DateTime();
+                            $date_depart->setTime(0, 0);
+                            $date_aujourdhui->setTime(0, 0);
+                            if ($date_depart >= $date_aujourdhui) {
+                                ?>
                         <a href="#" class="link-dark btn_edit_pv_controle"
-                            data-id="<?= htmlspecialchars($row["id_data_cc"])?>"><i
-                                class="fa-solid fa-pen-to-square me-3"></i></a>
+                            data-id="<?= htmlspecialchars($row["id_data_cc"])?>">
+                            <i class="fa-solid fa-pen-to-square me-3"></i>
+                        </a>
+                        <?php
+                            } else {
+                                    ?>
+                        <a href="#" class="link-dark" data-toggle="tooltip"
+                            title="Modification non autorisée : les produits sont déjà exportés">
+                            <i class="fa-solid fa-pen-to-square me-3"></i>
+                        </a>
+                        <?php
+                            }
+                        }
+                        ?>
+
                     </td>
                 </tr>
                 <?php   
@@ -262,9 +333,12 @@ if (!empty($edit_societe_id)) {
                 <tr>
             </tbody>
         </table>
-    </div>
-    <div id="edit_pv_controle_form"></div>
-
+        <div>
+            <?php
+                include('../../shared/pied_page.php');
+            ?>
+        </div>
+    </div>div <div id="edit_pv_controle_form"></div>
 
     <!--Bootstrap-->
 
@@ -281,10 +355,12 @@ if (!empty($edit_societe_id)) {
     <script>
     $(document).ready(function() {
         $('.toast').toast('show');
+        $('[data-toggle="tooltip"]').tooltip();
 
         $(".btn_edit_pv_controle").click(function() {
             var id_data_cc = $(this).data('id');
-            showEditForm('edit_pv_controle_form', './edit_pv.php?id=' + id_data_cc, 'staticBackdrop2');
+            showEditForm('edit_pv_controle_form', './edit_pv.php?id=' + id_data_cc,
+                'staticBackdrop2');
 
         });
 

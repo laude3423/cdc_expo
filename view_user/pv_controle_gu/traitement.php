@@ -1,6 +1,6 @@
 <?php
     require_once('../../scripts/db_connect.php');
-    session_start();
+    require('../../scripts/session.php');
     
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_data = $_POST["id"];
@@ -8,7 +8,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $lieu_controle = $_POST["lieu_controle"];
     $num_pv='';$num_cc="";
     //recherche
-    $query = "SELECT num_pv_controle FROM data_cc WHERE id_data_cc = $id_data AND lieu_controle_pv IS NOT NULL";
+    $query = "SELECT num_pv_controle FROM data_cc WHERE id_data_cc = $id_data AND num_pv_controle IS NOT NULL";
         $stmt = $conn->prepare($query);
         $stmt->execute();
         $resu = $stmt->get_result();
@@ -18,17 +18,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $dateInsert = date($dateFormat);
             $anneeActuelle = date('Y');
             $moisActuel = date('m');
-            $codeSql="SELECT date_creation_pv_controle, num_pv_controle FROM data_cc WHERE id_data_cc = (SELECT MAX(id_data_cc) FROM
-            data_cc) AND num_pv_controle IS NOT NULL";
-            $stmt1 = $conn->prepare($codeSql);
-            $stmt1->execute();
-            $resu1 = $stmt1->get_result();
-            if($resu1->num_rows !== 0){
-                $row = $resu1->fetch_assoc();
-                $date_creation = $rows['date_creation_pv_controle'];
-                $num_pv_controle = $rows['num_pv_controle'];
-                // Extraire l'incrémentation
-                // Diviser le numéro de PV en parties basées sur le délimiteur "-"
+            $codeSql="SELECT dcc.date_creation_pv_controle, dcc.id_data_cc, dcc.num_pv_controle FROM data_cc AS dcc
+            INNER JOIN users AS us ON dcc.id_user=us.id_user
+            LEFT JOIN direction AS di ON us.id_direction=di.id_direction
+            WHERE dcc.num_pv_controle IS NOT NULL AND di.id_direction=$id_direction";
+            $resultCode = mysqli_query($conn, $codeSql);
+
+            $max_id_data_cc = null;
+            $date_creation = null;
+            $num_pv_controle=null;
+
+            while ($row = mysqli_fetch_assoc($resultCode)) {
+                // Vérifier si c'est le premier élément ou si l'actuel id_data_cc est supérieur au max actuel
+                if ($max_id_data_cc === null || $row['id_data_cc'] > $max_id_data_cc) {
+                    $max_id_data_cc = $row['id_data_cc'];
+                    $date_creation = $row['date_creation_pv_controle'];
+                    $num_pv_controle = $row['num_pv_controle'];
+
+                }
+            }
+            if($max_id_data_cc !==null){
                 $parts = explode("-", $num_pv_controle);
                 // Si la chaîne a bien été divisée
                 if(count($parts) === 2) {
@@ -60,14 +69,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $result = mysqli_query($conn, $sql);
             if ($result) {
                         $_SESSION['toast_message'] = "Inertion réussie.";
-                        header("Location: ./lister.php");
+                        header("Location: https://cdc.minesmada.org/view_user/pv_controle_gu/detail.php?id=" . $id_data);
                         exit();
                 } else {
                         echo "Erreur d'enregistrement" . mysqli_error($conn);
                 }
         } else {
                 $_SESSION['toast_message2'] = "Le numéro de facture que vous avez choisi est déjà enregistré.";
-                header("Location: ./lister.php");
+                header("Location: https://cdc.minesmada.org/view_user/pv_controle_gu/detail.php?id=" . $id_data);
                 exit();
         }
             

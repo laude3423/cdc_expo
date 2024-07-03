@@ -51,7 +51,7 @@ require('../../scripts/session.php');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Bootstrap CSS-->
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -62,10 +62,30 @@ require('../../scripts/session.php');
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('loadingSpinner');
+        const table = document.getElementById('agentTable');
 
+        // Afficher le spinner
+        spinner.style.display = 'block';
+        table.style.display = 'none';
+
+        // Simulation de chargement des données
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }, 2000); // Changer le délai selon vos besoins
+    });
+    </script>
+    <style>
+    #agentTable {
+        display: none;
+    }
+    </style>
     <title>Ministere des mines</title>
     <?php 
-    include "../../shared/header.php";
+    include "../shared/navBar.php";
     ?>
 
 
@@ -73,16 +93,26 @@ require('../../scripts/session.php');
 
 <body>
     <div class="container">
-        <div class="row mb-3" style="margin-top: 30px;">
-            <div class="col md-8 mb-3">
-                <h5>Liste des granulométries</h5>
+        <hr>
+        <div class="row">
+            <div class="col">
+                <h5>Liste des granulomètries</h5>
             </div>
-            <div class="col md-10 text-end">
-                <a class="btn btn-dark btn-sm rounded-pill px-3 mb-3" href="#" onclick="openModal()"><i
+            <div class="col">
+                <input type="text" id="search" class="form-control" placeholder="Recherche...">
+            </div>
+            <div class="col text-end">
+                <a class="btn btn-dark btn-sm rounded-pill px-3 " href="#" onclick="openModal()"><i
                         class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
             </div>
         </div>
-        <table class="table table-hover text-center">
+        <hr>
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <table id="agentTable" class="table table-hover text-center">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Nom de granulo</th>
@@ -117,6 +147,11 @@ require('../../scripts/session.php');
                 <tr>
             </tbody>
         </table>
+        <div>
+            <?php
+                include('../../shared/pied_page.php');
+            ?>
+        </div>
     </div>
     <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false"
         aria-labelledby="staticBackdropLabel" style="font-size:90%; font-weight:bold">
@@ -144,7 +179,7 @@ require('../../scripts/session.php');
                         <div class="mb-3">
                             <label for="max" name="max" class="col-form-label">Granulo max:</label>
                             <input type="number" class="form-control" name="max" id="max"
-                                placeholder="Valeur max du granulo" required style="font-size:90%">
+                                placeholder="Valeur max du granulo" required style="font-size:90%" step="0.01">
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-sm btn-secondary" onclick="closeModal()">Close</button>

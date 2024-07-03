@@ -9,7 +9,7 @@ function nombreEnLettres($nombre) {
     if ($nombre < 20) {
         return $lettres[$nombre];
     } elseif ($nombre < 100) {
-        return $dizaines[floor($nombre / 10)] . '-' . $lettres[$nombre % 10];
+        return $dizaines[floor($nombre / 10)] . ' ' . $lettres[$nombre % 10];
     } elseif ($nombre < 1000) {
         $centaines = floor($nombre / 100);
         $reste = $nombre % 100;

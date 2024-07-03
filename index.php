@@ -4,6 +4,28 @@ session_start();
 // Connexion à la base de données
 require 'scripts/db_connect.php';
 
+if(isset($_SESSION['toast_message'])) {
+    echo '
+    <div style="left=50px;top=50px">
+        <div class="toast-container"">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                    <small class="text-muted">Maintenant</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ' . $_SESSION['toast_message'] . '
+                </div>
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message']);
+}
+
 
 // Vrifier si l'utilisateur est déj connecté
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
@@ -21,16 +43,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Vérifier les informations de connexion dans la base de donnes
     // $conn = seConnecterBaseDeDonnees();
     $utilisateur = verifierInformationsConnexion($conn, $adresseEmail, $motDePasse);
+    $verification = verifierEmail($conn, $adresseEmail);
 
-    if ($utilisateur !== null) {
+    if($verification !== null){
+        if ($utilisateur !== null) {
         // Connexion réussie, créer une session pour l'utilisateur
         creerSessionUtilisateur($utilisateur);
 
         // Rediriger en fonction de l'id_groupe de l'utilisateur
         redirigerSelonIDGroupe($utilisateur['id_groupe']);
-    } else {
-        // Identifiants de connexion invalides
-        $messageErreur = 'Identifiants de connexion invalides';
+        } else {
+            // Identifiants de connexion invalides
+            $messageErreur = 'Identifiants de connexion invalides';
+        }
+    }else{
+         $messageErreur = 'Veuillez vérifier d\'abord votre adresse email!';
     }
 
     // Fermer la connexion à la base de donnes
@@ -43,13 +70,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html>
 
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Karla:wght@200;300;400;500&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!--Font awesome-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!--Bootstrap JS-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
     </script>
     <style>
     body {
@@ -350,6 +379,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
     }
     </style>
+    <style>
+    .intro-content-wrapper {
+        background-color: rgba(0, 0, 0, 0.5);
+        /* Fond noir avec une opacité de 50% */
+        border-radius: 15px;
+        /* Bordures arrondies */
+        padding: 20px;
+        /* Espace intérieur pour le contenu */
+        width: 300px;
+        /* Largeur du cadre */
+        /* margin: 50px auto; Centrer horizontalement */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        /* Optionnel: ombre portée pour un meilleur effet visuel */
+    }
+
+    .intro-title,
+    .intro-text {
+        color: white;
+        /* Couleur du texte pour être visible sur le fond noir */
+        /* text-align: center; Centrer le texte */
+    }
+    </style>
 </head>
 <div class="container-fluid">
     <div class="row">
@@ -359,7 +410,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="blur-background"></div>
             </div>
             <div class="intro-content-wrapper">
-                <h1 class="intro-title"><br><br><br><br><br><br><br><br><br><br>Certificat de conformité!</h1>
+                <h1 class="intro-title">Certificat de conformité!</h1>
                 <p class="intro-text">Bienvenu sur cette application</p>
                 <!-- <a href="#!" class="btn btn-read-more">Read more</a> -->
             </div>
@@ -375,7 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="wrap login-wrapper mx-auto">
                 <h2 class="login-title">Connectez-vous</h2>
                 <?php if (isset($messageErreur)) : ?>
-                <p class="error-message"><?php echo $messageErreur; ?></p>
+                <small style="color: rgb(216, 144, 11);" class="error-message"><?php echo $messageErreur; ?></small>
                 <?php endif; ?>
                 <form class="login-form" method="POST" action="">
                     <div class="form-group mb-4">
@@ -393,12 +444,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="submit" class="btn btn-dark btn-block text-uppercase mb-2 rounded-pill shadow-sm">Se
                         connecter</button>
                 </form>
+                <p><a href="scripts/mot_passe_oublie.php" class="text-reset"> Mot de
+                        passe oublié </a></p>
                 <p class="login-wrapper-footer-text">Besoin d'un compte ? <a href="scripts/inscription.php"
                         class="text-reset"> S'inscrire </a></p>
             </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Inclure jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.toast').toast('show');
+});
+</script>
 
 
 </html>
@@ -436,16 +504,22 @@ function verifierInformationsConnexion($conn, $adresseEmail, $motDePasse) {
     return null;
 }
 function verifierEmail($conn, $adresseEmail) {
-    $requete = $conn->prepare('SELECT id_user, nom_user, id_groupe FROM users WHERE mail_user = ?');
+    $requete = $conn->prepare('SELECT * FROM users WHERE mail_user = ?');
     $requete->bind_param('s', $adresseEmail);
     $requete->execute();
     $resultat = $requete->get_result();
-
     if ($resultat->num_rows === 1) {
-        return $resultat->fetch_assoc();
+        $row= $resultat->fetch_assoc();
+        $email_comfirm=$row['email_confirme'];
+        if($email_comfirm == '1'){
+            return $row;
+        }else{
+            return null;
+        }
+    }else{
+        return null;
     }
 
-    return null;
 }
 
 function creerSessionUtilisateur($utilisateur) {
@@ -457,14 +531,14 @@ function creerSessionUtilisateur($utilisateur) {
 function redirigerSelonIDGroupe($idGroupe) {
     if ($idGroupe === 1) {
         // header('Location: view/demande_user.php');
-        header('Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php');
+        header('Location: https://cdc.minesmada.org/home/home.php');
     } else if ($idGroupe === 3) {
         // header('Location: view/demande_user.php');
-        header('Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php');
+        header('Location: https://cdc.minesmada.org/home/home.php');
     } else if ($idGroupe === 4) {
-        header('Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php');
+        header('Location: https://cdc.minesmada.org/home/home.php');
     } else {
-        header('Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_facture.php');
+        header('Location: https://cdc.minesmada.org/home/home.php');
     }
     exit;
 }

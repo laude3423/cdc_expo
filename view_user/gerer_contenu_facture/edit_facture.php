@@ -3,43 +3,56 @@
 
 
 <style>
-        .container {
-            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
-        }
-        .btn {
-            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
-        } 
-        .dropdown-item {
-            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
-        }
-        .form-control {
-            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
-        } 
-        .form-select {
-            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
-        }
-        .h4 {
-            font-size: 20px; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
-        }
-        .modal {
-            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
-        }
-        .modal-dialog {
-            font-size: small; /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
-        }
-        
-        
-    </style>
-    <!-- Formulaire add_commune -->
-    <div class="modal" tabindex="-1" role="dialog" id="edit_facture">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
+.container {
+    font-size: small;
+    /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+}
+
+.btn {
+    font-size: small;
+    /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+}
+
+.dropdown-item {
+    font-size: small;
+    /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+}
+
+.form-control {
+    font-size: small;
+    /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+}
+
+.form-select {
+    font-size: small;
+    /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+}
+
+.h4 {
+    font-size: 20px;
+    /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+}
+
+.modal {
+    font-size: small;
+    /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+}
+
+.modal-dialog {
+    font-size: small;
+    /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
+}
+</style>
+<!-- Formulaire add_commune -->
+<div class="modal" tabindex="-1" role="dialog" id="edit_facture">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Modifier une facture</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
-                <form method="post" action="scripts_facture/update_facture.php">
+                <form method="post" action="scripts_facture/update_facture.php" enctype="multipart/form-data">
                     <input type="hidden" class="form-control" id="id_data_cc" name="id_data_cc" required>
                     <div class="mb-3">
                         <label for="num_facture_edit" class="fw-bold">Numéro du facture:</label>
@@ -47,11 +60,13 @@
                     </div>
                     <div class="mb-3">
                         <label for="date_facture_edit" class="fw-bold">Date du facture:</label>
-                        <input type="date" class="form-control" id="date_facture_edit" name="date_facture_edit" required>
+                        <input type="date" class="form-control" id="date_facture_edit" name="date_facture_edit"
+                            required>
                     </div>
                     <div class="mb-3">
                         <label for="id_societe_expediteur_edit" class="fw-bold ">Societé expediteur: </label>
-                        <select class="form-select" id="id_societe_expediteur_edit" name="id_societe_expediteur_edit" autocomplete="off" required>
+                        <select class="form-select" id="id_societe_expediteur_edit" name="id_societe_expediteur_edit"
+                            autocomplete="off" required>
                             <option value="">Sélectionner...</option>
                             <!-- Remplir les options en récupérant les types de substance depuis la base de données -->
                             <?php
@@ -67,10 +82,11 @@
                             ?>
                         </select>
 
-                    </div> 
+                    </div>
                     <div class="mb-3">
                         <label for="id_societe_importateur_edit" class="fw-bold ">Societé importateur: </label>
-                        <select class="form-select" id="id_societe_importateur_edit" name="id_societe_importateur_edit" required>
+                        <select class="form-select" id="id_societe_importateur_edit" name="id_societe_importateur_edit"
+                            required>
                             <option value="">Sélectionner...</option>
                             <!-- Remplir les options en récuprant les types de substance depuis la base de donnes -->
                             <?php
@@ -85,20 +101,28 @@
                             }
                             ?>
                         </select>
-                    </div> 
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="pj_facture" name="pj_facture" class="col-form-label">Pièce joint de
+                                de la facture:</label>
+                            <input type="file" class="form-control" name="pj_facture" id="pj_facture"
+                                placeholder="scan de la facture" style="font-size:90%">
+                        </div>
+                    </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Enregistrer</button>
+                        <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                         <!-- Ajoutez ici d'autres boutons si nécessaire -->
                     </div>
                 </form>
             </div>
 
-            </div>
         </div>
     </div>
+</div>
 
-    <!-- <script>
+<!-- <script>
         $id_societe_expediteur_edit_value = new TomSelect("#id_societe_expediteur_edit",{
             create: true,
             sortField: {
@@ -116,4 +140,3 @@
             }
         });
     </script> -->
-    

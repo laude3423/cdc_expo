@@ -3,7 +3,7 @@ require_once('../../scripts/db_connect.php');
 require '../../vendor/autoload.php';
 use PhpOffice\PhpWord\TemplateProcessor;
 include '../../mylibs/phpqrcode/qrlib.php';
-include 'nombreEnLettre.php';
+include 'nombre_en_lettre.php';
 include 'recherche_substance.php';
 $agent = array();
  $dateFormat = "d-m-Y";
@@ -19,11 +19,13 @@ $mois_francais = array('janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'j
 $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
 
 echo $date_maintenant;
-$query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
+$query = "SELECT pv.*, ag.* FROM pv_agent_assister AS pv INNER JOIN agent AS ag ON pv.id_agent = ag.id_agent 
+WHERE id_data_cc=$id_data";
     $stmt = $conn->prepare($query);
     $stmt->execute();
     $resu = $stmt->get_result();
         while ($rowSub = $resu->fetch_assoc()) {
+            if(($rowSub['fonction_agent']=='Chef de Division Exportation Minière')||($rowSub['fonction_agent']=='Responsable qualité Laboratoire des Mines'))
             $agent[]=$rowSub['id_agent'];
         }
 
@@ -92,14 +94,60 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
         if(mysqli_num_rows($result1)> 0){
             $categorie_taille="existe";
         }
-    //création de fichier
-    if(!empty($categorie_brute)&&!empty($categorie_taille)){
-        $templatePathScan =  '../template/model_controleScan2.docx';
-        $templatePath =  '../template/model_controle2.docx';
-    }else{
-        $templatePathScan =  '../template/model_controleScan.docx';
-        $templatePath =  '../template/model_controle.docx';
+    //recherche poids_total
+    $poids_total_g=0;
+    $poids_total_kg=0;
+    $poidsTotal_generale="";
+    $queryR5 = "SELECT SUM(poids_facture) AS sommePoids_g FROM contenu_facture WHERE unite_poids_facture='g' AND id_data_cc=$id_data";
+        $result5= mysqli_query($conn, $queryR5);
+        if(mysqli_num_rows($result5)> 0){
+            $row5 = mysqli_fetch_assoc($result5);
+            $poids_total_g=$row5['sommePoids_g'];
+        }
+     $queryR6 = "SELECT SUM(poids_facture) AS sommePoids_kg FROM contenu_facture WHERE unite_poids_facture='kg' AND id_data_cc=$id_data";
+        $result6= mysqli_query($conn, $queryR6);
+        if(mysqli_num_rows($result6)> 0){
+            $row6 = mysqli_fetch_assoc($result6);
+            $poids_total_kg=$row6['sommePoids_kg'];
+        }
+    $type1="gemme";
+    $type2="ordianire";
+    if (($poids_total_g > 0) && ($poids_total_kg > 0)) {
+        $poidsTotal1 = poids_total($poids_total_g, $type1);
+        $poidsTotal2 = poids_total($poids_total_kg, $type2);
+        $poidsTotal_generale = $poidsTotal1 . ' et ' . $poidsTotal2;
+    } elseif (($poids_total_kg > 0) && ($poids_total_g == 0)) {
+        $poidsTotal_generale = poids_total($poids_total_kg, $type2);
+    } elseif (($poids_total_g > 0) && ($poids_total_kg == 0)) {
+        $poidsTotal_generale = poids_total($poids_total_g, $type1);
+    } else {
+        $poidsTotal_generale = "Aucune";
+       
     }
+    function poids_total($poids, $type){
+         $nombreFormat = number_format($poids, 2, '.', '');
+            // Séparer la partie avant et après la virgule
+        $nombreExplode = explode('.', $nombreFormat);
+        $nombreAvant = $nombreExplode[0];
+        $nombreApres = $nombreExplode[1];
+        $nombreApresLettre='';
+        if ($nombreApres > 0) {
+            $nombreCompare = comparer($nombreApres);
+            $nombreApresLettre = nombreEnLettres($nombreCompare);
+        }
+        $nombreAvantLettre = nombreEnLettres($nombreAvant);
+        if($type=="gemme"){
+            $poidsTotal=$nombreAvantLettre." grammes ". $nombreApresLettre . '('.$nombreFormat.'grs) de pierres gemmes et ou méteaux précieux';
+        }else{
+            $poidsTotal=$nombreAvantLettre." kilogrammes ". $nombreApresLettre . '('.$nombreFormat.'kgs) de pierres ordinaires';
+        }
+        return $poidsTotal;
+    }
+    //création de fichier
+    
+    $templatePathScan =  '../template/model_controleScan.docx';
+    $templatePath =  '../template/model_controle.docx';
+    
     $templatePathScanCdc =  '../template/model_scan_cdc.docx';
     $templatePathCdc =  '../template/model_cdc.docx';
     $templateScan = new TemplateProcessor($templatePathScan);
@@ -108,220 +156,244 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
     $templateCdc = new TemplateProcessor($templatePathCdc);
     $test="";
     
-    if(!empty($pft)){
-        $affiche_word=$afficheWord_pft;
-        $type_categorie1='Pierres Fines Taillées:';
-        $template->setValue('afficheWord_taille', implode(', ', $afficheWord_pft));
-        $templateScan->setValue('afficheWord_taille', implode(', ', $afficheWord_pft));
-        if(!empty($ppt)){
-            $type_categorie1='Pierres Fines et Pierres Précieuses Taillées:';
-            $template->setValue('afficheWord_taille2', implode(', ', $afficheWord_ppt));
-            $templateScan->setValue('afficheWord_taille2', implode(', ', $afficheWord_ppt));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_ppt));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_ppt));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_pft,$afficheWord_ppt);
+    if (!empty($pft)) {
+        $affiche_word = $afficheWord_pft;
+        echo 'consulter3';
+
+        $wordArrays = [
+            'ppt' => $afficheWord_ppt,
+            'pimt' => $afficheWord_pimt,
+            'mpt' => $afficheWord_mpt,
+            'ft' => $afficheWord_ft,
+            'pa' => $afficheWord_pa,
+            'ppb' => $afficheWord_ppb,
+            'pimb' => $afficheWord_pimb,
+            'mpb' => $afficheWord_mpb,
+            'pfb' => $afficheWord_pfb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
         }
-        if(!empty($pimt)){
-            $type_categorie1='Pierres Fines, Pierres industrielles et minerais travaillées';
-            $template->setValue('afficheWord_taille2', implode(', ', $afficheWord_pimt));
-            $templateScan->setValue('afficheWord_taille2', implode(', ', $afficheWord_pimt));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_pimt));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_pimt));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_pft,$afficheWord_pimt);
-        }
-        if(!empty($mpt)){
-            $type_categorie1='Pierres Fines et Métaux Précieux Taillées:';
-            $template->setValue('afficheWord_taille2', implode(', ', $afficheWord_mpt));
-            $templateScan->setValue('afficheWord_taille2', implode(', ', $afficheWord_mpt));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_mpt));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_mpt));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_pft,$afficheWord_mpt);
-        }
-        $template->setValue('afficheWord', implode(', ', $afficheWord_pft));
-        $templateScan->setValue('afficheWord', implode(', ', $afficheWord_pft));
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
         $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name_taille', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_taille', 0, true, false, $remplace);
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }elseif(!empty($ppt)){
         $affiche_word=$afficheWord_ppt;
-        $type_categorie1='Pierres Précieuses Taillées';
-        $template->setValue('afficheWord_taille', implode(', ', $afficheWord_ppt));
-        $templateScan->setValue('afficheWord_taille', implode(', ', $afficheWord_ppt));
-        $template->setValue('afficheWord', implode(', ', $afficheWord_ppt));
-        $templateScan->setValue('afficheWord', implode(', ', $afficheWord_ppt));
-        if(!empty($mpt)){
-            $type_categorie1='Métaux Précieux et Pierres Précieuses Taillées';
-            $template->setValue('afficheWord_taille2', implode(', ', $afficheWord_mpt));
-            $templateScan->setValue('afficheWord_taille2', implode(', ', $afficheWord_mpt));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_mpt));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_mpt));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_ppt,$afficheWord_mpt);
+        $wordArrays = [
+            'pimt' => $afficheWord_pimt,
+            'mpt' => $afficheWord_mpt,
+            'ft' => $afficheWord_ft,
+            'pa' => $afficheWord_pa,
+            'ppb' => $afficheWord_ppb,
+            'pimb' => $afficheWord_pimb,
+            'mpb' => $afficheWord_mpb,
+            'pfb' => $afficheWord_pfb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
         }
-        if(!empty($pimt)){
-            $type_categorie1='Pierres Précieuses et Pierres industrielles et minerais Taillées';
-            $template->setValue('afficheWord_taille2', implode(', ', $afficheWord_pimt));
-            $templateScan->setValue('afficheWord_taille2', implode(', ', $afficheWord_pimt));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_pimt));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_pimt));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_ppt,$afficheWord_pimt);
-        }
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
         $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name_taille', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_taille', 0, true, false, $remplace);
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }elseif(!empty($pimt)){
         $affiche_word=$afficheWord_pimt;
-        $type_categorie1='Pierres Industrielles et Minerais  Travaillées:';
-        $template->setValue('afficheWord_taille', implode(', ', $afficheWord_pimt));
-        $templateScan->setValue('afficheWord_taille', implode(', ', $afficheWord_pimt));
-        $template->setValue('afficheWord', implode(', ', $afficheWord_pimt));
-        $templateScan->setValue('afficheWord', implode(', ', $afficheWord_pimt));
-        if(!empty($mpt)){
-            $type_categorie1='Métaux Précieux et Pierres Industrielles et Minerais  Travaillées:';
-            $template->setValue('afficheWord_taille2', implode(', ', $afficheWord_mpt));
-            $templateScan->setValue('afficheWord_taille2', implode(', ', $afficheWord_mpt));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_mpt));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_mpt));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_mpt,$afficheWord_pimt);
+        $wordArrays = [
+            'mpt' => $afficheWord_mpt,
+            'ft' => $afficheWord_ft,
+            'pa' => $afficheWord_pa,
+            'ppb' => $afficheWord_ppb,
+            'pimb' => $afficheWord_pimb,
+            'mpb' => $afficheWord_mpb,
+            'pfb' => $afficheWord_pfb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
         }
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
         $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name_taille', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_taille', 0, true, false, $remplace);
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }elseif(!empty($mpt)){
-        $type_categorie1='Métaux Précieux Taillées:';
-        $template->setValue('afficheWord_taille', implode(', ', $afficheWord_mpt));
-        $templateScan->setValue('afficheWord_taille', implode(', ', $afficheWord_mpt));
-        $template->setValue('afficheWord', implode(', ', $afficheWord_mpt));
-        $templateScan->setValue('afficheWord', implode(', ', $afficheWord_mpt));
-        $remplace = generat_file($afficheWord_mpt);
-        $templateCdcScan->cloneBlock('block_name_taille', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_taille', 0, true, false, $remplace);
-    }else{
-        $template->setValue('afficheWord_taille', '');
-        $templateScan->setValue('afficheWord_taille', '');
-        $template->setValue('afficheWord', '');
-        $templateScan->setValue('afficheWord', '');
-        $remplace = array();
-        $remplace[] = array('substance'=>'');
-        $templateCdcScan->cloneBlock('block_name_taille', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_taille', 0, true, false, $remplace);
-    }
-    if(!empty($pfb)){
+        $affiche_word=$afficheWord_mpt;
+
+        $wordArrays = [
+            'ft' => $afficheWord_ft,
+            'pa' => $afficheWord_pa,
+            'ppb' => $afficheWord_ppb,
+            'pimb' => $afficheWord_pimb,
+            'mpb' => $afficheWord_mpb,
+            'pfb' => $afficheWord_pfb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
+        }
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
+        $remplace = generat_file($affiche_word);
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+    }else if(!empty($pa)){
+        $affiche_word=$afficheWord_pa;
+
+        $wordArrays = [
+            'ft' => $afficheWord_ft,
+            'ppb' => $afficheWord_ppb,
+            'pimb' => $afficheWord_pimb,
+            'mpb' => $afficheWord_mpb,
+            'pfb' => $afficheWord_pfb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
+        }
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
+        $remplace = generat_file($affiche_word);
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+    }else if(!empty($ft)){
+        $affiche_word=$afficheWord_ft;
+
+        $wordArrays = [
+            'ppb' => $afficheWord_ppb,
+            'pimb' => $afficheWord_pimb,
+            'mpb' => $afficheWord_mpb,
+            'pfb' => $afficheWord_pfb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
+        }
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
+        $remplace = generat_file($affiche_word);
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+    }else if(!empty($pfb)){
         $affiche_word=$afficheWord_pfb;
-        $type_categorie2='Pierres Fines Brutes:';
-        $template->setValue('afficheWord_brute', implode(', ', $afficheWord_pfb));
-        $templateScan->setValue('afficheWord_brute', implode(', ', $afficheWord_pfb));
-        $template->setValue('afficheWord', implode(', ', $afficheWord_pfb));
-        $templateScan->setValue('afficheWord', implode(', ', $afficheWord_pfb));
-        if(!empty($ppb)){
-            $type_categorie2='Pierres Fines et Pierres Précieuses Brutes:';
-            $template->setValue('afficheWord_brute2', implode(', ', $afficheWord_ppb));
-            $templateScan->setValue('afficheWord_brute2', implode(', ', $afficheWord_ppb));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_ppb));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_ppb));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_pfb,$afficheWord_ppb);
+        echo "consulter4";
+
+        $wordArrays = [
+            'ppb' => $afficheWord_ppb,
+            'pimb' => $afficheWord_pimb,
+            'mpb' => $afficheWord_mpb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
         }
-        if(!empty($pimb)){
-            $type_categorie2='Pierres Fines et Pierres Industrielles et Minerais Brutes:';
-            $template->setValue('afficheWord_brute2', implode(', ', $afficheWord_pimb));
-            $templateScan->setValue('afficheWord_brute2', implode(', ', $afficheWord_pimb));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_pimb));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_pimb));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_pfb,$afficheWord_pimb);
-        }
-        if(!empty($mpb)){
-            $type_categorie2='Métaux Précieux et Pierres Fines Brutes:';
-            $template->setValue('afficheWord_brute2', implode(', ', $afficheWord_mpb));
-            $templateScan->setValue('afficheWord_brute2', implode(', ', $afficheWord_mpb));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_mpb));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_mpb));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_pfb,$afficheWord_mpb);
-        }
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
         $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name_brute', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_brute', 0, true, false, $remplace);
-    }elseif(!empty($ppb)){
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+    }else if(!empty($ppb)){
         $affiche_word=$afficheWord_ppb;
-        $type_categorie2='Pierres Précieuses Brutes:';
-        $template->setValue('afficheWord_brute', implode(', ', $afficheWord_ppb));
-        $templateScan->setValue('afficheWord_brute', implode(', ', $afficheWord_ppb));
-        $template->setValue('afficheWord', implode(', ', $afficheWord_ppb));
-        $templateScan->setValue('afficheWord', implode(', ', $afficheWord_ppb));
-        if(!empty($pimb)){
-            $type_categorie2='Pierres Précieuses, Pierres Industrielles et Minerais Brutes:';
-            $template->setValue('afficheWord_brute2', implode(', ', $afficheWord_pimb));
-            $templateScan->setValue('afficheWord_brute2', implode(', ', $afficheWord_pimb));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_pimb));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_pimb));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_ppb,$afficheWord_pimb);
+
+        $wordArrays = [
+            'pimb' => $afficheWord_pimb,
+            'mpb' => $afficheWord_mpb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
         }
-        if(!empty($mpb)){
-            $type_categorie1='Métaux Précieux Pierres Pierres Précieuses Brutes:';
-            $template->setValue('afficheWord_brute2', implode(', ', $afficheWord_mpb));
-            $templateScan->setValue('afficheWord_brute2', implode(', ', $afficheWord_mpb));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_mpb));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_mpb));
-            $test="double";
-            $affiche_word= array_merge($afficheWord_ppb,$afficheWord_mpb);
-        }
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
         $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name_brute', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_brute', 0, true, false, $remplace);
-    }elseif(!empty($pimb)){
-        $type_categorie2='Pierres industrielles et minerais Brutes:';
-        $template->setValue('afficheWord_brute', implode(', ', $afficheWord_pimb));
-        $templateScan->setValue('afficheWord_brute', implode(', ', $afficheWord_pimb));
-        $template->setValue('afficheWord', implode(', ', $afficheWord_pimb));
-        $templateScan->setValue('afficheWord', implode(', ', $afficheWord_pimb));
-        if(!empty($mpb)){
-            $type_categorie2='Métaux Précieux etPierres Industrielles et Minerais Brutes:';
-            $template->setValue('afficheWord_brute2', implode(', ', $afficheWord_mpb));
-            $templateScan->setValue('afficheWord_brute2', implode(', ', $afficheWord_mpb));
-            $template->setValue('afficheWord2', implode(', ', $afficheWord_mpb));
-            $templateScan->setValue('afficheWord2', implode(', ', $afficheWord_mpb));
-            $test="double";
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+    }else if(!empty($pimb)){
+        $affiche_word=$afficheWord_mpt;
+
+        $wordArrays = [
+            'mpb' => $afficheWord_mpb,
+        ];
+
+        foreach ($wordArrays as $key => $wordArray) {
+            if (!empty($key)) {
+                $affiche_word = array_merge($affiche_word, $wordArray);
+            }
         }
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
         $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name_brute', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_brute', 0, true, false, $remplace);
-    }elseif(!empty($mpb)){
-        $type_categorie2='Métaux Précieux Brutes:';
-        $template->setValue('afficheWord_brute', implode(', ', $afficheWord_mpb));
-        $templateScan->setValue('afficheWord_brute', implode(', ', $afficheWord_mpb));
-        $template->setValue('afficheWord', implode(', ', $afficheWord_mpb));
-        $templateScan->setValue('afficheWord', implode(', ', $afficheWord_mpb));
-        $remplace = generat_file($afficheWord_mpb);
-        $templateScan->cloneBlock('block_name_brute', 0, true, false, $remplace);
-        $template->cloneBlock('block_name_brute', 0, true, false, $remplace);
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+    }else if(!empty($mpb)){
+        $affiche_word=$afficheWord_mpt;
+
+        $remplace1 = generat_file($affiche_word);
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
+
+        $remplace = generat_file($affiche_word);
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }else{
         $remplace = array();
         $remplace[] = array('substance'=>'');
-        $templateCdcScan->cloneBlock('block_name_brute', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name_brute', 0, true, false, $remplace);
-        $template->setValue('afficheWord_brute', '');
-        $templateScan->setValue('afficheWord_brute', '');
-        $template->setValue('afficheWord', '');
-        $templateScan->setValue('afficheWord', '');
+        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+    
+        $remplace1 = array();
+        $remplace1[] = array('substance'=>'');
+        $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
+        $template->cloneBlock('block_name', 0, true, false, $remplace1);
     }
 
-    //generate fichier
-    if(empty($test)){
-        $templateScan->setValue('afficheWord_brute2', '');
-        $template->setValue('afficheWord_brute2', '');
-        $templateScan->setValue('afficheWord_taille2', '');
-        $template->setValue('afficheWord_taille2', '');
-        $templateScan->setValue('afficheWord2', '');
-        $template->setValue('afficheWord2', '');
-    }
     //pv
     $entete="
             MINISTERE DES MINES                
@@ -346,8 +418,8 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
     $templateScan->setValue('adresse_societe_imp', $adresse_societe_importateur);
     $templateScan->setValue('adresse_societe_exp', $adresse_societe_expediteur);
     $templateScan->setValue('destination_finale', $pays_destination);
-    $templateScan->setValue('type_categorie1', $type_categorie1);
-    $templateScan->setValue('type_categorie2', $type_categorie2);
+    // $templateScan->setValue('type_categorie1', $type_categorie1);
+    // $templateScan->setValue('type_categorie2', $type_categorie2);
     $templateScan->setValue('date', $dateEnTexte);
     $templateScan->setValue('num_facture', $num_facture);
     $templateScan->setValue('date_facture', $date_format_facture);
@@ -355,18 +427,18 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
     $templateScan->setValue('date_fiche_declaration', $date_format_declaration);
     $templateScan->setValue('num_domiciliation', $num_domiciliation);
     $templateScan->setValue('num_lp3e', $num_lp3e);
-    $templateScan->setValue('categorie', $categorie_existe);
     $templateScan->setValue('date_lp3e', $date_format_lp3e);
     $templateScan->setValue('lieu_embarquement', $lieu_embarquement);
     $templateScan->setValue('mode_emballage', $mode_emballage);
     $templateScan->setValue('date_creation', $dateMaintenant);
     $templateScan->setValue('lieu_controle', $lieu_controle);
+    $templateScan->setValue('total_general', $poidsTotal_generale);
     $remplace_agent = array();
     foreach ($agent as $agent_id) {
         $agent_concat = "- " . $grade_agents["agent_" . $agent_id] . " " . $noms_agents["agent_" . $agent_id] . ", " . $fonction_agents["agent_" . $agent_id] . "\n";
         $remplace_agent[] = array('nom'=>$agent_concat);
     }
-    $templateScan->cloneBlock('block_name', 0, true, false, $remplace_agent);
+    $templateScan->cloneBlock('block_name_nom', 0, true, false, $remplace_agent);
 
     $destinationFolder =  '../fichier/';
     $numPVClear=preg_replace('/[^a-zA-Z0-9]/', '-', $num_pv);
@@ -402,8 +474,8 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
     $template->setValue('adresse_societe_imp', $adresse_societe_importateur);
     $template->setValue('adresse_societe_exp', $adresse_societe_expediteur);
     $template->setValue('destination_finale', $pays_destination);
-    $template->setValue('type_categorie1', $type_categorie1);
-    $template->setValue('type_categorie2', $type_categorie2);
+    // $template->setValue('type_categorie1', $type_categorie1);
+    // $template->setValue('type_categorie2', $type_categorie2);
     $template->setValue('date', $dateEnTexte);
     $template->setValue('num_facture', $num_facture);
     $template->setValue('date_facture', $date_facture);
@@ -412,12 +484,12 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
     $template->setValue('num_domiciliation', $num_domiciliation);
     $template->setValue('num_lp3e', $num_lp3e);
     $template->setValue('date_lp3e', $date_lp3e);
-    $template->setValue('categorie', $categorie_existe);
+    $template->setValue('total_general', $poidsTotal_generale);
     $template->setValue('lieu_embarquement', $lieu_embarquement);
     $template->setValue('mode_emballage', $mode_emballage);
     $template->setValue('date_creation', $dateMaintenant);
     $template->setValue('lieu_controle', $lieu_controle);
-    $template->cloneBlock('block_name', 0, true, false, $remplace_agent);
+    $template->cloneBlock('block_name_nom', 0, true, false, $remplace_agent);
     
 
         // Enregistrer le nouveau document DOCX
@@ -471,19 +543,27 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
     //generate file certificat de conformité
     $templateCdcScan->setValue('entete', $entete);
     $templateCdcScan->setValue('num_cc', $num_cc);
+    $templateCdcScan->setValue('entete', $entete);
+    $templateCdcScan->setValue('num_cc', $num_cc);
+    $templateCdcScan->setValue('num_lp3e', $num_lp3e);
+    $templateCdcScan->setValue('date_lp3e', $date_format_lp3e);
+    $templateCdcScan->setValue('num_facture', $num_facture);
+    $templateCdcScan->setValue('date_facture', $date_format_facture);
+    $templateCdcScan->setValue('num_dom', $num_domiciliation);
+    $templateCdcScan->setValue('nom_user', "Direction des Exportations et de la Valeur");
     $templateCdcScan->setValue('date_maintenant', $date_maintenant);
     $templateCdcScan->setValue('num_declaration', $num_fiche_declaration);
     $templateCdcScan->setValue('date_declaration', $date_format_declaration);
     $templateCdcScan->setValue('num_pv_controle', $num_pv);
     $templateCdcScan->setValue('date_pv_controle', $dateMaintenant);
     $templateCdcScan->setValue('nom_societe_exp', $nom_societe_expediteur);
-    $templateCdcScan->setValue('adresse_societe_exp', $adresse_societe_expediteur);
+    $templateCdcScan->setValue('addresse_societe_exp', $adresse_societe_expediteur);
     $templateCdcScan->setValue('nom_societe_imp', $nom_societe_importateur);
     $templateCdcScan->setValue('adresse_societe_imp', $adresse_societe_importateur);
     $templateCdcScan->setValue('nom_responsable', $nom_responsable);
-    $templateCdcScan->setValue('type_categorie1', $type_categorie1);
-    $templateCdcScan->setValue('type_categorie2', $type_categorie2);
-    $templateCdcScan->setValue('destination', $pays_destination);
+    $templateCdcScan->setValue('nom_responsable_imp', $nom_responsable);
+    $templateCdcScan->setValue('total_general', $poidsTotal_generale);
+    $templateCdcScan->setValue('destination_finale', $pays_destination);
     
     $destinationFolder =  '../fichier/';
     $numCCClear=preg_replace('/[^a-zA-Z0-9]/', '-', $num_cc);
@@ -504,25 +584,31 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
         //deuxième fichier
         $templateCdc->setValue('entete', $entete);
         $templateCdc->setValue('num_cc', $num_cc);
+        $templateCdc->setValue('num_lp3e', $num_lp3e);
+        $templateCdc->setValue('date_lp3e', $date_format_lp3e);
+        $templateCdc->setValue('num_facture', $num_facture);
+        $templateCdc->setValue('date_facture', $date_format_facture);
+        $templateCdc->setValue('num_dom', $num_domiciliation);
+        $templateCdc->setValue('total_general', $poidsTotal_generale);
+        $templateCdc->setValue('nom_societe_exp', $nom_societe_expediteur);
+        $templateCdc->setValue('nom_user', "Direction des Exportations et de la Valeur");
         $templateCdc->setValue('date_maintenant', $date_maintenant);
         $templateCdc->setValue('num_declaration', $num_fiche_declaration);
         $templateCdc->setValue('date_declaration', $date_format_declaration);
         $templateCdc->setValue('num_pv_controle', $num_pv);
         $templateCdc->setValue('date_pv_controle', $dateMaintenant);
-        $templateCdc->setValue('nom_societe_exp', $nom_societe_expediteur);
-        $templateCdc->setValue('adresse_societe_exp', $adresse_societe_expediteur);
+        $templateCdc->setValue('addresse_societe_exp', $adresse_societe_expediteur);
         $templateCdc->setValue('nom_societe_imp', $nom_societe_importateur);
         $templateCdc->setValue('adresse_societe_imp', $adresse_societe_importateur);
         $templateCdc->setValue('nom_responsable', $nom_responsable);
-        $templateCdc->setValue('type_categorie1', $type_categorie1);
-        $templateCdc->setValue('type_categorie2', $type_categorie2);
-        $templateCdc->setValue('destination', $pays_destination);
+        $templateCdc->setValue('nom_responsable_imp', $nom_responsable);
+        $templateCdc->setValue('destination_finale', $pays_destination);
         $nouveau_nom2 = $numCCClear  . '_QR.docx';
         $outputFilePathQRCC = $destinationFolder . $nouveau_nom2;
         $templateCdc->saveAs($outputFilePathQRCC);
 
         $tempDir = '../fichier_scan/';
-        $lien = 'https://cdc.minesmada.org/view_user/generate_fichier/scriptsControle.php?id_data_cc='.$id_data;
+        $lien = 'https://cdc.minesmada.org/view_user/generate_fichier/scriptsCdc.php?id_data_cc='.$id_data;
         $qrcode_name = 'qrcode_test';
         QRcode::png($lien, $tempDir.''.$qrcode_name.'.jpg', QR_ECLEVEL_L, 5);
 
@@ -560,7 +646,7 @@ $query = "SELECT * FROM pv_agent_assister WHERE id_data_cc=$id_data";
     function generat_file($affiche) {
         $replacements = array();
         foreach ($affiche as $valeur) {
-            $replacements[] = array('substance' => $valeur);
+            $replacements[] = array('contenu' => $valeur);
         }
 
         return $replacements;
