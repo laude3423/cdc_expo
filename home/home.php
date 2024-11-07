@@ -605,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <?php } ?>
 
         <?php  if($groupeID === 2){
-            echo 'Nombre d\'utilisateur qui regarde le video:'.$view_count;
+            echo 'Nombre d\'utilisateregarde le video:'.$view_count;
         }?>
     </div>
     </main>
