@@ -174,7 +174,7 @@ include_once('../../scripts/db_connect.php');
                                 style="font-size:90%">
                                 <option value="">Choisir ...</option>
                                 <?php    
-                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Officier de police judiciaire'";
+                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Officier de police Judiciaire'";
                                         $stmt = $conn->prepare($query);
                                         $stmt->execute();
                                         $resu = $stmt->get_result();
@@ -212,6 +212,43 @@ include_once('../../scripts/db_connect.php');
                                 <option value="">Choisir ...</option>
                                 <?php    
                                         $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Agent de scellage'";
+                                        $stmt = $conn->prepare($query);
+                                        $stmt->execute();
+                                        $resu = $stmt->get_result();
+                                        
+                                        while ($rowSub = $resu->fetch_assoc()) {
+                                            echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] . "</option>";
+                                        }
+                                        ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="faude" name="faude" class="col-form-label">Agent de l'Agence Nationale
+                                Anti-Fraude:</label>
+                            <select id="faude" name="faude" placeholder="Choisir ..." autocomplete="off" required
+                                style="font-size:90%">
+                                <option value="">Choisir ...</option>
+                                <?php    
+                                        $query = "SELECT * FROM agent WHERE fonction_agent='Agent de l'Agence Nationale Anti-Fraude'";
+                                        $stmt = $conn->prepare($query);
+                                        $stmt->execute();
+                                        $resu = $stmt->get_result();
+                                        
+                                        while ($rowSub = $resu->fetch_assoc()) {
+                                            echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] . "</option>";
+                                        }
+                                        ?>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="labo" name="labo" class="col-form-label">Responsable du Laboratoire:</label>
+                            <select id="labo" name="labo" placeholder="Choisir ..." autocomplete="off" required
+                                style="font-size:90%">
+                                <option value="">Choisir ...</option>
+                                <?php    
+                                        $query = "SELECT * FROM agent WHERE fonction_agent='Responsable du Laboratoire'";
                                         $stmt = $conn->prepare($query);
                                         $stmt->execute();
                                         $resu = $stmt->get_result();

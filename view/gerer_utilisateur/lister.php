@@ -43,26 +43,43 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
         
     }
-    if(isset($_SESSION['toast_message'])) {
+ if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
 
     // Effacer le message du Toast de la variable de session
     unset($_SESSION['toast_message']);
+}
+if(isset($_SESSION['toast_message2'])) {
+    echo '
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message2']);
 }
 $edit_societe_details = array();
 
@@ -132,7 +149,7 @@ if (!empty($edit_societe_id)) {
                 <h5>Liste des utilisateurs</h5>
             </div>
             <div class="col">
-                <input type="text" id="search" class="form-control" placeholder="Recherche...">
+                <input type="text" id="search2" class="form-control" placeholder="Recherche par direction">
             </div>
             <div class="col text-end">
                 <a class="btn btn-dark btn-sm rounded-pill px-3 " href="#" onclick="openModal()"><i
@@ -174,6 +191,7 @@ if (!empty($edit_societe_id)) {
                     <td><?php echo $row['nom_groupe'] ?></td>
                     <td><?php echo $row['nom_direction'] ?></td>
                     <td>
+                        <a class="link-dark" href="./detail.php?id=<?php echo $row['id_user']; ?>">détails</a>
                         <?php if ($row['status_user'] === '1'): ?>
                         <a href="#" class="btn-sm btn btn-success"
                             onclick="toggleStatus(<?php echo $row['id_user'] ?>, 'desactive')">Désactiver</a>
@@ -371,6 +389,22 @@ if (!empty($edit_societe_id)) {
             }
         });
     }
+    document.getElementById('search2').addEventListener('input', function() {
+        var searchValue = this.value.toLowerCase(); // Récupère la valeur saisie et convertit en minuscules
+
+        // Parcourt toutes les lignes du tableau
+        var rows = document.querySelectorAll('#agentTable tbody tr');
+        rows.forEach(function(row) {
+            var nomSociete = row.querySelector('td:nth-child(7)').textContent
+                .toLowerCase(); // Récupère le nom de la société dans chaque ligne
+            // Vérifie si le nom de la société correspond à la valeur saisie dans le champ de recherche
+            if (nomSociete.includes(searchValue)) {
+                row.style.display = ''; // Affiche la ligne si elle correspond à la recherche
+            } else {
+                row.style.display = 'none'; // Masque la ligne si elle ne correspond pas à la recherche
+            }
+        });
+    });
     </script>
 </body>
 

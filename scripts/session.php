@@ -1,7 +1,9 @@
 <?php
         // Définissez le délai d'expiration de la session à 5 minutes (300 secondes)
         ini_set('session.gc_maxlifetime', 1800);
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
         
         // Configurez le délai d'expiration de la session sur chaque nouvelle requête
@@ -38,9 +40,32 @@
         $id_direction = $rowUsers['id_direction'];
         $fonctionUsers = $rowUsers['fonction'];
         $nom_user= $rowUsers['nom_user'];
+        $num_userID=$rowUsers['id_user'];
         $prenom_user = $rowUsers['prenom_user'];
         $code_fonction = $rowUsers['code_fonction'];
+        $image_url = $rowUsers['photo_profil'];
         $_SESSION['id_direction'] = $rowUsers['id_direction'];
+
+        $user_id=$userID;
+        $stmt = $conn->prepare("SELECT id FROM sessions_actives WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows > 0) {
+        // Si l'utilisateur a déjà une session active, mettez simplement à jour la date
+        $stmt = $conn->prepare("UPDATE sessions_actives SET date_derniere_activite = NOW() WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        } else {
+        // Sinon, insérez une nouvelle entrée pour cette session
+        $session_id = session_id();
+        $stmt = $conn->prepare("INSERT INTO sessions_actives (user_id, session_id) VALUES (?, ?)");
+        $stmt->bind_param("is", $user_id, $session_id);
+        }
+        $stmt->execute();
+        $stmt->close();
+
+        $conn->query("DELETE FROM sessions_actives WHERE date_derniere_activite < (NOW() - INTERVAL 15 MINUTE)");
 
         // switch ($groupeID) {
         //     case 2:

@@ -7,18 +7,17 @@ require('../../scripts/session.php');
 $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
     if (isset($_POST['submit'])) {
-        $nom = $_POST['nom'];
-        $prenom = $_POST['prenom'];
-        $fonction = $_POST['fonction'];
-        $contact = $_POST['contact'];
+        $nom = htmlspecialchars($_POST['nom']);
+        $prenom = htmlspecialchars($_POST['prenom']);
+        $fonction = htmlspecialchars($_POST['fonction']);
+        $contact = htmlspecialchars($_POST['contact']);
         $id_agent = $_POST['id'];
 
         if (empty($id_agent)) {
             // Insertion d'une nouvelle société
-            $sql = "INSERT INTO `agent`( `nom_agent`, `prenom_agent`, `fonction_agent`, `contact_agent`) VALUES ('$nom','$prenom','$fonction','$contact')";
-            $result = mysqli_query($conn, $sql);
-
-            if ($result) {
+            $stmt = $conn->prepare("INSERT INTO `agent`( `nom_agent`, `prenom_agent`, `fonction_agent`, `contact_agent`) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $nom, $prenom, $fonction, $contact);
+            if ($stmt->execute()) {
                 $_SESSION['toast_message'] = "Insertion réussie.";
                 header("Location: ".$_SERVER['PHP_SELF']);
                 exit();
@@ -41,20 +40,18 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
         
     }
-    if(isset($_SESSION['toast_message'])) {
+if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -62,6 +59,7 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
     // Effacer le message du Toast de la variable de session
     unset($_SESSION['toast_message']);
 }
+
 $edit_societe_details = array();
 
 if (!empty($edit_societe_id)) {
@@ -110,6 +108,15 @@ if (!empty($edit_societe_id)) {
     });
     </script>
     <style>
+    th {
+        font-size: small;
+    }
+
+    td {
+        font-size: small;
+    }
+
+
     #agentTable {
         display: none;
     }
@@ -219,11 +226,15 @@ if (!empty($edit_societe_id)) {
                                 <option value="" selected disabled>Choisir ...</option>
                                 <option value="Chef de Division Exportation Minière">Chef de Division Exportation
                                     Minière</option>
-                                <option value="Responsable qualité Laboratoire des Mines">Responsable
+                                <option value="Responsable de la qualité du Laboratoire des Mines">Responsable
                                     qualité Laboratoire des Mines</option>
                                 <option value="Agent de Scellage">Agent de Scellage</option>
                                 <option value="Agent de douane">Agent de douane</option>
                                 <option value="Officier de police judiciaire">Officier de police judiciaire</option>
+                                <option value="Chef de section scellage">Chef de section scellage</option>
+                                <option value="Agent de l'Agence Nationale Anti-Fraude">Agent de l'Agence Nationale
+                                    Anti-Fraude(ANAF)</option>
+                                <option value="Responsable du Laboratoire">Responsable du Laboratoire</option>
                             </select>
                             <div>
                                 <div class="mb-3">

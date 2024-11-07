@@ -34,8 +34,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_categorie = isset($_POST["id_categorie"]) ? intval($_POST["id_categorie"]) : null;
     $id_forme_substance = isset($_POST["id_forme_substance"]) ? intval($_POST["id_forme_substance"]) : null;
     $id_dimension_diametre = isset($_POST["id_dimension_diametre"]) ? intval($_POST["id_dimension_diametre"]) : null;
-    $id_lp1_info = isset($_POST["id_lp1_info"]) ? intval($_POST["id_lp1_info"]) : null;
-    
+    $id_lp1_info = isset($_POST["id_lp1_info_edit"]) ? intval($_POST["id_lp1_info_edit"]) : null;
+    $num_lp1_info = $_POST['ancien_lp_edit'];
+    $verified_lp1 = $_POST['verified_lp'];
+    $unite_monetaire= $_POST['unite_monetaire_edit'] ?? "";
+    $preforme=$id_categorie;
+    if($id_categorie == 3){
+        $id_categorie = 1;
+    }
+    switch ($unite_monetaire) {
+        case 'yen':
+            $prix_unitaire_facture *= 0.007;
+            break;
+        case 'euro':
+            $prix_unitaire_facture *= 1.08;
+            break;
+        case 'dollar':
+            // Ne rien faire car le prix ne change pas
+            break;
+        default:
+            echo 'Unité monétaire non prise en charge';
+            return;
+    }
         // Requête pour obtenir le sigle de direction en fonction de l'ID de direction
         $query_detail_substance = "SELECT * FROM substance_detaille_substance 
         WHERE id_substance = ? 
@@ -59,159 +79,411 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $id_detaille_substance = $row['id_detaille_substance'];
                 // Obtenez la première ligne de résultat
                 //recherche pour lp1
-                $queryLP = "SELECT lp.*, pd.* FROM lp_info AS lp INNER JOIN produits AS pd ON lp.id_produit= pd.id_produit WHERE id_lp=$id_lp1_info";
-                $resultLP = $conn_lp1->query($queryLP);
-                $rowLP = $resultLP->fetch_assoc();
-                $quantite_init=$rowLP['quantite_en_chiffre'];
-                $unite_produit = $rowLP['unite'];
-                $num_lp = $rowLP['num_LP'];
+                if($verified_lp1=="nouveau"){
+                    $num_lp1_info='NULL';
+                    $queryLP = "SELECT lp.*, pd.* FROM lp_info AS lp INNER JOIN produits AS pd ON lp.id_produit= pd.id_produit WHERE id_lp=$id_lp1_info";
+                    $resultLP = $conn_lp1->query($queryLP);
+                    $rowLP = $resultLP->fetch_assoc();
+                    $quantite_init=$rowLP['quantite_en_chiffre'];
+                    $unite_produit = $rowLP['unite'];
+                    $num_lp = $rowLP['num_LP'];
 
-                $queryR = "SELECT id_lp1_info,poids_facture, quantite_lp1_actuel_lp1_suivis FROM contenu_facture WHERE id_contenu_facture=$id_contenu_facture";
-                $resultR = $conn->query($queryR);$conn->query($queryR);
-                if ($resultR->num_rows > 0) {
-                    $rowR = $resultR->fetch_assoc();
-                    $id_lp1_info_base=$rowR['id_lp1_info'];
-                    $poids_facture_base=$rowR['poids_facture'];
-                    $qteR_lp1=$rowR['quantite_lp1_actuel_lp1_suivis'];
-                    
-                    if ($id_lp1_info == $id_lp1_info_base) {
-                        $differencePoids=0;
-                        if ($poids_facture_base > $poids_facture) {
-                            if (strtolower($unite_produit) == strtolower($unite_poids_facture)) {
-                                $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
-                            } elseif (strtolower($unite_produit) == "kg" && strtolower($unite_poids_facture) == "g") {
-                                $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
-                                $differencePoids /=1000;
-                            } elseif (strtolower($unite_produit) == "g" && strtolower($unite_poids_facture) == "kg") {
-                                $differencePoids = floatval($poids_facture_base)  - floatval($poids_facture);
-                                $differencePoids *=1000; 
-                            }
-                            $qteR_lp1 +=$differencePoids;
-                            
-                            $stmt = $conn->prepare("UPDATE contenu_facture SET quantite_lp1_actuel_lp1_suivis = ? WHERE id_contenu_facture = ?");
-                            $stmt->bind_param("si", $qteR_lp1, $id_contenu_facture);
-                            $stmt->execute();
-                        } elseif ($poids_facture_base < $poids_facture) {
-                            if (strtolower($unite_produit) == strtolower($unite_poids_facture)) {
-                                $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
-                            } elseif (strtolower($unite_produit) == "kg" && strtolower($unite_poids_facture) == "g") {
-                                    $differencePoids =  floatval($poids_facture) - floatval($poids_facture_base);
-                                    $differencePoids /=1000; 
-                            } elseif (strtolower($unite_produit) == "g" && strtolower($unite_poids_facture) == "kg") {
-                                    $differencePoids =  floatval($poids_facture) - floatval($poids_facture_base);
+                    $queryR = "SELECT id_lp1_info,poids_facture, quantite_lp1_actuel_lp1_suivis FROM contenu_facture WHERE id_contenu_facture=$id_contenu_facture";
+                    $resultR = $conn->query($queryR);$conn->query($queryR);
+                    if ($resultR->num_rows > 0) {
+                        $rowR = $resultR->fetch_assoc();
+                        $id_lp1_info_base=$rowR['id_lp1_info'];
+                        $poids_facture_base=$rowR['poids_facture'];
+                        $qteR_lp1=$rowR['quantite_lp1_actuel_lp1_suivis'];
+                        $en_attente="En attente";
+                        if ($id_lp1_info == $id_lp1_info_base) {
+                            $differencePoids=0;
+                            if ($poids_facture_base > $poids_facture) {
+                                calculateQuantity($unite_produit, $unite_poids_facture, $quantite_init, $poids_facture);
+                                if (strtolower($unite_produit) == strtolower($unite_poids_facture)) {
+                                    $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
+                                } elseif (strtolower($unite_produit) == "kg" && strtolower($unite_poids_facture) == "g") {
+                                    $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
+                                    $differencePoids /=1000;
+                                } elseif (strtolower($unite_produit) == "g" && strtolower($unite_poids_facture) == "kg") {
+                                    $differencePoids = floatval($poids_facture_base)  - floatval($poids_facture);
                                     $differencePoids *=1000; 
-                            }
-                            
-                            if($qteR_lp1 < 0){
-                               $_SESSION['toast_message2'] = 'La quantité dans le laissez-passer n°'.$num_lp.' est insuffisante pour la quantité demandée !';
-                                    header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
-                                exit();
-                            }else{
+                                }
+                                $qteR_lp1 +=$differencePoids;
+                                
                                 $stmt = $conn->prepare("UPDATE contenu_facture SET quantite_lp1_actuel_lp1_suivis = ? WHERE id_contenu_facture = ?");
                                 $stmt->bind_param("si", $qteR_lp1, $id_contenu_facture);
-                                $stmt->execute();
-                                
-                                $stmt2 = $conn->prepare("UPDATE `contenu_facture` SET `poids_facture` = ?, `unite_poids_facture` = ?, `prix_unitaire_facture` = ?, 
-                                                            `id_lp1_info` = ?, `id_detaille_substance` = ? WHERE `id_contenu_facture` = ?");
-                                $stmt2->bind_param("ssdiii", $poids_facture, $unite_poids_facture, $prix_unitaire_facture, $id_lp1_info, $id_detaille_substance, $id_contenu_facture);
-                                if ($stmt2->execute()) {
-                                                $_SESSION['toast_message'] = "Modification réussie.";
-                                                header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
-                                                exit();
+                                if($stmt->execute()){
+                                   $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                    $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                    $stmt3->execute();
+                                    $sql="UPDATE `contenu_facture` SET 
+                                        `poids_facture` = '$poids_facture', 
+                                        `unite_poids_facture` = '$unite_poids_facture', 
+                                        `prix_unitaire_facture` = '$prix_unitaire_facture', 
+                                        `id_lp1_info` = '$id_lp1_info', 
+                                        `id_ancien_lp`=NULL,
+                                            `preforme`='$preforme',
+                                        `id_detaille_substance` = '$id_detaille_substance'
+                                            WHERE `id_contenu_facture` = '$id_contenu_facture'";
+                                    $result = mysqli_query($conn, $sql);
+                                    if ($result) {
+                                        $_SESSION['toast_message'] = "Modification réussie.";
+                                        header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                        exit();
+                                    } else {
+                                                    echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                    } 
+                                }
+                            } elseif ($poids_facture_base < $poids_facture) {
+                                if (strtolower($unite_produit) == strtolower($unite_poids_facture)) {
+                                    $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
+                                } elseif (strtolower($unite_produit) == "kg" && strtolower($unite_poids_facture) == "g") {
+                                        $differencePoids =  floatval($poids_facture) - floatval($poids_facture_base);
+                                        $differencePoids /=1000; 
+                                } elseif (strtolower($unite_produit) == "g" && strtolower($unite_poids_facture) == "kg") {
+                                        $differencePoids =  floatval($poids_facture) - floatval($poids_facture_base);
+                                        $differencePoids *=1000; 
+                                }
+                                $qteR_lp1 -=$differencePoids;
+                                if($qteR_lp1 < 0){
+                                $_SESSION['toast_message2'] = 'La quantité dans le laissez-passer n°'.$num_lp.' est insuffisante pour la quantité demandée !';
+                                        header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                    exit();
+                                }else{
+                                    
+                                    $stmt = $conn->prepare("UPDATE contenu_facture SET quantite_lp1_actuel_lp1_suivis = ? WHERE id_contenu_facture = ?");
+                                    $stmt->bind_param("si", $qteR_lp1, $id_contenu_facture);
+                                    $stmt->execute();
+
+                                    $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                    $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                    $stmt3->execute();
+                                    $sql="UPDATE `contenu_facture` SET 
+                                        `poids_facture` = '$poids_facture', 
+                                        `unite_poids_facture` = '$unite_poids_facture', 
+                                        `prix_unitaire_facture` = '$prix_unitaire_facture', 
+                                        `id_lp1_info` = '$id_lp1_info', 
+                                        `id_ancien_lp`=NULL,
+                                            `preforme`='$preforme',
+                                        `id_detaille_substance` = '$id_detaille_substance'
+                                            WHERE `id_contenu_facture` = '$id_contenu_facture'";
+                                    $result = mysqli_query($conn, $sql);
+                                    if ($result) {
+                                        $_SESSION['toast_message'] = "Modification réussie.";
+                                        header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                        exit();
+                                    } else {
+                                                    echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                    }
+                                }
+                            }else{
+                                $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                $stmt3->execute();
+
+                                //mitovy ny poids_facture sy base
+                                $ssl="UPDATE `contenu_facture` SET 
+                                                                `preforme`='$preforme', 
+                                                                `unite_poids_facture` = '$unite_poids_facture', 
+                                                                `prix_unitaire_facture` = '$prix_unitaire_facture', 
+                                                                `id_lp1_info` = '$id_lp1_info',
+                                                                `id_ancien_lp`=NULL, 
+                                                                `id_detaille_substance` = '$id_detaille_substance' 
+                                                                WHERE `id_contenu_facture` = '$id_contenu_facture'";
+                                $result = mysqli_query($conn, $sql);
+                                if ($result) {
+                                    $_SESSION['toast_message'] = "Modification réussie.";
+                                    header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                    exit();
                                 } else {
-                                                echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                        echo "Erreur d'enregistrement" . mysqli_error($conn);
                                 }
                             }
                         }else{
-                            //mitovy ny poids_facture sy base
-                            $stmt2 = $conn->prepare("UPDATE `contenu_facture` SET  `unite_poids_facture` = ?, `prix_unitaire_facture` = ?, 
-                                                            `id_lp1_info` = ?, `id_detaille_substance` = ? WHERE `id_contenu_facture` = ?");
-                            $stmt2->bind_param("sdiii", $unite_poids_facture, $prix_unitaire_facture, $id_lp1_info, $id_detaille_substance, $id_contenu_facture);
-                            if ($stmt2->execute()) {
-                                $_SESSION['toast_message'] = "Modification réussie.";
-                                header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
-                                exit();
-                            } else {
-                                    echo "Erreur d'enregistrement" . mysqli_error($conn);
-                            }
-                        }
-                    }else{
-                        $queryR = "SELECT id_lp1_info, quantite_lp1_actuel_lp1_suivis FROM contenu_facture WHERE id_lp1_info=$id_lp1_info 
-                        AND id_contenu_facture = (SELECT MAX(id_contenu_facture) 
-                                       FROM contenu_facture 
-                                       WHERE id_lp1_info = $id_lp1_info)";
-                        $resultR = $conn->query($queryR);
-                        if ($resultR->num_rows > 0) {
-                            $rowR = $resultR->fetch_assoc();
-                            $quantite_init2=$rowR['quantite_lp1_actuel_lp1_suivis'];
-                            if (strtolower($unite_produit) == strtolower($unite_poids_facture)) {
-                                $differencePoids = floatval($quantite_init2) - floatval($poids_facture);
-                            } elseif (strtolower($unite_produit) == "kg" && strtolower($unite_poids_facture) == "g") {
-                                    $differencePoids = floatval($quantite_init2)* 1000 - floatval($poids_facture);
-                                    $differencePoids /= 1000;
-                            } elseif (strtolower($unite_produit) == "g" && strtolower($unite_poids_facture) == "kg") {
-                                    $differencePoids = floatval($quantite_init2)/ 1000  - floatval($poids_facture);
-                                    $differencePoids *=1000;
-                            }
-                            if($differencePoids < 0){
-                                $_SESSION['toast_message2'] = 'La quantité dans le Laissez-passer n°'.$num_lp.'sont exportée!';
-                                    header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
-                                exit();
-                            }else{
-                                $sql="UPDATE `contenu_facture` SET `poids_facture`='$poids_facture',`unite_poids_facture`='$unite_poids_facture',`prix_unitaire_facture`='$prix_unitaire_facture',
-                                `quantite_lp1_initial_lp1_suivis`='$quantite_init',`unite_substance_lp1`='$unite_produit',
-                                `quantite_lp1_actuel_lp1_suivis`='$differencePoids',`id_lp1_info`='$id_lp1_info',`id_detaille_substance`='$id_detaille_substance',`id_data_cc`='$id_data_cc' WHERE id_contenu_facture='$id_contenu_facture'";
-                                $result = mysqli_query($conn, $sql);
-
-                                if ($result) {
-                                        $_SESSION['toast_message'] = "Modification réussie.";
-                                            header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
-                                            exit();
-                                    } else {
-                                        echo "Erreur d'enregistrement" . mysqli_error($conn);
-                                    }
-                                    
-                            }
-                        }else{
-                            //tsy mbola anaty base ilay LP1
-                            if (strtolower($unite_produit) == strtolower($unite_poids_facture)) {
-                                    $differencePoids = floatval($quantite_init) - floatval($poids_facture);
-                            } elseif (strtolower($unite_produit) == "kg" && strtolower($unite_poids_facture) == "g") {
-                                    $differencePoids = floatval($quantite_init)* 1000 - floatval($poids_facture);
-                                    $differencePoids /= 1000;
-                            } elseif (strtolower($unite_produit) == "g" && strtolower($unite_poids_facture) == "kg") {
-                                    $differencePoids = floatval($quantite_init)/ 1000  - floatval($poids_facture);
-                                    $differencePoids *=1000;
-                            }
-                        
-                            if($differencePoids < 0){
+                            $queryR = "SELECT id_lp1_info, quantite_lp1_actuel_lp1_suivis FROM contenu_facture WHERE id_lp1_info=$id_lp1_info 
+                            AND id_contenu_facture = (SELECT MAX(id_contenu_facture) 
+                                        FROM contenu_facture 
+                                        WHERE id_lp1_info = $id_lp1_info)";
+                            $resultR = $conn->query($queryR);
+                            if ($resultR->num_rows > 0) {
+                                $rowR = $resultR->fetch_assoc();
+                                $quantite_init2=$rowR['quantite_lp1_actuel_lp1_suivis'];
+                                 $diff = calculateQuantity($unite_produit, $unite_poids_facture, $quantite_init2, $poids_facture);
+                                if($diff < 0){
                                     $_SESSION['toast_message2'] = 'La quantité dans le Laissez-passer n°'.$num_lp.'sont exportée!';
                                         header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
                                     exit();
+                                }else{
+                                    $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                    $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                    $stmt3->execute();
+
+                                    $sql="UPDATE `contenu_facture` SET 
+                                    `poids_facture`='$poids_facture',
+                                    `unite_poids_facture`='$unite_poids_facture',
+                                    `prix_unitaire_facture`='$prix_unitaire_facture',
+                                    `quantite_lp1_initial_lp1_suivis`='$quantite_init',
+                                    `unite_substance_lp1`='$unite_produit',
+                                    `quantite_lp1_actuel_lp1_suivis`='$diff',
+                                    `id_lp1_info`='$id_lp1_info', 
+                                    `id_ancien_lp`=NULL,
+                                    `preforme`='$preforme',  
+                                    `id_detaille_substance`='$id_detaille_substance',
+                                    `id_data_cc`='$id_data_cc' WHERE id_contenu_facture='$id_contenu_facture'";
+                                    $result = mysqli_query($conn, $sql);
+
+                                    if ($result) {
+                                            $_SESSION['toast_message'] = "Modification réussie.";
+                                                header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                                exit();
+                                        } else {
+                                            echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                        }
+                                        
+                                }
                             }else{
-                                // // $differencePoid= $qteR_lp1 + $poids_facture_base;
-                                // // $stmt = $conn->prepare("UPDATE contenu_facture SET quantite_lp1_actuel_lp1_suivis = ? WHERE id_lp1_info = ?");
-                                // // $stmt->bind_param("si", $differencePoid, $id_lp1_info_base);
-                                // // $stmt->execute();
-
-                                $sql="UPDATE `contenu_facture` SET `poids_facture`='$poids_facture',`unite_poids_facture`='$unite_poids_facture',`prix_unitaire_facture`='$prix_unitaire_facture',
-                                `quantite_lp1_initial_lp1_suivis`='$quantite_init',`unite_substance_lp1`='$unite_produit',
-                                `quantite_lp1_actuel_lp1_suivis`='$differencePoids',`id_lp1_info`='$id_lp1_info',`id_detaille_substance`='$id_detaille_substance',`id_data_cc`='$id_data_cc' WHERE id_contenu_facture='$id_contenu_facture'";
-                                $result = mysqli_query($conn, $sql);
-
-                                if ($result) {
-                                        $_SESSION['toast_message'] = "Modification réussie.";
+                                //tsy mbola anaty base ilay LP1
+                                $diff = calculateQuantity($unite_produit, $unite_poids_facture, $quantite_init, $poids_facture);
+                                if($diff < 0){
+                                        $_SESSION['toast_message2'] = 'La quantité dans le Laissez-passer n°'.$num_lp.'sont exportée!';
                                             header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
-                                            exit();
-                                    } else {
-                                        echo "Erreur d'enregistrement" . mysqli_error($conn);
-                                    }
-                                    
+                                        exit();
+                                }else{
+                                    $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                    $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                    $stmt3->execute();
+
+                                    $sql="UPDATE `contenu_facture` SET `poids_facture`='$poids_facture',
+                                    `unite_poids_facture`='$unite_poids_facture',
+                                    `prix_unitaire_facture`='$prix_unitaire_facture',
+                                    `quantite_lp1_initial_lp1_suivis`='$quantite_init',
+                                    `unite_substance_lp1`='$unite_produit',
+                                    `quantite_lp1_actuel_lp1_suivis`='$diff',
+                                    `id_lp1_info`='$id_lp1_info',
+                                    `id_ancien_lp`=NULL,
+                                    `preforme`='$preforme', 
+                                    `id_detaille_substance`='$id_detaille_substance',
+                                    `id_data_cc`='$id_data_cc' WHERE id_contenu_facture='$id_contenu_facture'";
+                                    $result = mysqli_query($conn, $sql);
+
+                                    if ($result) {
+                                            $_SESSION['toast_message'] = "Modification réussie.";
+                                                header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                                exit();
+                                        } else {
+                                            echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                        }
+                                        
+                                }
                             }
+                            
                         }
-                        
+                    }else{ echo 'Aucune infos sur LP';}
+                }else if($verified_lp1=='ancien'){
+                    $queryLP = "SELECT * FROM ancien_lp WHERE id_ancien_lp=$num_lp1_info";
+                    $resultLP = $conn->query($queryLP);
+                    $rowLP = $resultLP->fetch_assoc();
+                    $quantite_init=$rowLP['quantite'];
+                    $unite_produit = $rowLP['unite'];
+                    $num_lp = $rowLP['numero_lp'];
+
+                    $queryR = "SELECT id_ancien_lp,poids_facture, quantite_lp1_actuel_lp1_suivis FROM contenu_facture WHERE id_contenu_facture=$id_contenu_facture";
+                    $resultR = $conn->query($queryR);$conn->query($queryR);
+                    if ($resultR->num_rows > 0) {
+                        $rowR = $resultR->fetch_assoc();
+                        $numero_lp1_info_base=$rowR['id_ancien_lp'];
+                        $poids_facture_base=$rowR['poids_facture'];
+                        $qteR_lp1=$rowR['quantite_lp1_actuel_lp1_suivis'];
+                        $en_attente="En attente";
+                        if ($num_lp1_info == $numero_lp1_info_base) {
+                            $differencePoids=0;
+                            if ($poids_facture_base > $poids_facture) {
+                                echo $qteR_lp1;
+                                calculateQuantity($unite_produit, $unite_poids_facture, $quantite_init, $poids_facture);
+                                if (strtolower($unite_produit) == strtolower($unite_poids_facture)) {
+                                    $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
+                                } elseif (strtolower($unite_produit) == "kg" && strtolower($unite_poids_facture) == "g") {
+                                    $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
+                                    $differencePoids /=1000;
+                                } elseif (strtolower($unite_produit) == "g" && strtolower($unite_poids_facture) == "kg") {
+                                    $differencePoids = floatval($poids_facture_base)  - floatval($poids_facture);
+                                    $differencePoids *=1000; 
+                                }
+                                $qteR_lp1 +=$differencePoids;
+                                echo $qteR_lp1;
+                                $stmt = $conn->prepare("UPDATE contenu_facture SET quantite_lp1_actuel_lp1_suivis = ? WHERE id_contenu_facture = ?");
+                                $stmt->bind_param("si", $qteR_lp1, $id_contenu_facture);
+                                if($stmt->execute()){
+                                    $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                    $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                    $stmt3->execute();
+                                    $sql="UPDATE `contenu_facture` SET `poids_facture` = '$poids_facture', 
+                                    `unite_poids_facture` = '$unite_poids_facture', 
+                                    `prix_unitaire_facture` = '$prix_unitaire_facture', 
+                                                                `id_ancien_lp` = '$num_lp1_info', 
+                                                                `id_lp1_info`=NULL,
+                                                                `preforme`='$preforme', 
+                                                                `id_detaille_substance` = '$id_detaille_substance' 
+                                                                WHERE `id_contenu_facture` = '$id_contenu_facture'";
+                                    $result = mysqli_query($conn, $sql);
+                                    if ($result) {
+                                                    $_SESSION['toast_message'] = "Modification réussie.";
+                                                    header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                                    exit();
+                                    } else {
+                                                    echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                    }
+                                }
+                            } elseif ($poids_facture_base < $poids_facture) {
+                                if (strtolower($unite_produit) == strtolower($unite_poids_facture)) {
+                                    $differencePoids = floatval($poids_facture_base) - floatval($poids_facture);
+                                } elseif (strtolower($unite_produit) == "kg" && strtolower($unite_poids_facture) == "g") {
+                                        $differencePoids =  floatval($poids_facture) - floatval($poids_facture_base);
+                                        $differencePoids /=1000; 
+                                } elseif (strtolower($unite_produit) == "g" && strtolower($unite_poids_facture) == "kg") {
+                                        $differencePoids =  floatval($poids_facture) - floatval($poids_facture_base);
+                                        $differencePoids *=1000; 
+                                }
+                                $qteR_lp1 -=$differencePoids;
+                                
+                                if($qteR_lp1 < 0){
+                                $_SESSION['toast_message2'] = 'La quantité dans le laissez-passer n°'.$num_lp.' est insuffisante pour la quantité demandée !';
+                                        header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                    exit();
+                                }else{
+                                    
+                                    $stmt = $conn->prepare("UPDATE contenu_facture SET quantite_lp1_actuel_lp1_suivis = ? WHERE id_contenu_facture = ?");
+                                    $stmt->bind_param("si", $qteR_lp1, $id_contenu_facture);
+                                    $stmt->execute();
+
+                                    $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                    $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                    $stmt3->execute();
+                                    $sql="UPDATE `contenu_facture` SET `poids_facture` = '$poids_facture', 
+                                    `unite_poids_facture` = '$unite_poids_facture', 
+                                    `prix_unitaire_facture` = '$prix_unitaire_facture', 
+                                                                `id_ancien_lp` = '$num_lp1_info', 
+                                                                `id_lp1_info`=NULL,
+                                                                `preforme`='$preforme', 
+                                                                `id_detaille_substance` = '$id_detaille_substance' 
+                                                                WHERE `id_contenu_facture` = '$id_contenu_facture'";
+                                    $result = mysqli_query($conn, $sql);
+                                    if ($result) {
+                                                    $_SESSION['toast_message'] = "Modification réussie.";
+                                                    header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                                    exit();
+                                    } else {
+                                                    echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                    }
+                                }
+                            }else{
+                                $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                $stmt3->execute();
+
+                                //mitovy ny poids_facture sy base
+                                $sql="UPDATE `contenu_facture` SET  
+                                `unite_poids_facture` = '$unite_poids_facture', 
+                                `prix_unitaire_facture` = '$prix_unitaire_facture', 
+                                `id_ancien_lp` = '$num_lp1_info', 
+                                `id_lp1_info`=NULL,
+                                `preforme`='$preforme',
+                                 `id_detaille_substance` = '$id_detaille_substance' WHERE `id_contenu_facture` = '$id_contenu_facture'";
+                                $result = mysqli_query($conn, $sql);
+                                    if ($result) {
+                                    $_SESSION['toast_message'] = "Modification réussie.";
+                                    header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                    exit();
+                                } else {
+                                        echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                }
+                            }
+                        }else{
+                            $queryR = "SELECT id_ancien_lp, quantite_lp1_actuel_lp1_suivis FROM contenu_facture WHERE id_ancien_lp=$num_lp1_info 
+                            AND id_contenu_facture = (SELECT MAX(id_contenu_facture) 
+                                        FROM contenu_facture 
+                                        WHERE id_ancien_lp = $num_lp1_info)";
+                            $resultR = $conn->query($queryR);
+                            if ($resultR->num_rows > 0) {
+                                $rowR = $resultR->fetch_assoc();
+                                $quantite_init2=$rowR['quantite_lp1_actuel_lp1_suivis'];
+                                 $diff = calculateQuantity($unite_produit, $unite_poids_facture, $quantite_init2, $poids_facture);
+                                 
+                                if($diff < 0){
+                                    $_SESSION['toast_message2'] = 'La quantité dans le Laissez-passer n°'.$num_lp.'sont exportée!';
+                                        header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                    exit();
+                                }else{
+                                    $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                    $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                    $stmt3->execute();
+
+                                    $sql = "UPDATE `contenu_facture` 
+                                            SET `poids_facture` = '$poids_facture',
+                                                `unite_poids_facture` = '$unite_poids_facture',
+                                                `prix_unitaire_facture` = '$prix_unitaire_facture',
+                                                `quantite_lp1_initial_lp1_suivis` = '$quantite_init',
+                                                `unite_substance_lp1` = '$unite_produit',
+                                                `quantite_lp1_actuel_lp1_suivis` = '$diff',
+                                                `id_ancien_lp` = '$num_lp1_info',
+                                                `id_lp1_info` = NULL,
+                                                `id_detaille_substance` = '$id_detaille_substance',
+                                                `id_data_cc` = '$id_data_cc' 
+                                            WHERE `id_contenu_facture` = '$id_contenu_facture'";
+                                    $result = mysqli_query($conn, $sql);
+
+                                    if ($result) {
+                                        $_SESSION['toast_message'] = "Modification réussie.";
+                                        header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                        exit();
+                                    } else {
+                                        echo "Erreur d'enregistrement: " . mysqli_error($conn);
+                                    }
+
+                                        
+                                }
+                            }else{
+                                //tsy mbola anaty base ilay LP1
+                                $diff = calculateQuantity($unite_produit, $unite_poids_facture, $quantite_init, $poids_facture);
+                                if($diff < 0){
+                                        $_SESSION['toast_message2'] = 'La quantité dans le Laissez-passer n°'.$num_lp.'sont exportée!';
+                                            header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                        exit();
+                                }else{
+                                    $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture`=? WHERE id_data_cc=?");
+                                    $stmt3->bind_param("si", $en_attente,$id_data_cc);
+                                    $stmt3->execute();
+
+                                    $sql="UPDATE `contenu_facture` SET `poids_facture`='$poids_facture',
+                                    `unite_poids_facture`='$unite_poids_facture',
+                                    `prix_unitaire_facture`='$prix_unitaire_facture',
+                                    `quantite_lp1_initial_lp1_suivis`='$quantite_init',
+                                    `unite_substance_lp1`='$unite_produit',
+                                    `quantite_lp1_actuel_lp1_suivis`='$diff',
+                                    `id_ancien_lp`='$num_lp1_info',`id_lp1_info`=NULL,
+                                    `preforme`='$preforme', 
+                                    `id_detaille_substance`='$id_detaille_substance',
+                                    `id_data_cc`='$id_data_cc' WHERE id_contenu_facture='$id_contenu_facture'";
+                                    $result = mysqli_query($conn, $sql);
+
+                                    if ($result) {
+                                            $_SESSION['toast_message'] = "Modification réussie.";
+                                                header("Location: https://cdc.minesmada.org/view_user/gerer_contenu_facture/liste_contenu_facture.php?id=" . $id_data_cc);
+                                                exit();
+                                        } else {
+                                            echo "Erreur d'enregistrement" . mysqli_error($conn);
+                                        }
+                                        
+                                }
+                            }
+                            
+                        }
+                    }else{
+                        echo 'Aucune information sur LP';
                     }
-                 }
+
+                }else{ echo 'Aucune LP';}
                 
             } else {
                             echo "Aucun résultat trouvé. Id substance =>" .$id_substance. 
@@ -231,4 +503,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Redirection vers la page d'accueil ou une autre page si le formulaire n'a pas été soumis
     header("Location: ../view/commune_region.php");
     exit();
+}
+function calculateQuantity($unite_produit, $unite_poids_facture, $quantite_init, $poids_facture) {
+    if ($unite_produit == "g" && $unite_poids_facture == "kg") {
+        $result = (floatval($quantite_init) / 1000) - floatval($poids_facture);
+        return $result * 1000;
+    } elseif ($unite_produit == "kg" && $unite_poids_facture == "g") {
+        $result = (floatval($quantite_init) * 1000) - floatval($poids_facture);
+        return $result / 1000;
+    } elseif ($unite_produit ==  $unite_poids_facture) {
+        return floatval($quantite_init) - floatval($poids_facture);
+    } 
 }

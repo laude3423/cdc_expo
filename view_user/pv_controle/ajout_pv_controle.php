@@ -88,17 +88,17 @@ require(__DIR__ . '/../../scripts/session.php');
                             </select>
                         </div> -->
                         <div class="col">
-                            <label for="date_depart" name="date_depart" class="col-form-label">Date de départ</label>
-                            <input type="date" class="form-control" name="date_depart" id="date_depart"
-                                placeholder="Date de départ de l'exportation" required style="font-size:90%">
-                            <div id="date_error1" style="color: red; display: none;">Veuillez entrer une date valide.
-                            </div>
-                        </div>
-                        <div class="col">
                             <label for="numDom" name="numDom" class="col-form-label">Numéro de
                                 domiciliation:</label>
                             <input type="text" class="form-control" name="numDom" id="numDom"
                                 placeholder="Numéro de domiciliation" required style="font-size:90%">
+                        </div>
+                        <div class="col">
+                            <label for="date_dom" name="date_dom" class="col-form-label">Date de création DOM</label>
+                            <input type="date" class="form-control" name="date_dom" id="date_dom"
+                                placeholder="Date de départ de l'exportation" required style="font-size:90%">
+                            <div id="date_error1" style="color: red; display: none;">Veuillez entrer une date valide.
+                            </div>
                         </div>
                     </div>
                     <div class="row">
@@ -110,8 +110,8 @@ require(__DIR__ . '/../../scripts/session.php');
                         </div>
                         <div class="col">
                             <label for="pj_dom" name="pj_dom" class="col-form-label">Pièce joint de DOM:</label>
-                            <input type="file" class="form-control" name="pj_dom" id="pj_dom"
-                                placeholder="Nombre de colis" style="font-size:90%">
+                            <input type="file" class="form-control" name="pj_dom" id="pj_dom" accept=".pdf"
+                                placeholder="Nombre de colis" style="font-size:90%" required>
                         </div>
                     </div>
                     <div class="row">
@@ -151,7 +151,7 @@ require(__DIR__ . '/../../scripts/session.php');
                                 fiche de
                                 déclaration:</label>
                             <input type="file" class="form-control" name="pj_declaration" id="pj_declaration"
-                                placeholder="Numéro de fiche de déclaration" required style="font-size:90%">
+                                accept=".pdf" style="font-size:90%" required>
                         </div>
                         <div class="col">
                             <label for="num_lp3" name="num_lp3" class="col-form-label">Numéro de LP III E:</label>
@@ -163,53 +163,54 @@ require(__DIR__ . '/../../scripts/session.php');
                         <div class="col">
                             <label for="date_lp3" name="date_lp3" class="col-form-label">Date de création de LP III
                                 E:</label>
-                            <input type="date" class="form-control" name="date_lp3" id="date_lp3"
-                                placeholder="Numéro de fiche de déclaration" required style="font-size:90%">
+                            <input type="date" class="form-control" name="date_lp3" id="date_lp3" required
+                                style="font-size:90%">
                             <div id="date_error3" style="color: red; display: none;">Veuillez entrer une date valide.
                             </div>
                         </div>
                         <div class="col">
                             <label for="pj_lp3e" name="pj_lp3e" class="col-form-label">Pièce joint LP III E:</label>
-                            <input type="file" class="form-control" name="pj_lp3e" id="pj_lp3e" style="font-size:90%">
+                            <input type="file" class="form-control" name="pj_lp3e" id="pj_lp3e" accept=".pdf"
+                                style="font-size:90%" required>
                         </div>
                     </div>
-                    <div class="row">
+                    <!-- <div class="row">
                         <div class="col">
-                            <label for="chef" name="chef" class="col-form-label">Chef de Division:</label>
+                            <label for="chef" name="chef" class="col-form-label">Chef de section scellage:</label>
                             <select id="chef" name="chef" placeholder="Choisir ..." autocomplete="off" required
                                 style="font-size:90%">
                                 <option value="">Choisir ...</option>
                                 <?php    
-                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Chef de Division Exportation Minière'";
-                                        $stmt = $conn->prepare($query);
-                                        $stmt->execute();
-                                        $resu = $stmt->get_result();
+                                        // $query = "SELECT * FROM agent WHERE fonction_agent='Chef de section scellage'";
+                                        // $stmt = $conn->prepare($query);
+                                        // $stmt->execute();
+                                        // $resu = $stmt->get_result();
                                         
-                                        while ($rowSub = $resu->fetch_assoc()) {
-                                            echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] . "</option>";
-                                        }
+                                        // while ($rowSub = $resu->fetch_assoc()) {
+                                        //     echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] .' '.$rowSub['prenom_agent']. "</option>";
+                                        // }
                                         ?>
                             </select>
                         </div>
                         <div class="col">
-                            <label for="qualite" name="qualite" class="col-form-label">Responsable de qualité
-                                laboratoire:</label>
+                            <label for="qualite" name="qualite" class="col-form-label">Responsable de la qualité du
+                                Laboratoire des Mines:</label>
                             <select id="qualite" name="qualite" placeholder="Choisir ..." autocomplete="off" required
                                 style="font-size:90%">
                                 <option value="">Choisir ...</option>
                                 <?php    
-                                        $query = "SELECT id_agent, nom_agent FROM agent WHERE fonction_agent='Responsable qualité Laboratoire des Mines'";
-                                        $stmt = $conn->prepare($query);
-                                        $stmt->execute();
-                                        $resu = $stmt->get_result();
+                                        // $query = "SELECT * FROM agent WHERE fonction_agent='Responsable de la qualité du Laboratoire des Mines'";
+                                        // $stmt = $conn->prepare($query);
+                                        // $stmt->execute();
+                                        // $resu = $stmt->get_result();
                                         
-                                        while ($rowSub = $resu->fetch_assoc()) {
-                                            echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] . "</option>";
-                                        }
+                                        // while ($rowSub = $resu->fetch_assoc()) {
+                                        //     echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] .' '.$rowSub['prenom_agent']. "</option>";
+                                        // }
                                         ?>
                             </select>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="modal-footer">
                         <button type="button" class="btn btn-sm btn-secondary" onclick="closeModal()">Close</button>
                         <button class="btn btn-sm btn-primary" type="submit" name="submit">Enregistrer</button>
@@ -272,6 +273,19 @@ document.getElementById('date_lp3').addEventListener('input', function() {
         dateError.style.display = 'block';
     }
 });
+document.getElementById('date_depart').addEventListener('input', function() {
+    var inputDate = new Date(this.value);
+    var today = new Date();
+
+    // Réinitialiser l'heure à 00:00:00 pour comparer uniquement les dates
+    today.setHours(0, 0, 0, 0);
+
+    if (inputDate < today) {
+        document.getElementById('date_error1').style.display = 'block';
+    } else {
+        document.getElementById('date_error1').style.display = 'none';
+    }
+});
 
 function isValidDate(dateString) {
     const date = new Date(dateString);
@@ -283,4 +297,20 @@ function isValidDate(dateString) {
 
     return dateString === date.toISOString().split('T')[0];
 }
+
+function validatePDFInput(event) {
+    var fileInput = event.target;
+    var filePath = fileInput.value;
+    var allowedExtension = /\.pdf$/i;
+
+    if (!allowedExtension.test(filePath)) {
+        alert('Veuillez choisir un fichier PDF.');
+        fileInput.value = ''; // Clear the file input
+        return false;
+    }
+}
+
+document.getElementById('pj_dom').addEventListener('change', validatePDFInput);
+document.getElementById('pj_declaration').addEventListener('change', validatePDFInput);
+document.getElementById('pj_lp3e').addEventListener('change', validatePDFInput);
 </script>

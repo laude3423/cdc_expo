@@ -3,7 +3,8 @@ include "../db_connect.php";
 ?>
 <?php 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $substance = $_POST['substance'];
+     $substance = $_POST['substance'];
+    //$id_substance = $_POST['id_substance'];
     $forme = isset($_POST["forme"]) ? $_POST["forme"] : array(); 
     $durete = isset($_POST["durete"]) ? $_POST["durete"] : array(); 
     $dimension = isset($_POST["dimension"]) ? $_POST["dimension"] : array();
@@ -18,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_detail = $_POST['id'];
     $id_type_substance = $_POST['type_substance'];
 
-    // Préparer la requête SQL
+    //Préparer la requête SQL
     $id_substance="";
     $sqlR="SELECT * FROM substance WHERE nom_substance = '$substance'";
     $resultR = mysqli_query($conn, $sqlR);

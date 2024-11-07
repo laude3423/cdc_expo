@@ -202,31 +202,31 @@ $countries = [
 $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
     if (isset($_POST['submit'])) {
-        $nom = $_POST['nom'];
-        $adresse = $_POST['adresse'];
-        $contact = $_POST['contact'];
-        $email = $_POST['email'];
-        $destination= $_POST['destination'];
+        $nom = htmlspecialchars($_POST['nom']);
+        $adresse = htmlspecialchars($_POST['adresse']);
+        $contact = htmlspecialchars($_POST['contact']);
+        $email = htmlspecialchars($_POST['email']);
+        $destination= htmlspecialchars($_POST['destination']);
         $id_societe_importateur = $_POST['id'];
 
-        $country_code = $_POST['country_code'];
-        $valid = false;
+        // $country_code = $_POST['country_code'];
+        // $valid = false;
 
-        foreach ($countries as $country) {
-            if ($country['code'] === $country_code) {
-                $number_length = $country['length'];
-                $clean_number = preg_replace('/\D/', '', $contact);
-                if (strlen($clean_number) == $number_length) {
-                    $valid = true;
-                    break;
-                }
-            }
-        }
+        // foreach ($countries as $country) {
+        //     if ($country['code'] === $country_code) {
+        //         $number_length = $country['length'];
+        //         $clean_number = preg_replace('/\D/', '', $contact);
+        //         if (strlen($clean_number) == $number_length) {
+        //             $valid = true;
+        //             break;
+        //         }
+        //     }
+        // }
 
-        if ($valid) {
+        
             if (empty($id_societe_importateur)) {
                 // Insertion d'une nouvelle société
-                $sql = "INSERT INTO `societe_importateur`(`nom_societe_importateur`, `adresse_societe_importateur`, `contact_societe_importateur`, `email_societe_importateur`,`pays_destination`, `code_pays`, `validation`) VALUES ('$nom','$adresse','$contact','$email', '$destination', '$country_code', 'En attente')";
+                $sql = "INSERT INTO `societe_importateur`(`nom_societe_importateur`, `adresse_societe_importateur`, `contact_societe_importateur`, `email_societe_importateur`,`pays_destination`, `validation`) VALUES ('$nom','$adresse','$contact','$email', '$destination',  'En attente')";
                 $result = mysqli_query($conn, $sql);
 
                 if ($result) {
@@ -238,7 +238,7 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
                 }
             } else {
                 // Mise à jour d'une société existante
-                $sql = "UPDATE `societe_importateur` SET `nom_societe_importateur`='$nom', `adresse_societe_importateur`='$adresse', `contact_societe_importateur`='$contact', `email_societe_importateur`='$email',`pays_destination`='$destination',`code_pays`='$country_code', `validation`='En attente' WHERE `id_societe_importateur`='$id_societe_importateur'";
+                $sql = "UPDATE `societe_importateur` SET `nom_societe_importateur`='$nom', `adresse_societe_importateur`='$adresse', `contact_societe_importateur`='$contact', `email_societe_importateur`='$email',`pays_destination`='$destination', `validation`='En attente' WHERE `id_societe_importateur`='$id_societe_importateur'";
                 $result = mysqli_query($conn, $sql);
 
                 if ($result) {
@@ -249,26 +249,24 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
                     echo "Erreur d'enregistrement" . mysqli_error($conn);
                 }
             }
-        } else {
-            $_SESSION['toast_message2']="Le numéro de téléphone est invalide.";
-            header("Location: ".$_SERVER['PHP_SELF']);
-            exit();
-        }
+        // } else {
+        //     $_SESSION['toast_message2']="Le numéro de téléphone est invalide.";
+        //     header("Location: ".$_SERVER['PHP_SELF']);
+        //     exit();
+        // }
     }
 if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -278,18 +276,16 @@ if(isset($_SESSION['toast_message'])) {
 }
 if(isset($_SESSION['toast_message2'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
                     <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message2'] . '
-                </div>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -351,6 +347,10 @@ if (!empty($edit_societe_id)) {
         display: none;
     }
 
+    .required {
+        color: red;
+    }
+
     main {
         display: flex;
         justify-content: center;
@@ -383,6 +383,10 @@ if (!empty($edit_societe_id)) {
         text-align: justify;
         text-justify: inter-word;
         /* Ajoutez cette propriété pour une justification plus précise */
+    }
+
+    td {
+        font-size: small;
     }
     </style>
     <style>
@@ -462,12 +466,17 @@ if (!empty($edit_societe_id)) {
             </thead>
             <tbody>
                 <?php 
-                $sql="SELECT * FROM `societe_importateur`";
+                $sql="SELECT * FROM `societe_importateur` WHERE `validation` iS NOT NULL ORDER BY id_societe_importateur DESC";
                 $result= mysqli_query($conn, $sql);
                 while($row = mysqli_fetch_assoc($result)){
                   ?>
                 <tr>
+                    <?php  if( $row['validation']=='Validé'){
+                    ?>
                     <td>✅</td>
+                    <?php  }else {?>
+                    <td>⚠️</td>
+                    <?php  }?>
                     <td><?php echo $row['nom_societe_importateur'] ?></td>
                     <td><?php echo $row['adresse_societe_importateur'] ?></td>
                     <td><?php echo $row['contact_societe_importateur'] ?></td>
@@ -476,12 +485,28 @@ if (!empty($edit_societe_id)) {
                     <td>
                         <a class="link-dark"
                             href="./detail.php?id=<?php echo $row['id_societe_importateur']; ?>">détails</a>
+                        <?php if ($row['validation'] != 'Validé') {
+                                ?>
                         <a href="#" class="link-dark"
                             onclick="openModal(<?php echo $row['id_societe_importateur']?>)"><i
                                 class="fa-solid fa-pen-to-square me-3"></i></a>
                         <a href="#" class="link-dark"
                             onclick="confirmerSuppression(<?php echo $row['id_societe_importateur']?>)"><i
                                 class="fa-solid fa-trash "></i></a>
+                        <?php
+                            } else {
+                                    ?>
+                        <a href="#" class="link-dark" data-toggle="tooltip"
+                            title="Modification non autorisée : Société déjà validé">
+                            <i class="fa-solid fa-pen-to-square me-3"></i>
+                        </a>
+                        <a href="#" class="link-dark" data-toggle="tooltip"
+                            title="Suppression non autorisée : Société déjà validé">
+                            <i class="fa-solid fa-trash"></i>
+                        </a>
+                        <?php
+                            }
+                        ?>
                     </td>
                 </tr>
                 <?php   
@@ -512,37 +537,31 @@ if (!empty($edit_societe_id)) {
                 <div class="modal-body">
                     <form id="societeForm" action="" method="post">
                         <div class="mb-3">
-                            <label for="nom" name="nom" class="col-form-label">Nom de la société:</label>
+                            <label for="nom" name="nom" class="col-form-label">Nom de la société<span
+                                    class="required">*</span></label>
                             <input type="text" class="form-control" name="nom" id="nom" placeholder="Nom complète"
                                 required style="font-size:90%">
                         </div>
                         <div class="mb-3">
-                            <label for="adresse" name="adresse" class="col-form-label">Adresse de la société:</label>
+                            <label for="adresse" name="adresse" class="col-form-label">Adresse de la société<span
+                                    class="required">*</span></label>
                             <input type="text" class="form-control" id="adresse" name="adresse"
                                 placeholder="Adresse complète" required style="font-size:90%">
                         </div>
                         <div class="mb-3">
-                            <label for="contact" class="col-form-label">Contact de la société :</label>
-                            <div class="input-group">
-                                <select class="form-select" id="country_code" name="country_code"
-                                    style="max-width: 150px;">
-                                    <option value="">Séléctionner ...</option>
-                                    <?php foreach ($countries as $country): ?>
-                                    <option value="<?= $country['code'] ?>"><?= $country['code'] ?>
-                                        (<?= $country['name'] ?>)</option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <input type="tel" class="form-control" id="contact" name="contact"
-                                    placeholder="Numéro de téléphone" required style="font-size: 90%">
-                            </div>
+                            <label for="contact" class="col-form-label">Contact de la société<span
+                                    class="required">*</span></label>
+                            <input type="text" class="form-control" id="contact" name="contact"
+                                placeholder="Numéro de téléphone" required style="font-size: 90%">
                         </div>
                         <div class="mb-3">
                             <label for="email" name="email" class="col-form-label">Email de la société:</label>
                             <input type="email" class="form-control" id="email" name="email" placeholder="Adresse email"
-                                required style="font-size:90%">
+                                style="font-size:90%">
                         </div>
                         <div class="mb-3">
-                            <label for="destination" name="destination" class="col-form-label">Destination:</label>
+                            <label for="destination" name="destination" class="col-form-label">Destination<span
+                                    class="required">*</span></label>
                             <input type="text" class="form-control" id="destination" name="destination"
                                 placeholder="Ville de destination" required style="font-size:90%">
                         </div>
@@ -592,6 +611,7 @@ if (!empty($edit_societe_id)) {
     }
     $(document).ready(function() {
         $('.toast').toast('show');
+        $('[data-toggle="tooltip"]').tooltip();
     });
 
     function confirmerSuppression(id) {
@@ -653,9 +673,10 @@ if (!empty($edit_societe_id)) {
                         $('#adresse').val(data.adresse_societe_importateur);
                         $('#contact').val(data.contact_societe_importateur);
                         $('#email').val(data.email_societe_importateur);
-                        var countryCode = data.code_pays;
-                        $('#country_code').val(countryCode);
-                        updateCountryName(countryCode);
+                        // var countryCode = data.code_pays;
+                        // $('#country_code').val(countryCode);
+                        // updateCountryName(countryCode);
+                        $('#destination').val(data.pays_destination);
                     },
                     error: function(xhr, status, error) {
                         console.error('Erreur lors de la récupération des données : ' + error);
@@ -670,21 +691,21 @@ if (!empty($edit_societe_id)) {
             document.getElementById('adresse').value = '';
             document.getElementById('contact').value = '';
             document.getElementById('email').value = '';
-            document.getElementById('country_code').value = '';
+            //document.getElementById('country_code').value = '';
             document.getElementById('id').value = '';
         }
 
         myModal.show();
     }
 
-    function updateCountryName(countryCode) {
-        $('#country_code').each(function() {
-            if ($(this).val() === countryCode) {
-                var countryName = $(this).text().split('(')[1].replace(')', '');
-                $('#country_name').val(countryName);
-            }
-        });
-    }
+    // function updateCountryName(countryCode) {
+    //     $('#country_code').each(function() {
+    //         if ($(this).val() === countryCode) {
+    //             var countryName = $(this).text().split('(')[1].replace(')', '');
+    //             $('#country_name').val(countryName);
+    //         }
+    //     });
+    // }
     </script>
 </body>
 

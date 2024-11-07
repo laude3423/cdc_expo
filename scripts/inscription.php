@@ -21,9 +21,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $matricule = $_POST["matricule"];
     $users = $_POST["fonction"];
     $fonction = "";
-    if($fonction=="Directeur"){
+    if(($users =="Directeur")||($users=="Directeur des Exportations")){
         $fonction = "A";
-    }else if ($fonction=="Chef de services"){
+    }else if (($users =="Chef de service")||($users=="Chef de Division Exportation")||($users=="Chef de Section Scellage")){
         $fonction = "B";
     }else{
         $fonction = "C";
@@ -40,6 +40,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email_count = $row['count'];
     $validation = 0;
     $groupe=1;
+    if($direction==17){
+     $groupe=3;   
+    }else if($direction=18){
+      $groupe=4;    
+    }
     $id_user='';
 
     if ($email_count > 0) {
@@ -85,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     echo 'Message envoyé avec succès !';
             }
             $_SESSION['toast_message'] = "Utilisateur enregistré avec succès.";
-            header("Location: ../index.php");
+            header("Location: ../scripts/indication.php");
             exit;
         } else {
             echo "Erreur lors de l'insertion de l'utilisateur : " . $conn->error;
@@ -106,6 +111,7 @@ $conn->close();
 <head>
     <title>Inscription</title>
     <!-- Intégration de Bootstrap CSS -->
+    <link rel="icon" href="../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
@@ -313,10 +319,14 @@ $conn->close();
                                 </div>
                                 <div class="col-sm-6">
                                     <label for="fonction" class="form-label">Fonction:</label>
-                                    <select class="form-control" name="fonction" id="fonction" required>
+                                    <select class="form-select" name="fonction" id="fonction" required>
                                         <option value="">Séléctionner ...</option>
                                         <option value="Directeur">Directeur</option>
-                                        <option value="Chef de services"></option>
+                                        <option value="Directeur des Exportations">Directeur des Exportations</option>
+                                        <option value="Chef de service">Chef de service</option>
+                                        <option value="Chef de Division Exportation">Chef de Division Exportation
+                                        </option>
+                                        <option value="Chef de Section Scellage">Chef de Section Scellage</option>
                                         <option value="Secrétaire de Direction">Secrétaire de Direction</option>
                                         <option value="Opérateur de saisie">Opérateur de saisie</option>
                                     </select>
@@ -331,7 +341,7 @@ $conn->close();
                                     <select class="form-control" name="direction" id="direction" required>
                                         <?php
                             include('db_connect.php');
-                            $requete = $conn->prepare('SELECT * FROM direction');
+                            $requete = $conn->prepare("SELECT * FROM direction WHERE sigle_direction IN ('DIR.ANSAND', 'DIR.A', 'DR.AA', 'DIR.M', 'DR.SAVA', 'DIR.TO', 'DR.VAK', 'DR.DIANA', 'GU','PCMAII')");
                             $requete->execute();
                             $resultat = $requete->get_result();
 

@@ -17,6 +17,12 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
         $instat = $_POST['instat'];
         $rcs = $_POST['rcs'];
         $type = $_POST['type'];
+        $date_octroi_stat=$_POST['date_instat'];
+        $date_octroi_nif=$_POST['date_octroi'];
+        $date_fin_nif=$_POST['date_fin'];
+        $date_octroi_rcs=$_POST['date_rcs'];
+        $affilie=$_POST['affilie'];
+        $en_attente='En attente';
         
         if (strlen($contact) !== 10) {
             echo json_encode(array('error' => 'Le numéro de contact doit avoir exactement 10 chiffres.'));
@@ -39,12 +45,12 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
             $numRcs_cleaned = preg_replace('/[^a-zA-Z0-9]/', '-', $rcs);
             $fileName_rcs = "SCAN_RCS_" .$numRcs_cleaned.".". pathinfo($_FILES['pj_rcs']['name'],
             PATHINFO_EXTENSION);
-            $uploadPath_NIF = $uploadDir . $fileName_rcs;
+            $uploadPath_RCS = $uploadDir . $fileName_rcs;
 
             $numInstat_cleaned = preg_replace('/[^a-zA-Z0-9]/', '-', $instat);
-            $fileName_rcs = "SCAN_INSTAT_" .$numInstat_cleaned.".". pathinfo($_FILES['pj_instat']['name'],
+            $fileName_instat = "SCAN_INSTAT_" .$numInstat_cleaned.".". pathinfo($_FILES['pj_instat']['name'],
             PATHINFO_EXTENSION);
-            $uploadPath_INSTAT = $uploadDir . $numInstat_cleaned;
+            $uploadPath_INSTAT = $uploadDir . $fileName_instat;
             //deplacement des fichier
             if (move_uploaded_file($_FILES['pj_nif']['tmp_name'], $uploadPath_NIF)) {
             } else {
@@ -59,10 +65,16 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
             echo "Erreur lors de l'upload du fichier.";
             }
             // Insertion d'une nouvelle société
-            $sql = "INSERT INTO `societe_expediteur`(`nom_societe_expediteur`, `adresse_societe_expediteur`, `nif_societe_expediteur`, `contact_societe_expediteur`, `email_societe_expediteur`, responsable, `instat`, `rcs`, `pj_nif`, `pj_rcs`, `pj_instat`, `validation`,`type`) VALUES ('$nom','$adresse','$nif','$contact','$email', '$responsable', '$instat', '$rcs', '$uploadPath_NIF','$uploadPath_RCS', '$uploadPath_INSTAT', 'En attente', '$type')";
-            $result = mysqli_query($conn, $sql);
+            $stmt = $conn->prepare("INSERT INTO `societe_expediteur` (
+                `date_octroi_nif`, `date_fin_nif`, `date_octroi_stat`, `date_octroi_rcs`, `affilie`, 
+                `nom_societe_expediteur`, `adresse_societe_expediteur`, `nif_societe_expediteur`, 
+                `contact_societe_expediteur`, `email_societe_expediteur`, `responsable`, `instat`, `rcs`, 
+                `pj_nif`, `pj_rcs`, `pj_instat`, `validation`, `type`
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-            if ($result) {
+            $stmt->bind_param("ssssssssssssssssss", $date_octroi_nif, $date_fin_nif, $date_octroi_stat, $date_octroi_rcs, $affilie, $nom, $adresse, $nif, $contact, $email, $responsable, $instat, $rcs, $uploadPath_NIF, $uploadPath_RCS, $uploadPath_INSTAT, $en_attente, $type);
+
+            if ($stmt->execute()) {
                 $_SESSION['toast_message'] = "Insertion réussie.";
                 header("Location: ".$_SERVER['PHP_SELF']);
                 exit();
@@ -79,15 +91,16 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
             $numRcs_cleaned = preg_replace('/[^a-zA-Z0-9]/', '-', $rcs);
             $fileName_rcs = "SCAN_RCS_" .$numRcs_cleaned.".". pathinfo($_FILES['pj_rcs']['name'],
             PATHINFO_EXTENSION);
-            $uploadPath_NIF = $uploadDir . $fileName_rcs;
+            $uploadPath_RCS = $uploadDir . $fileName_rcs;
 
             $numInstat_cleaned = preg_replace('/[^a-zA-Z0-9]/', '-', $instat);
             $fileName_rcs = "SCAN_INSTAT_" .$numInstat_cleaned.".". pathinfo($_FILES['pj_instat']['name'],
             PATHINFO_EXTENSION);
-            $uploadPath_INSTAT = $uploadDir . $numInstat_cleaned;
+            $uploadPath_INSTAT = $uploadDir . $fileName_rcs;
             //deplacement des fichier
              
-            if(!empty($uploadPath_NIF)){
+            if(isset($_FILES['pj_nif']) && $_FILES['pj_nif']['error'] == UPLOAD_ERR_OK){
+                echo $uploadPath_NIF;
                 $sql = "UPDATE `societe_expediteur` SET `pj_nif`='$uploadPath_NIF' WHERE `id_societe_expediteur`='$id_societe_expediteur'";
                 $result = mysqli_query($conn, $sql);
 
@@ -96,7 +109,7 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
                 echo "Erreur lors de l'upload du fichier.";
                 }
             }
-            if(!empty($uploadPath_INSTAT)){
+            if(isset($_FILES['pj_instat']) && $_FILES['pj_instat']['error'] == UPLOAD_ERR_OK){
                 $sql = "UPDATE `societe_expediteur` SET `pj_instat`='$uploadPath_INSTAT' WHERE `id_societe_expediteur`='$id_societe_expediteur'";
                 $result = mysqli_query($conn, $sql);
                 if (move_uploaded_file($_FILES['pj_instat']['tmp_name'], $uploadPath_INSTAT)) {
@@ -104,7 +117,7 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
                 echo "Erreur lors de l'upload du fichier.";
                 }
             }
-            if(!empty($uploadPath_RCS)){
+            if(isset($_FILES['pj_rcs']) && $_FILES['pj_rcs']['error'] == UPLOAD_ERR_OK){
                 $sql = "UPDATE societe_expediteur SET `pj_rcs`='$uploadPath_RCS' WHERE `id_societe_expediteur`='$id_societe_expediteur'";
                 $result = mysqli_query($conn, $sql);
                 if (move_uploaded_file($_FILES['pj_rcs']['tmp_name'], $uploadPath_RCS)) {
@@ -113,10 +126,27 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
                 }
             }
             // Mise à jour d'une société existante
-            $sql = "UPDATE `societe_expediteur` SET `nom_societe_expediteur`='$nom', `adresse_societe_expediteur`='$adresse', `nif_societe_expediteur`='$nif', `contact_societe_expediteur`='$contact', `email_societe_expediteur`='$email', `responsable`='$responsable', `type`='$type', `instat`='$instat', `rcs`='$rcs',`validation`='En attente' WHERE `id_societe_expediteur`='$id_societe_expediteur'";
-            $result = mysqli_query($conn, $sql);
+            $stmt = $conn->prepare("UPDATE `societe_expediteur` 
+                        SET `nom_societe_expediteur`=?, 
+                            `adresse_societe_expediteur`=?, 
+                            `nif_societe_expediteur`=?, 
+                            `contact_societe_expediteur`=?, 
+                            `email_societe_expediteur`=?, 
+                            `responsable`=?, 
+                            `type`=?,
+                            `instat`=?, 
+                            `date_octroi_nif`=?, 
+                            `date_fin_nif`=?,
+                            `date_octroi_stat`=?,
+                            `date_octroi_rcs`=?,
+                            `affilie`=?, 
+                            `rcs`=?,
+                            `validation`='En attente' 
+                        WHERE `id_societe_expediteur`=?");
 
-            if ($result) {
+            $stmt->bind_param("sssssssssssssss", $nom, $adresse, $nif, $contact, $email, $responsable, $type, $instat, $date_octroi_nif, $date_fin_nif, $date_octroi_stat, $date_octroi_rcs, $affilie, $rcs, $id_societe_expediteur);
+
+            if ($stmt->execute()) {
                 $_SESSION['toast_message'] = "Modification réussie.";
                 header("Location: ".$_SERVER['PHP_SELF']);
                 exit();
@@ -127,26 +157,43 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
         
     }
-    if(isset($_SESSION['toast_message'])) {
+if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
 
     // Effacer le message du Toast de la variable de session
     unset($_SESSION['toast_message']);
+}
+if(isset($_SESSION['toast_message2'])) {
+    echo '
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message2']);
 }
 $edit_societe_details = array();
 
@@ -243,6 +290,14 @@ if (!empty($edit_societe_id)) {
         /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
     }
 
+    .required {
+        color: red;
+    }
+
+    td {
+        font-size: small;
+    }
+
     .btn {
         font-size: small;
         /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
@@ -311,12 +366,19 @@ if (!empty($edit_societe_id)) {
             </thead>
             <tbody>
                 <?php 
-                $sql="SELECT * FROM `societe_expediteur`";
+                $sql="SELECT * FROM `societe_expediteur` WHERE `validation` iS NOT NULL  ORDER BY id_societe_expediteur DESC";
                 $result= mysqli_query($conn, $sql);
                 while($row = mysqli_fetch_assoc($result)){
                   ?>
                 <tr>
+                    <?php  if( $row['validation']=='Validé'){
+                    ?>
                     <td>✅</td>
+                    <?php  }else if($row['validation']=='À Refaire'){?>
+                    <td>❌</td>
+                    <?php }else {?>
+                    <td>⚠️</td>
+                    <?php  }?>
                     <td><?php echo $row['nom_societe_expediteur'] ?></td>
                     <td><?php echo $row['adresse_societe_expediteur'] ?></td>
                     <td><?php echo $row['nif_societe_expediteur'] ?></td>
@@ -325,11 +387,27 @@ if (!empty($edit_societe_id)) {
                     <td>
                         <a class="link-dark"
                             href="./detail.php?id=<?php echo $row['id_societe_expediteur']; ?>">détails</a>
+                        <?php //if ($row['validation'] != 'Validé') {
+                                ?>
                         <a href="#" class="link-dark" onclick="openModal(<?php echo $row['id_societe_expediteur']?>)"><i
                                 class="fa-solid fa-pen-to-square me-3"></i></a>
                         <a href="#" class="link-dark"
                             onclick="confirmerSuppression(<?php echo $row['id_societe_expediteur']?>)"><i
                                 class="fa-solid fa-trash "></i></a>
+                        <?php
+                            //} else {
+                                    ?>
+                        <!-- <a href="#" class="link-dark" data-toggle="tooltip"
+                            title="Modification non autorisée : Société déjà validé">
+                            <i class="fa-solid fa-pen-to-square me-3"></i>
+                        </a>
+                        <a href="#" class="link-dark" data-toggle="tooltip"
+                            title="Suppression non autorisée : Société déjà validé">
+                            <i class="fa-solid fa-trash"></i>
+                        </a> -->
+                        <?php
+                            //}
+                        ?>
                     </td>
                 </tr>
                 <?php   
@@ -361,12 +439,14 @@ if (!empty($edit_societe_id)) {
                     <form id="societeForm" action="" method="post" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col">
-                                <label for="nom" name="nom" class="col-form-label">Nom de la société:</label>
+                                <label for="nom" name="nom" class="col-form-label">Nom de la société<span
+                                        class="required">*</span></label>
                                 <input type="text" class="form-control" name="nom" id="nom" placeholder="Nom complète"
                                     required style="font-size:90%">
                             </div>
                             <div class="col">
-                                <label for="type" name="type" class="col-form-label">Type de la société:</label>
+                                <label for="type" name="type" class="col-form-label">Type de la société<span
+                                        class="required">*</span></label>
                                 <select class="form-control" name="type" id="type" required>
                                     <option value="">Séléctionner ...</option>
                                     <option value="SA">SA</option>
@@ -378,12 +458,14 @@ if (!empty($edit_societe_id)) {
                         </div>
                         <div class="row">
                             <div class="col">
-                                <label for="responsable" name="nom" class="col-form-label">Responsable:</label>
+                                <label for="responsable" name="nom" class="col-form-label">Responsable<span
+                                        class="required">*</span></label>
                                 <input type="text" class="form-control" name="responsable" id="responsable"
                                     placeholder="Nom complète" required style="font-size:90%">
                             </div>
                             <div class="col">
-                                <label for="email" name="email" class="col-form-label">Email de la société:</label>
+                                <label for="email" name="email" class="col-form-label">Email de la société<span
+                                        class="required">*</span></label>
                                 <input type="email" class="form-control" id="email" name="email"
                                     placeholder="Adresse email" required style="font-size:90%">
                             </div>
@@ -391,61 +473,100 @@ if (!empty($edit_societe_id)) {
                         <div class="row">
                             <div class="col">
                                 <label for="contact" name="contact" class="col-form-label">Contact de la
-                                    société:</label>
+                                    société<span class="required">*</span></label>
                                 <input type="number" class="form-control" id="contact" name="contact"
                                     placeholder="Numéro de téléphone" required style="font-size:90%"
                                     pattern="[0-9]{10}">
                             </div>
                             <div class="col">
                                 <label for="adresse" name="adresse" class="col-form-label">Adresse de la
-                                    société:</label>
+                                    société<span class="required">*</span></label>
                                 <input type="text" class="form-control" id="adresse" name="adresse"
                                     placeholder="Adresse complète" required style="font-size:90%">
                             </div>
                         </div>
                         <div class="row">
                             <div class="col">
-                                <label for="nif" name="nif" class="col-form-label">NIF de la société:</label>
+                                <label for="nif" name="nif" class="col-form-label">NIF de la société<span
+                                        class="required">*</span></label>
                                 <input type="number" class="form-control" id="nif" name="nif"
-                                    placeholder="Numéro d'identification fiscale" required style="font-size:90%"
-                                    pattern="[0-9]{10}">
+                                    placeholder="Numéro d'identification fiscale" required style="font-size:90%">
                             </div>
                             <div class="col">
                                 <label for="pj_nif" name="pj_nif" class="col-form-label">Scan de NIF de la
-                                    société:</label>
-                                <input type="file" class="form-control" id="pj_nif" name="pj_nif"
-                                    placeholder="Numéro d'identification fiscale" style="font-size:90%"
-                                    pattern="[0-9]{10}">
+                                    société<span class="required">*</span></label>
+                                <input type="file" class="form-control" id="pj_nif" name="pj_nif" accept=".pdf"
+                                    placeholder="Numéro d'identification fiscale" style="font-size:90%">
                             </div>
                         </div>
                         <div class="row">
                             <div class="col">
-                                <label for="rcs" name="rcs" class="col-form-label">N° RCS de la société:</label>
-                                <input type="text" class="form-control" id="rcs" name="rcs"
-                                    placeholder="Numéro d'identification fiscale" required style="font-size:90%"
-                                    pattern="[0-9]{10}">
+                                <label for="date_octroi" name="date_octroi" class="col-form-label">Date d'octroi
+                                    NIF<span class="required">*</span></label>
+                                <input type="date" class="form-control" id="date_octroi" name="date_octroi" required
+                                    style="font-size:90%">
+                            </div>
+                            <div class="col">
+                                <label for="date_fin" name="date_fin" class="col-form-label">Date fin de
+                                    validité<span class="required">*</span></label>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin"
+                                    style="font-size:90%">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="rcs" name="rcs" class="col-form-label">N° RCS de la société:</label>
+                                        <input type="text" class="form-control" id="rcs" name="rcs"
+                                            placeholder="Numéro de référence des identifiants créanciers"
+                                            style="font-size:90%">
+                                    </div>
+                                    <div class="col">
+                                        <label for="date_rcs" name="date_rcs" class="col-form-label">Date
+                                            d'octroi:</label>
+                                        <input type="date" class="form-control" id="date_rcs" name="date_rcs"
+                                            style="font-size:90%">
+                                    </div>
+                                </div>
                             </div>
                             <div class="col">
                                 <label for="pj_rcs" name="pj_rcs" class="col-form-label">Scan de RCS de la
                                     société:</label>
-                                <input type="file" class="form-control" id="pj_rcs" name="pj_rcs"
-                                    placeholder="Numéro d'identification fiscale" style="font-size:90%"
-                                    pattern="[0-9]{10}">
+                                <input type="file" class="form-control" id="pj_rcs" name="pj_rcs" accept=".pdf"
+                                    placeholder="Numéro d'identification fiscale" style="font-size:90%">
                             </div>
                         </div>
-                        <div class="row">
+                        <div class=" row">
                             <div class="col">
-                                <label for="instat" name="instat" class="col-form-label">N° STAT de la
-                                    société:</label>
-                                <input type="text" class="form-control" id="instat" name="instat"
-                                    placeholder="Numéro d'INSTAT" required style="font-size:90%" pattern="[0-9]{10}">
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="instat" name="instat" class="col-form-label">N° STAT de la
+                                            société<span class="required">*</span></label>
+                                        <input type="text" class="form-control" id="instat" name="instat"
+                                            placeholder="Numéro STAT" required style="font-size:90%">
+                                    </div>
+                                    <div class="col">
+                                        <label for="date_instat" name="date_instat" class="col-form-label">Date
+                                            d'octroi<span class="required">*</span></label>
+                                        <input type="date" class="form-control" id="date_instat" name="date_instat"
+                                            required style="font-size:90%">
+                                    </div>
+                                </div>
                             </div>
                             <div class="col">
                                 <label for="pj_instat" name="pj_instat" class="col-form-label">Scan d'STAT de la
-                                    société:</label>
-                                <input type="file" class="form-control" id="pj_instat" name="pj_instat"
-                                    placeholder="Numéro d'identification fiscale" style="font-size:90%"
-                                    pattern="[0-9]{10}">
+                                    société<span class="required">*</span></label>
+                                <input type="file" class="form-control" id="pj_instat" name="pj_instat" accept=".pdf"
+                                    placeholder="Numéro d'identification fiscale" style="font-size:90%">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="col">
+                                <label for="affilie" name="affilie" class="col-form-label">Nom de la société
+                                    affiliée:</label>
+                                <input type="text" class="form-control" id="affilie" name="affilie"
+                                    placeholder="Nom de la société affiliée" style="font-size:90%">
                             </div>
                         </div>
                         <input type="hidden" id="id" name="id">
@@ -494,6 +615,7 @@ if (!empty($edit_societe_id)) {
     }
     $(document).ready(function() {
         $('.toast').toast('show');
+        $('[data-toggle="tooltip"]').tooltip();
     });
 
     function confirmerSuppression(id) {
@@ -560,6 +682,11 @@ if (!empty($edit_societe_id)) {
                         $('#rcs').val(data.rcs);
                         $('#instat').val(data.instat);
                         $('#type').val(data.type);
+                        $('#date_octroi').val(data.date_octtroi_nif);
+                        $('#date_fin').val(data.date_fin_nif);
+                        $('#date_instat').val(data.date_octroi_stat);
+                        $('#date_rcs').val(data.date_octroi_rcs);
+                        $('#affilie').val(data.affilie);
                     },
                     error: function(xhr, status, error) {
                         console.error('Erreur lors de la récupération des données : ' + error);
@@ -593,7 +720,24 @@ if (!empty($edit_societe_id)) {
                 alert("Le numéro de NIF doit avoir exactement 10 chiffres.");
             }
         });
+
     }
+
+    function validatePDFInput(event) {
+        var fileInput = event.target;
+        var filePath = fileInput.value;
+        var allowedExtension = /(\.pdf)$/i;
+
+        if (!allowedExtension.exec(filePath)) {
+            alert('Veuillez choisir un fichier PDF.');
+            fileInput.value = '';
+            return false;
+        }
+    }
+
+    document.getElementById('pj_instat').addEventListener('change', validatePDFInput);
+    document.getElementById('pj_rcs').addEventListener('change', validatePDFInput);
+    document.getElementById('pj_nif').addEventListener('change', validatePDFInput);
     </script>
 </body>
 

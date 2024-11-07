@@ -1,7 +1,43 @@
 <?php
-
 // Connexion à la base de données
   require_once('../../scripts/db_connect.php');
+  require_once('../../scripts/connect_db_lp1.php');
+$currentYear = date('Y');
+$years = range($currentYear - 6, $currentYear);
+$annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
+  $sql = "SELECT * FROM contenu_facture WHERE quantite_lp1_actuel_lp1_suivis=0 AND id_lp1_info IS NOT NULL";
+    $result = $conn->query($sql);
+    if($result && $result->num_rows > 0){
+        while ($row = $result->fetch_assoc()) {
+            $id_lp_info = $row['id_lp1_info'];
+
+            $sql = "SELECT * FROM lp_info WHERE id_lp='$id_lp_info' AND expire_lp IS NULL";
+            $result2 = $conn_lp1->query($sql);
+            if($result2 && $result2->num_rows > 0){
+                $row2 = $result2->fetch_assoc();
+                $id_lp= $row2['id_lp'];
+
+                $query = "UPDATE lp_info SET expire_lp = 'oui' WHERE id_lp = ?";
+                $stmt = $conn_lp1->prepare($query);
+                $stmt->bind_param("i", $id_lp);
+                $stmt->execute();
+            }
+    }
+}
+    
+  $sql = "SELECT cfac.id_ancien_lp FROM contenu_facture AS cfac LEFT JOIN ancien_lp AS anc
+  ON cfac.id_ancien_lp=anc.id_ancien_lp  WHERE quantite_lp1_actuel_lp1_suivis = 0 AND anc.expiration IS NULL";
+    $result = $conn->query($sql);
+    if($result && $result->num_rows > 0){
+        $query = "UPDATE ancien_lp SET expiration = 'oui' WHERE id_ancien_lp = ?";
+        $stmt = $conn->prepare($query);
+
+        while ($row = $result->fetch_assoc()) {
+            $id_contenu_facture = $row['id_ancien_lp'];
+            $stmt->bind_param("i", $id_contenu_facture);
+            $stmt->execute();
+        }
+    }
   require_once('../../scripts/session.php');
   if($groupeID!==2){
     require_once('../../scripts/session_actif.php');
@@ -9,18 +45,16 @@
 
 if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -30,18 +64,16 @@ if(isset($_SESSION['toast_message'])) {
 }
 if(isset($_SESSION['toast_message2'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
                     <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message2'] . '
-                </div>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -136,6 +168,17 @@ if(isset($_SESSION['toast_message2'])) {
             <div class="col">
                 <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
             </div>
+            <div class="col">
+                <form method="GET" action="">
+                    <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
+                        <?php foreach ($years as $year): ?>
+                        <option value="<?php echo $year; ?>" <?php echo ($year == $annee) ? 'selected' : ''; ?>>
+                            <?php echo $year; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
             <div class="col text-end">
                 <a class="btn btn-success rounded-pill px-3" href="./exporter_facture.php?" style="font-size: 90%;"><i
                         class="fas fa-file-excel"></i> Exporter en excel</a>
@@ -157,7 +200,7 @@ if(isset($_SESSION['toast_message2'])) {
             FROM data_cc dcc
             LEFT JOIN societe_expediteur sexp ON dcc.id_societe_expediteur = sexp.id_societe_expediteur
             LEFT JOIN societe_importateur simp ON dcc.id_societe_importateur = simp.id_societe_importateur
-            LEFT JOIN users u ON dcc.id_user = u.id_user
+            LEFT JOIN users u ON dcc.id_user = u.id_user WHERE YEAR(dcc.date_facture) = $annee AND num_facture IS NOT NULL
             ORDER BY dcc.date_modification_facture DESC";
 
             $result = $conn->query($query);
@@ -191,7 +234,7 @@ if(isset($_SESSION['toast_message2'])) {
                         }else{
                             echo'<td>⚠️</td>';
                         }
-                        echo '<td>'.date("d/m/Y", strtotime($row["date_facture"])).'</td> 
+                        echo '<td>'.$row["num_facture"].'</td> 
                         <td class="masque2">'.$row["nom_societe_importateur"].'</td>
                         <td class="masque2">'.$row["nom_societe_expediteur"].'</td>';
                         if(empty($row["num_pv_controle"])){
@@ -222,7 +265,7 @@ if(isset($_SESSION['toast_message2'])) {
             LEFT JOIN societe_importateur simp ON dcc.id_societe_importateur = simp.id_societe_importateur
             LEFT JOIN users u ON dcc.id_user = u.id_user
             LEFT JOIN direction dir ON dir.id_direction = u.id_direction 
-            WHERE dir.id_direction = $id_direction
+            WHERE dir.id_direction = $id_direction YEAR(dcc.date_facture) = $annee AND num_facture IS NOT NULL
             ORDER BY dcc.date_modification_facture DESC";
 
             $result = $conn->query($query);
@@ -238,7 +281,8 @@ if(isset($_SESSION['toast_message2'])) {
                     <table id="agentTable" class="table table-hover">
                         <thead class="table-dark">
                             <tr>
-                                <th scope="col" id=""> </th>
+                                <th scope="col" id=""></th>
+                                <th scope="col" id="">N° Facture</th>
                                 <th scope="col" id="nomDirection">Date facture</th>
                                 <th class="masque2" scope="col" id="nom_prenom">Expediteur</th>
                                 <th class="masque2" scope="col" id="nomSubstance">Importateur</th>
@@ -253,10 +297,13 @@ if(isset($_SESSION['toast_message2'])) {
                     echo '<tr>';
                     if($row["validation_facture"]=='Validé'){
                             echo'<td>✅</td>';
+                        }else if($row["validation_facture"]=='À Refaire'){
+                            echo'<td>❌</td>';
                         }else{
                             echo'<td>⚠️</td>';
                         }
-                        echo '<td>'.date("d/m/Y", strtotime($row["date_facture"])).'</td> 
+                        echo '<td>'.$row["num_facture"].'</td>
+                        <td>'.date("d/m/Y", strtotime($row["date_facture"])).'</td> 
                         <td class="masque2">'.$row["nom_societe_importateur"].'</td>
                         <td class="masque2">'.$row["nom_societe_expediteur"].'</td>';
                         if(empty($row["num_pv_controle"])){
@@ -265,9 +312,7 @@ if(isset($_SESSION['toast_message2'])) {
                             echo'<td>complet</td>';
                         }
                          echo'<td>'.$row["validation_facture"].'</td>';
-                            $date_depart = empty($row['date_depart']) ? (new DateTime())->modify('+2 days') : new DateTime($row['date_depart']);
-                            $date_aujourdhui = new DateTime();
-                            if ($date_depart > $date_aujourdhui) {
+                            if ($row['validation_facture']!='Validé') {
                                 echo '<td>
                                 <a href="liste_contenu_facture.php?id=' . $row['id_data_cc'] . '" class="link-dark">détails</a>
                                     <a class="link-dark btn-edit-facture" 
@@ -282,7 +327,7 @@ if(isset($_SESSION['toast_message2'])) {
                                     echo '<td>
                                     <a href="liste_contenu_facture.php?id=' . $row['id_data_cc'] . '" class="link-dark">détails</a>
                                     <a href="#" class="link-dark" data-toggle="tooltip"
-                                    title="Modification non autorisée : les produits sont déjà exportés">
+                                    title="Modification non autorisée : La facture est déjà validée">
                                     <i class="fa-solid fa-pen-to-square me-3"></i></td>';
                             }
                             echo '</tr>';

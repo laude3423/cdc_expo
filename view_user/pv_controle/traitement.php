@@ -37,29 +37,114 @@ $uploadPath_LP3 = $uploadDir . $fileName_LP3;
     echo "Erreur lors de l'upload du fichier.";
     }
     //insertion sur l'agent
-    if(!empty($chef)){
-    $sql = "INSERT INTO `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES ('$chef','$id_data')";
-    $result = mysqli_query($conn, $sql);
-    }
-    if(!empty($qualite)){
-    $sql = "INSERT INTO `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES ('$qualite','$id_data')";
-    $result = mysqli_query($conn, $sql);
-    }
-        //modification pour l'insertion
-        $sql = "UPDATE `data_cc` SET `id_societe_expediteur`='$expediteur', `id_societe_importateur`='$importateur',
-        `num_pv_controle`='$num_pv', `mode_emballage`='$mode_emballage',
-        `lieu_controle_pv`='$lieu_controle',`lieu_embarquement_pv`='$lieu_embarquement', `num_domiciliation`='$num_domiciliation',
-        `num_fiche_declaration_pv`='$num_fiche_declaration',`pj_domiciliation_pv`='$uploadPath_DOM',
-        `date_fiche_declaration_pv`='$date_declaration',`pj_fiche_declaration_pv`='$uploadPath_DEC',`num_lp3e_pv`='$num_lp3e',`date_lp3e`='$date_lp3e',`pj_lp3e_pv`='$uploadPath_LP3',
-        `date_creation_pv_controle`='$dateInsert',`lien_pv_controle`='$pathToSave',`pj_pv_controle`='$pathToSavePDF',`date_modification_pv_controle`='$dateInsert',
-        `premiere_validation_cdc`='En attente',`deuxieme_validation_cdc`='En attente',`validation_controle`='En attente',
-        `num_cc`='$num_cc',`date_cc`='$dateInsert',`lien_cc`='$lien_cc',`pj_cc`='$pj_cc', `date_depart`='$date_depart' WHERE id_data_cc='$id_data'";
-        $result = mysqli_query($conn, $sql);
+    // if(!empty($chef)){
+    //     // Vérifier si les données existent déjà
+    //     $check_sql = "SELECT * FROM `pv_agent_assister` WHERE `id_agent` = '$chef' AND `id_data_cc` = '$id_data'";
+    //     $check_result = mysqli_query($conn, $check_sql);
+
+    //     // Si les données n'existent pas, insérer
+    //     if(mysqli_num_rows($check_result) == 0){
+    //         $sql = "INSERT INTO `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES ('$chef','$id_data')";
+    //         $result = mysqli_query($conn, $sql);
+    //     }
+    // }
+
+    // if(!empty($qualite)){
+    //     // Vérifier si les données existent déjà
+    //     $check_sql = "SELECT * FROM `pv_agent_assister` WHERE `id_agent` = '$qualite' AND `id_data_cc` = '$id_data'";
+    //     $check_result = mysqli_query($conn, $check_sql);
+
+    //     // Si les données n'existent pas, insérer
+    //     if(mysqli_num_rows($check_result) == 0){
+    //         $sql = "INSERT INTO `pv_agent_assister`(`id_agent`, `id_data_cc`) VALUES ('$qualite','$id_data')";
+    //         $result = mysqli_query($conn, $sql);
+    //     }
+    // }
+    // Modification pour l'insertion
+    $id_data = intval($id_data); // S'assurer que $id_data est un entier
+
+// S'assurer que $id_data est un entier
+$id_data = intval($id_data); 
+$attante="En attente";
+// Préparation de la requête SQL avec 23 placeholders
+$sql = "UPDATE `data_cc` SET 
+    `num_pv_controle`=?, 
+    `mode_emballage`=?, 
+    `lieu_controle_pv`=?, 
+    `lieu_embarquement_pv`=?, 
+    `num_domiciliation`=?, 
+    `num_fiche_declaration_pv`=?, 
+    `pj_domiciliation_pv`=?, 
+    `date_fiche_declaration_pv`=?, 
+    `pj_fiche_declaration_pv`=?, 
+    `num_lp3e_pv`=?, 
+    `date_lp3e`=?, 
+    `pj_lp3e_pv`=?, 
+    `date_creation_pv_controle`=?, 
+    `lien_pv_controle`=?, 
+    `pj_pv_controle`=?, 
+    `date_modification_pv_controle`=?, 
+    `validation_directeur`=?, 
+    `validation_chef`=?, 
+    `validation_controle`=?, 
+    `date_dom`=?, 
+    `num_cc`=?, 
+    `date_cc`=?, 
+    `lien_cc`=?, 
+    `pj_cc`=? 
+    WHERE id_data_cc=?";
+
+// Préparation de la requête
+$stmt = mysqli_prepare($conn, $sql);
+
+if ($stmt === false) {
+    die('Erreur de préparation de la requête: ' . mysqli_error($conn));
+}
+
+// Vérification du nombre de paramètres (23 types attendus)
+$bind_result = mysqli_stmt_bind_param($stmt, 'ssssssssssssssssssssssssi', 
+    $num_pv,               // string
+    $mode_emballage,        // string
+    $lieu_controle,         // string
+    $lieu_embarquement,     // string
+    $num_domiciliation,     // string
+    $num_fiche_declaration, // string
+    $uploadPath_DOM,        // string
+    $date_declaration,      // string
+    $uploadPath_DEC,        // string
+    $num_lp3e,              // string
+    $date_lp3e,             // string
+    $uploadPath_LP3,        // string
+    $dateInsert,            // string
+    $pathToSave,            // string
+    $pathToSavePDF,         // string
+    $dateInsert,  
+    $attante,
+    $attante,
+    $attante,           // string
+    $dateDom,   // string
+    $num_cc,                // string
+    $dateInsert,            // string
+    $lien_cc,               // string
+    $pj_cc,                 // string
+    $id_data                // int
+);
+
+if ($bind_result === false) {
+    die('Erreur de liaison des paramètres: ' . mysqli_error($conn));
+}
+
+// Exécution de la requête
+$result = mysqli_stmt_execute($stmt);
 
         if ($result) {
-        $_SESSION['toast_message'] = "Insertion réussie.";
-        header("Location: https://cdc.minesmada.org/view_user/pv_controle_gu/detail.php?id=" . $id_data);
-        exit();
+            $stmt = $conn->prepare("INSERT INTO `incrementation`( `id_data_cc`, `id_direction`, `incrementation`, `date_incrementation`) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("iiis", $id_data, $id_direction, $nouvelle_incrementation, $dateInsert);
+            $stmt->execute();
+            insertLogs($conn, $userID, $activite);
+            $_SESSION['toast_message'] = "Insertion réussie.";
+            header("Location: https://cdc.minesmada.org/view_user/pv_controle_gu/detail.php?id=" . $id_data);
+            exit();
         } else {
         echo "Erreur d'enregistrement" . mysqli_error($conn);
         }

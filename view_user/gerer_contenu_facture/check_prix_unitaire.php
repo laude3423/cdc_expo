@@ -17,7 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id_categorie = isset($_POST["id_categorie"]) ? intval($_POST["id_categorie"]) : null;
     $id_forme_substance = isset($_POST["id_forme_substance"]) ? intval($_POST["id_forme_substance"]) : null;
     $id_dimension_diametre = isset($_POST["id_dimension_diametre"]) ? intval($_POST["id_dimension_diametre"]) : null;
-
+    if($id_categorie==3){
+        $id_categorie=2;
+    }
     $query_detail_substance = "SELECT * FROM substance_detaille_substance 
         WHERE id_substance = ? 
         AND (id_couleur_substance = ? OR id_couleur_substance IS NULL)
@@ -39,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $row = $result_detail_substance->fetch_assoc();
             $response = ['status' => 'success', 'prix_substance' => $row['prix_substance']];
         } else {
-            $response = ['status' => 'error', 'message' => 'Aucun prix trouvé pour cette combinaison.'];
+            $response = ['status' => 'error', 'message' => 'Aucun prix trouvé pour cette combinaison.'. $id_categorie];
         }
     } else {
         $response = ['status' => 'error', 'message' => 'Erreur lors de l\'exécution de la requête.'];

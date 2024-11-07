@@ -7,11 +7,16 @@ ini_set('display_errors', 1);
 
 header('Content-Type: application/json; charset=UTF-8');
 
-ob_start();
-
 $response = array();
 if (isset($_POST['id'])) {
     $id = $_POST['id'];
+    $sql = "SELECT * FROM contenu_facture WHERE id_contenu_facture=?";
+    $stmt23 = $conn->prepare($sql);
+    $stmt23->bind_param("i", $id);
+    $stmt23->execute();
+    $resu23 = $stmt23->get_result();
+    $row23 = $resu23->fetch_assoc();
+    $id_data_cc=$row23['id_data_cc'];
 
     $query = "DELETE FROM contenu_facture WHERE id_contenu_facture = ?";
     $stmt = $conn->prepare($query);
@@ -21,6 +26,16 @@ if (isset($_POST['id'])) {
         $stmt->bind_param('i', $id);
         if ($stmt->execute()) {
             $response = array('success' => true, 'message' => 'Suppression réussie');
+
+            // Mettre à jour `validation_facture` dans `data_cc` après suppression
+            $stmt3 = $conn->prepare("UPDATE data_cc SET `validation_facture` = 'En attente' WHERE id_data_cc = ?");
+            if ($stmt3) {
+                $stmt3->bind_param('i', $id_data_cc);
+                $stmt3->execute();
+                $stmt3->close();
+            } else {
+                $response['message'] .= ' (Erreur lors de la mise à jour : ' . $conn->error . ')';
+            }
         } else {
             $response = array('success' => false, 'message' => 'Erreur lors de la suppression : ' . $stmt->error);
         }
@@ -30,12 +45,6 @@ if (isset($_POST['id'])) {
     }
 } else {
     $response = array('success' => false, 'message' => 'ID non spécifié');
-}
-
-$output = ob_get_clean();
-
-if (!empty($output)) {
-    $response['output'] = $output;
 }
 
 // Encoder la réponse en JSON

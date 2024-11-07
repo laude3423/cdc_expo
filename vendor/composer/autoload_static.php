@@ -22,6 +22,7 @@ class ComposerStaticInit9d278b9b98037878dcc5db0dd01977f7
         ),
         'T' => 
         array (
+            'Twilio\\' => 7,
             'Tests\\PhpOffice\\Math\\' => 21,
         ),
         'S' => 
@@ -57,6 +58,10 @@ class ComposerStaticInit9d278b9b98037878dcc5db0dd01977f7
         'ZipStream\\' => 
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
+        ),
+        'Twilio\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/twilio/sdk/src/Twilio',
         ),
         'Tests\\PhpOffice\\Math\\' => 
         array (

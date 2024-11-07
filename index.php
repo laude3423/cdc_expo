@@ -3,11 +3,16 @@ session_start();
 
 // Connexion à la base de données
 require 'scripts/db_connect.php';
+include './histogramme/insert_logs.php';
+$sqlm = $conn->prepare('SELECT * FROM maintenance');
+$sqlm->execute();
+$resultatM = $sqlm->get_result();
+$rowM = $resultatM->fetch_assoc();
 
 if(isset($_SESSION['toast_message'])) {
     echo '
     <div style="left=50px;top=50px">
-        <div class="toast-container"">
+        <div class="toast-container">
             <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="toast-header">
                     <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
@@ -27,7 +32,7 @@ if(isset($_SESSION['toast_message'])) {
 }
 
 
-// Vrifier si l'utilisateur est déj connecté
+//Vrifier si l'utilisateur est déj connecté
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     redirigerVersPageAccueil();
 }
@@ -37,9 +42,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Rcupérer les données du formulaire
     $adresseEmail = $_POST['adresse_email'];
     $motDePasse = $_POST['mots_de_passe'];
-
+    $variable='';
+    $id_USERS=NULL;
     // Valider les données (vous pouvez ajouter des validations supplémentaires ici)
-
+    $sql = "SELECT * FROM `users` WHERE `mail_user`= '$adresseEmail'";
+    $result = $conn->query($sql);
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $id_USERS = $row['id_user'];
+        }
+        $variable="0";
+    }else{
+        $variable="Tentative de connexion à échoué, adresse-email invalides:".$adresseEmail;
+        insertLogs($conn, $id_USERS, $variable);
+    }
     // Vérifier les informations de connexion dans la base de donnes
     // $conn = seConnecterBaseDeDonnees();
     $utilisateur = verifierInformationsConnexion($conn, $adresseEmail, $motDePasse);
@@ -49,12 +65,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($utilisateur !== null) {
         // Connexion réussie, créer une session pour l'utilisateur
         creerSessionUtilisateur($utilisateur);
-
+        $activite='Connexion réussie';
+        insertLogs($conn, $id_USERS, $activite);
         // Rediriger en fonction de l'id_groupe de l'utilisateur
         redirigerSelonIDGroupe($utilisateur['id_groupe']);
         } else {
             // Identifiants de connexion invalides
             $messageErreur = 'Identifiants de connexion invalides';
+            if($variable=="0"){
+                $activite='Identifiants de connexion invalides ou mot de passe incorrect';
+                insertLogs($conn, $id_USERS, $activite);
+            }
         }
     }else{
          $messageErreur = 'Veuillez vérifier d\'abord votre adresse email!';
@@ -71,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!--Font awesome-->
+    <link rel="icon" href="./logo/favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -81,6 +102,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         integrity="sha384-rbs5jQhjAAcWNfo49T8YpCB9WAlUjRRJZ1a1JqoD9gZ/peS9z3z9tpz9Cg3i6/6S" crossorigin="anonymous">
     </script>
     <style>
+    #maintenance-notice {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .maintenance-animation {
+        text-align: center;
+        color: white;
+    }
+
+    .maintenance-text {
+        font-size: 2em;
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
+    }
+
     body {
         background-color: #fff;
         font-family: 'Karla', sans-serif;
@@ -402,6 +458,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     </style>
 </head>
+<?php if(empty($rowM['coure_maintenance'])){ ?>
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-6 col-md-7 intro-section">
@@ -414,13 +471,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="intro-text">Bienvenu sur cette application</p>
                 <!-- <a href="#!" class="btn btn-read-more">Read more</a> -->
             </div>
-            <!-- <div class="intro-section-footer">
-            <na class="footer-nav">
-              <a href="#!">Facebook</a>
-              <a href="#!">Twitter</a>
-              <a href="#!">Gmail</a>
-            </na>
-          </div> -->
         </div>
         <div class="col-sm-6 col-md-5 form-section">
             <div class="wrap login-wrapper mx-auto">
@@ -452,7 +502,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </div>
-
+<?php } else{ ?>
+<div id="maintenance-notice">
+    <div class="maintenance-animation">
+        <div class="maintenance-text">L'application est en maintenance</div>
+    </div>
+</div>
+<?php } ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
 </script>
@@ -467,7 +523,13 @@ $(document).ready(function() {
     $('.toast').toast('show');
 });
 </script>
-
+<script>
+// PHP variable to JavaScript
+var maintenanceMode = <?php echo json_encode($maintenanceMode); ?>;
+if (maintenanceMode === 'true') {
+    document.getElementById('maintenance-notice').style.display = 'block';
+}
+</script>
 
 </html>
 
@@ -476,7 +538,7 @@ $(document).ready(function() {
 <?php
 function redirigerVersPageAccueil() {
     // header('Location: view/demande_user.php');
-    header('Location: view/acc_user.php');
+    header('Location: home/home.php');
     exit;
 }
 
@@ -538,7 +600,8 @@ function redirigerSelonIDGroupe($idGroupe) {
     } else if ($idGroupe === 4) {
         header('Location: https://cdc.minesmada.org/home/home.php');
     } else {
-        header('Location: https://cdc.minesmada.org/home/home.php');
+        header('Location: https://cdc.minesmada.org/histogramme/dashboard.php');
+        //header('Location: https://cdc.minesmada.org/home/reconnaissance/code/test.php');
     }
     exit;
 }

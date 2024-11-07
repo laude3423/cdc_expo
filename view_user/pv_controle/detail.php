@@ -1,8 +1,11 @@
 <?php
     require_once('../../scripts/db_connect.php');
+    include_once('../../scripts/connect_db_lp1.php');
     require_once('../generate_fichier/nombreEnLettre.php');
     require('../../scripts/session.php');
+    include '../../histogramme/insert_logs.php';
     $validation_v = $fonctionUsers. ' ' . $nom_user. ' '.$prenom_user;
+    $activite="Validation d'un CDC";
     if (isset($_GET['id'])) {
         $id_data_cc = $_GET['id'];
         $sql = "SELECT datacc.*, societe_imp.*, societe_exp.*
@@ -62,6 +65,7 @@
         $date_lp3e = $row["date_lp3e"] ?? "";   
         $pj_lp3e = $row["pj_lp3e_pv"] ?? ""; 
         $num_cc = $row['num_cc'] ?? "";
+        $num_facture = $row['num_facture'] ?? "";
         $date_cc = $row['date_cc'] ?? "";
         $lien_cc = $row['lien_cc'] ?? "";
         $pj_cc = $row['pj_cc'] ?? "";
@@ -74,13 +78,23 @@
         $user_directeur = $row['user_validation_directeur'];
         $user_chef_services = $row['user_validation_chef'];
         $scan = $row['scan_controle'];
-        
+        //echo "Num:".$row['num_quittance'];
         //
         $id_agent_chef = $row1["id_agent"] ?? "";
         $id_agent_qualite = $row2["id_agent"] ?? "";
         $id_agent_scellage = $row3["id_agent"] ?? "";
         $id_agent_douane = $row4["id_agent"] ?? "";
         $id_agent_police = $row5["id_agent"] ?? "";
+
+        // $sql6 = "SELECT unite_poids_facture, sum(poids_facture) AS somme FROM contenu_facture WHERE id_data_cc= $id_data_cc";
+        // $stmt6 = $conn->prepare($sql6);
+        // $stmt6->execute();
+        // $resu6 = $stmt6->get_result();
+        // $row6 = $resu6->fetch_assoc();
+        // $somme= $row6['somme'];
+        // $unite_poids_facture = $row6['unite_poids_facture'];
+        // $redevance = $assiette * $somme * 0.006; // 0.6%
+        // $ristourne = $assiette * $somme * 0.014; // 1.4%
         
         $id_agent_scellage = array();
 
@@ -89,6 +103,72 @@
                 $id_agent_scellage[] = $row3['id_agent'];
             }
         }
+
+       $query = "SELECT * FROM data_cc WHERE  num_facture  IS NOT NULL AND id_data_cc=$id_data_cc";
+        $result = $conn->query($query);
+        if ($result->num_rows > 0) {
+            $facturation = 'avec';
+        }
+        $query2 = "SELECT * FROM data_cc WHERE  num_facture  IS NULL AND id_data_cc=$id_data_cc";
+        $result = $conn->query($query2);
+        if ($result->num_rows > 0) {
+            $attestation = 'avec';
+        }
+        $query3 = "SELECT * FROM revenu WHERE  id_data_cc=$id_data_cc";
+        $result = $conn->query($query3);
+        if ($result->num_rows > 0) {
+            $revenu = 'avec';
+        }
+        
+        $texte ="";
+        if(!empty($attestation)){
+            $query = "SELECT sub.nom_substance FROM contenu_attestation AS catt 
+          LEFT JOIN substance2 AS sub ON sub.id_substance = catt.id_substance 
+          WHERE  catt.id_data_cc=?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $id_data_cc);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $substances = [];
+            while ($row_2 = $result->fetch_assoc()) {
+                $nom_substance = $row_2['nom_substance'];
+                
+                // Vérifie si le premier caractère est une voyelle (en minuscule ou majuscule)
+                if (preg_match('/^[aeiouAEIOU]/', $nom_substance)) {
+                    $substances[] = "d'" . $nom_substance;
+                } else {
+                    $substances[] = "de " . $nom_substance;
+                }
+            }
+
+            // Join the substance names with commas, and replace the last comma with ' et '
+            $substances_sentence = implode(', ', $substances);
+            $substances_sentence = preg_replace('/, ([^,]+)$/', ' et $1', $substances_sentence);
+
+            $query= "SELECT SUM(poids_attestation) AS somme, unite FROM contenu_attestation WHERE id_data_cc='$id_data_cc'";
+            $result= mysqli_query($conn, $query);
+            $row_2= mysqli_fetch_assoc($result);
+            $somme = floatval($row_2['somme']);
+            $unite = $row_2['unite'];
+            $nombre = nombreEnLettres($somme);
+            $unite_affiche="";
+            if(($unite=='kg')&&($somme < 2)){
+                $unite_affiche="kilogramme";
+            }else if(($unite=='kg')&&($somme >= 2)){
+                $unite_affiche="kilogrammes";
+            }else if(($unite=='g')&&($somme < 2)){
+                $unite_affiche="gramme";
+            }else if(($unite=='g')&&($somme >= 2)){
+                $unite_affiche="grammes";
+            }
+            $texte = $nombre .' '.$unite_affiche.' '.$substances_sentence.'.';
+
+            $query= "SELECT an.* FROM data_cc AS dcc LEFT JOIN ancien_lp AS an ON an.id_ancien_lp = dcc.id_ancien_lp  WHERE dcc.id_data_cc=$id_data_cc";
+            $result= mysqli_query($conn, $query);
+            $row_4= mysqli_fetch_assoc($result);
+        }
+        
         $stmt->close();
         $stmt1->close();
         $stmt2->close();
@@ -103,6 +183,7 @@ if (isset($_POST['submit'])) {
     $sql = "UPDATE `data_cc` SET `validation_chef`='$action', `user_validation_chef`='$validation_v' WHERE id_data_cc=$id";
     $result = mysqli_query($conn, $sql);
     if ($result) {
+        insertLogs($conn, $userID, $activite);
         $_SESSION['toast_message'] = "Modification réussie.";
         header("Location: https://cdc.minesmada.org/view_user/pv_controle/detail.php?id=" . $id);
         exit();
@@ -117,6 +198,7 @@ if (isset($_POST['submit2'])) {
     $sql = "UPDATE `data_cc` SET `validation_directeur`='$action', `user_validation_directeur`='$validation_v' WHERE id_data_cc=$id";
     $result = mysqli_query($conn, $sql);
     if ($result) {
+        insertLogs($conn, $userID, $activite);
         $_SESSION['toast_message'] = "Modification réussie.";
         header("Location: https://cdc.minesmada.org/view_user/pv_controle/detail.php?id=" . $id);
         exit();
@@ -126,24 +208,41 @@ if (isset($_POST['submit2'])) {
 }
 if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
 
     // Effacer le message du Toast de la variable de session
     unset($_SESSION['toast_message']);
+}
+if(isset($_SESSION['toast_message2'])) {
+    echo '
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message2']);
 }
 
 ?>
@@ -260,10 +359,15 @@ if(isset($_SESSION['toast_message'])) {
 
 <body>
     <div class="info  container">
+        <p class="text-center mb-0">Détails du certificat de conformité</p>
         <hr>
         <div class="partie1">
             <?php 
                         if($groupeID === 2){
+                            // echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan"
+                            //                                             data-id="' . $id_data_cc . '">Modifier scan</a>';
+                             echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan"
+                                                                        data-id="' . $id_data_cc . '">Insérer scan</a>';
                                     echo '
                                         <div class="dropdown">
                                             <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -274,34 +378,121 @@ if(isset($_SESSION['toast_message'])) {
                                                 echo '<li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>
                                                 <li><hr class="dropdown-divider"></li>';
                                             }
-                                                echo '<li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
-                                                <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de contrôle</a></li>
+                                                echo '<li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de contrôle</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>';
+                                                if(!empty($facturation)){
+                                                    echo'<a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                                }else{
+                                                    echo'<a class="dropdown-item" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_attestation.'">Contenu de l\'Attestation</a>';
+                                                }
+                                                echo '</li>
                                             </ul>
                                         </div>
                                     ';
                             } else if($groupeID===1) {
-                                    echo '<div class="dropdown">
+                                    echo '<div class="row">
+                                    <div class="dropdown col">
                                             <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                                 Voir les détails associer
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                 <li>';
+                                                if(!empty($facturation)){
+                                                    echo'<a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                                }else{
+                                                    echo'<a class="dropdown-item" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_attestation.'">Contenu de l\'Attestation</a>';
+                                                }
+                                                echo '</li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de contrôle</a></li>
                                             </ul>
-                                        </div>';
+                                        </div>
+                                    <div class="col text-end">';
+                                    if(empty($num_facture)){
+                                        if($userID===7){
+                                            if(($validation_chef_services!='Validé')||($validation_directeur!='Validé')){
+                                                if(!empty($revenu)){
+                                                    echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-ov"
+                                                                                            data-id="' . $id_data_cc . '">Générer O.V</a>';
+                                                }else{
+                                                    echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-ov"
+                                                                                            data-id="' . $id_data_cc . '">Modifier O.V</a>';
+                                                }
+                                            }
+                                        }
+                                         if(empty($scan)){
+                                            echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan_nc"
+                                                                                data-id="' . $id_data_cc . '">Insérer scan</a>';
+                                        }else if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                                                echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan_nc"
+                                                                                data-id="' . $id_data_cc . '">Modifier scan</a>';
+                                        }
+                                    }else{
+                                        if($userID===7){
+                                            //if(($validation_chef_services!='Validé')||($validation_directeur!='Validé')){
+                                                if(empty($revenu)){
+                                                    echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-ov"
+                                                                                            data-id="' . $id_data_cc . '">Générer O.V</a>';
+                                                }else{
+                                                    echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-ov"
+                                                                                            data-id="' . $id_data_cc . '">Modifier O.V</a>';
+                                                }
+                                            //}
+                                        }else{
+                                        }
+                                        if(empty($scan)){
+                                            echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan"
+                                                                                data-id="' . $id_data_cc . '">Insérer scan</a>';
+                                            }else if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                                                echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan"
+                                                                                data-id="' . $id_data_cc . '">Modifier scan</a>';
+                                            } 
+                                    }
+                                    echo '</div>
+                                    </div>';
                             }else{
-                                    echo '<div class="dropdown">
+                                    echo '<div class="row">
+                                    <div class="dropdown col">
                                             <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                                 Voir les détails associer
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>
-                                                <li><hr class="dropdown-divider"></li>
+                                                 <li>';
+                                                if(!empty($facturation)){
+                                                    echo'<a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                                }else{
+                                                    echo'<a class="dropdown-item" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_attestation.'">Contenu de l\'Attestation</a>';
+                                                }
+                                                echo '</li>
+                                                <li><hr class="dropdown-divider"></li>';
+                                                if(!empty($num_pv_scellage)){
+                                                    echo'<li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>';
+                                                }
+                                                
+                                                echo'<li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=' . $id_data_cc.'">Voir PV de contrôle</a></li>
                                             </ul>
+                                            </div>
+                                    <div class="col text-end">';
+                                              if(empty($num_facture)){
+                                                    if(empty($scan)){
+                                                        echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan_nc"
+                                                                                            data-id="' . $id_data_cc . '">Insérer scan</a>';
+                                                    }else if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                                                            echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan_nc"
+                                                                                            data-id="' . $id_data_cc . '">Modifier scan</a>';
+                                                    }
+                                                }else{
+                                                        if(empty($scan)){
+                                                        echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan"
+                                                                                            data-id="' . $id_data_cc . '">Insérer scan</a>';
+                                                        }else if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                                                            echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan"
+                                                                                            data-id="' . $id_data_cc . '">Modifier scan</a>';
+                                                        } 
+                                                }
+                                        echo '</div>
                                         </div>';
                             }
                     
@@ -311,7 +502,7 @@ if(isset($_SESSION['toast_message'])) {
         <?php 
         if($groupeID !==2){
             if(!empty($scan)){
-                    if (( $code_fonction == 'B') && ($validation_chef_services != "Validé")) {?>
+                    if ($code_fonction == 'B') {?>
         <form action="" method="post">
             <?php
                     // Supposons que $selectedValue contient la valeur récupérée de la base de données.
@@ -325,7 +516,7 @@ if(isset($_SESSION['toast_message'])) {
                     <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
                     <select class="form-select" name="action" id="action" required>
                         <option value="">Séléctionner</option>
-                        <option value="Refaire" <?= isSelected('Refaire', $selectedValueD) ?>>Refaire</option>
+                        <option value="À Refaire" <?= isSelected('À Refaire', $selectedValueD) ?>>À Refaire</option>
                         <option value="Validé" <?= isSelected('Validé', $selectedValueD) ?>>Validé</option>
                         <option value="En attente" <?= isSelected('En attente', $selectedValueD) ?>>En attente
                         </option>
@@ -338,7 +529,7 @@ if(isset($_SESSION['toast_message'])) {
             </div>
         </form>
         <?php
-            }else if (( $code_fonction == 'A') && ($validation_directeur != "Validé")){
+            }else if ($code_fonction == 'A'){
                 ?>
         <form action="" method="post">
             <?php
@@ -353,7 +544,7 @@ if(isset($_SESSION['toast_message'])) {
                     <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data_v2" id="id_data_v2">
                     <select class="form-select" name="action_v2" id="action_v2" required>
                         <option value="">Séléctionner</option>
-                        <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                        <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À Refaire</option>
                         <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
                         <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente
                         </option>
@@ -366,20 +557,21 @@ if(isset($_SESSION['toast_message'])) {
             </div>
         </form>
         <?php
-            }else if($code_fonction == 'B'){
-                echo '<p class="alert alert-info">Status: '.$validation_chef_services.' par '.$user_chef_services.'.</p>';
-            }else if($code_fonction == 'A'){
-                echo '<p class="alert alert-info">Status: '.$validation_directeur.' par '.$user_directeur.'.</p>';
-            }else if(($code_fonction == 'C') && ($validation_chef_services != "En attente")&&($validation_directeur != "En attente")){
-                echo '<p class="alert alert-info">Status: '.$validation_directeur.' par '.$user_directeur.' et '.$validation_chef_services.' par '.$user_chef_services.'.</p>';
-            }else if(($code_fonction == 'C') && ($validation_chef_services != "En attente")){
-                echo '<p class="alert alert-info">Status: '.$validation_chef_services.' par '.$user_chef_services.'.</p>';
-            }else if(($code_fonction == 'C') && ($validation_directeur != "En attente")){
-                echo '<p class="alert alert-info">Status: '.$validation_directeur.' par '.$user_directeur.' et.</p>';
+            }else if(($code_fonction == 'B')&&($validation_chef_services=="Validé")&&($validation_directeur=="Validé")){
+                echo '<p class="alert alert-info">Validation du Directeur:'.$validation_directeur.',
+                 Validateur: '.$user_directeur.'<br>Validation du Chef de service:'.$validation_chef_services.', Validateur:'.$user_chef_services.'</p>';
+            }else if(($code_fonction == 'A')&&($validation_directeur=="Validé")&&($validation_chef_services=="Validé")){
+                 echo '<p class="alert alert-info">Validation du Directeur:'.$validation_directeur.',
+                 Validateur: '.$user_directeur.'<br>Validation du Chef de service:'.$validation_chef_services.', Validateur:'.$user_chef_services.'</p>';
+            }else if(($code_fonction == 'C')&&($validation_directeur=="Validé")&&($validation_chef_services=="Validé")){
+                echo '<p class="alert alert-info">Validation du Directeur:'.$validation_directeur.',
+                 Validateur: '.$user_directeur.'<br>Validation du Chef de service:'.$validation_chef_services.', Validateur:'.$user_chef_services.'</p>';
+            }else if((($code_fonction == 'A')||($code_fonction == 'B')||($code_fonction == 'C'))&&(($validation_directeur!="Validé")||($validation_chef_services!="Validé"))){
+                 echo '<p class="alert alert-info">Validation du Directeur:'.$validation_directeur.', Validation du Chef de service:'.$validation_chef_services.'</p>';
             }
-            }else{
+        }else{
                  echo '<p class="alert alert-info">Aucun scan correspondant!.</p>';
-            }
+        }
             
     }else if($groupeID ===2){ ?>
         <div class="row">
@@ -398,7 +590,7 @@ if(isset($_SESSION['toast_message'])) {
                                 <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
                                 <select class="form-select" name="action" id="action" required>
                                     <option value="">Séléctionner</option>
-                                    <option value="Refaire" <?= isSelected('Refaire', $selectedValue2) ?>>Refaire
+                                    <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue2) ?>>À Refaire
                                     </option>
                                     <option value="Validé" <?= isSelected('Validé', $selectedValue2) ?>>Validé</option>
                                     <option value="En attente" <?= isSelected('En attente', $selectedValue2) ?>>En
@@ -427,7 +619,7 @@ if(isset($_SESSION['toast_message'])) {
                                     id="id_data_v2">
                                 <select class="form-select" name="action_v2" id="action_v2" required>
                                     <option value="">Séléctionner</option>
-                                    <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire
+                                    <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À Refaire
                                     </option>
                                     <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
                                     <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En
@@ -447,6 +639,49 @@ if(isset($_SESSION['toast_message'])) {
 
         <?php
     }
+    $sumAssiette = 0;
+    $sumRedevance = 0;
+    $sumRistourne = 0;
+
+    // $sql = "SELECT DISTINCT id_lp1_info FROM contenu_facture WHERE id_data_cc=$id_data_cc AND id_lp1_info IS NOT NULL";
+    // $result = $conn->query($sql);
+    // if ($result->num_rows > 0) {
+    //     // Boucler à travers les colonnes et afficher les noms
+    //     while ($row_lp = $result->fetch_assoc()) {
+    //         $id_lp1_info = $row_lp['id_lp1_info'];
+    //         $sql = "SELECT lp.*, rv.*, tr.* FROM lp_info AS lp 
+    //                 LEFT JOIN revenu AS rv ON lp.id_revenu = rv.id_revenu 
+    //                 LEFT JOIN tresor AS tr ON lp.id_tresor = tr.id_tresor 
+    //                 WHERE id_lp=$id_lp1_info";
+    //         $result_lp = $conn_lp1->query($sql);
+
+    //         // Vérifier si des colonnes existent
+    //         if ($result_lp->num_rows > 0) {
+    //             // Boucler à travers les colonnes et récupérer les sommes
+    //             while ($row_lp = $result_lp->fetch_assoc()) {
+    //                 $sumAssiette += $row_lp['assiette_rrm'];
+    //                 $sumRedevance += $row_lp['redevance'];
+    //                 $sumRistourne += $row_lp['ristourne'];
+
+    //             }
+    //         } else {
+    //             echo "Aucun résultat pour id_lp=$id_lp1_info.";
+    //         }
+    //     }
+    // }
+    if((!empty($row['redevance']))&&(!empty($ristourne))){
+        $sumRedevance = $sumRedevance + intval($row['redevance']);
+        $sumRistourne = $sumRistourne + intval($row['ristourne']);
+    }
+    $sql_revenu = "SELECT * FROM revenu WHERE id_data_cc=$id_data_cc";
+    $result_revenu = $conn->query($sql_revenu);
+    if ($result_revenu->num_rows > 0) {
+        while ($row_revenu = $result_revenu->fetch_assoc()) {
+            $sumAssiette += $row_revenu['assiette'];
+            $sumRedevance +=$row_revenu['redevance'];
+            $sumRistourne +=$row_revenu['ristourne'];
+        }
+    }
     ?>
         <hr>
         <div class="info1">
@@ -457,6 +692,31 @@ if(isset($_SESSION['toast_message'])) {
                             <hr>
                             <p><strong>Numéro de certificat de conformité:</strong> ' . $row["num_cc"] . '</p>
                             <p><strong>Date de création:</strong> ' . date("d/m/Y", strtotime($row["date_cc"])) . '</p>';
+                            if($sumAssiette > 0){
+                                echo '<p><strong>Assiette:</strong> ' . $sumAssiette. ' Ariary</p>
+                                <p><strong>Redevance:</strong> ' . $sumRedevance. ' Ariary</p>
+                                <p><strong>Ristourne:</strong> ' . $sumRistourne. ' Ariary</p>';
+                            }else if($sumRedevance > 0){
+                                echo '<p><strong>Redevance:</strong> ' . $sumRedevance. ' Ariary</p>
+                                <p><strong>Ristourne:</strong> ' . $sumRistourne. ' Ariary</p>';
+                            }
+                            if(!empty($row["droit_conformite"])){
+                                echo '<p><strong>Droit de conformité:</strong> ' . $row["droit_conformite"] . ' Ariary</p>';
+                            if(!empty($row['description'])){
+                                echo '<p><strong>Description:</strong> ' . $row["description"] . '</p>';
+                            }
+                            ?>
+
+            <p><strong>Scan de l'OV:</strong> <a
+                    href="../view_user/<?php echo $row['scan_ov']; ?>"><?php echo $row['num_ov']; ?>.pdf</a>
+                du
+                <?php echo date('d/m/Y', strtotime($row['date_ov'])); ?></p>
+            <p><strong>Scan de la quittance:</strong> <a
+                    href="../view_user/<?php echo $row['scan_quittance']; ?>"><?php echo $row['num_quittance']; ?>.pdf</a>
+                du
+                <?php echo date('d/m/Y', strtotime($row['date_quittance'])); ?></p>
+            <?php 
+                            }
                             if(($validation_chef_services=='Validé')&&($validation_directeur=='Validé')){
                              echo '<p><strong>Télécharger:</strong> <a href="../view_user/' . htmlspecialchars($row["pj_cc"], ENT_QUOTES, "UTF-8") . '">' . htmlspecialchars($row["num_cc"], ENT_QUOTES, "UTF-8") . '.pdf</a></p>';
                             }
@@ -478,7 +738,7 @@ if(isset($_SESSION['toast_message'])) {
                 <p><strong>Nombre et d'emballage:</strong><?php echo $row['mode_emballage']; ?></p>
                 <p><strong>Lieu d'embarquement:</strong><?php echo $row['lieu_embarquement_pv']; ?></p>
                 <p><strong>Télécharger:</strong> <a
-                        href="../view_user/<?php echo htmlspecialchars($row['pj_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
+                        href="../fichier/<?php echo htmlspecialchars(basename($row['pj_pv_controle']), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
                 </p>
             </div>
             <?php 
@@ -512,7 +772,6 @@ if(isset($_SESSION['toast_message'])) {
                 <p><strong>Contact de la société:</strong><?php echo $row['contact_societe_importateur']; ?></p>
                 <p><strong>Email de la société:</strong> <?php echo $row['email_societe_importateur']; ?></p>
                 <p><strong>Pays de destination:</strong> <?php echo $row['pays_destination']; ?></p>
-                <p><strong>Date de départ:</strong> <?php echo date('d/m/Y', strtotime($row['date_depart'])); ?></p>
 
             </div>
             <div class="alert alert-light" role="alert">
@@ -639,48 +898,30 @@ if(isset($_SESSION['toast_message'])) {
                     ?>
                 </div>
                 <?php
-
-                     include '../pv_scellage/recherche.php';
-                    if((count($afficheWord_brute) > 0)&&(count($afficheWord) > 0)) {
+                if(empty($facturation)){
+                    echo $texte;
+                }else{
+                    include '../pv_scellage/recherche.php';
+                    if(count($afficheWord_brute) > 0) {
                         echo "Catégorie Brute : ";
                         for ($i = 0; $i < count($afficheWord_brute); $i++) {
-                            echo $afficheWord_brute[$i] .' ';
+                            echo $afficheWord_brute[$i] .', ';
                         }
                         echo '</br> POIDS: '.$ecrit_b;
-                        echo "</br>Catégorie Taillé : ";
-                        for ($i = 0; $i < count($afficheWord); $i++) {
-                            echo $afficheWord[$i] .' ';
-                        }
-                        echo '</br> POIDS: '.$ecrit_t;
-                    }else if(count($afficheWord_brute) > 0) {
-                        echo "Catégorie Brute : ";
-                        for ($i = 0; $i < count($afficheWord_brute); $i++) {
-                            echo $afficheWord_brute[$i] .' ';
-                        }
-                        echo '</br> POIDS: '.$ecrit_b;
-                        echo "</br>Catégorie Taillé : ";
-                        for ($i = 0; $i < count($afficheWord); $i++) {
-                            echo $afficheWord[$i] .' ';
-                        }
-                        echo '</br> POIDS: '.$ecrit_t;
-                    }else if(count($afficheWord) > 0) {
-                        echo "Catégorie Taillé : ";
-                        for ($i = 0; $i < count($afficheWord); $i++) {
-                            echo $afficheWord[$i] .' ';
-                        }
-                        echo '</br> POIDS: '.$ecrit_t;
                     }
-           
+                    if(count($afficheWord) > 0) {
+                        echo "Catégorie Taillée ou Travaillée : ";
+                        for ($i = 0; $i < count($afficheWord); $i++) {
+                            if($i == count($afficheWord) - 1){
+                                echo $afficheWord[$i];
+                            } else {
+                                echo $afficheWord[$i] . ', ';
+                            }
+                        }
+                        echo '<br> POIDS: '.$ecrit_t;
+                    }
+                }
                 ?>
-            </div>
-
-            <div class="alert alert-light" role="alert">
-                <h5 id="list-item-4">Informations sur DOM</h5>
-                <hr>
-                <p><strong>Numéro de domiciliation:</strong> <?php echo $row['num_domiciliation']; ?></p>
-                <p><strong>Scan du fichier DOM:</strong> <a
-                        href="../view_user/<?php echo htmlspecialchars($row['pj_domiciliation_pv'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_domiciliation'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
-                </p>
             </div>
             <div class="alert alert-light" role="alert">
                 <h5 id="list-item-4">Informations sur le fichier de déclaration</h5>
@@ -691,7 +932,15 @@ if(isset($_SESSION['toast_message'])) {
                     du <?php echo date('d/m/Y', strtotime($row['date_fiche_declaration_pv'])); ?></p>
 
             </div>
-
+            <?php if(!empty($facturation)){ ?>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-4">Informations sur DOM</h5>
+                <hr>
+                <p><strong>Numéro de domiciliation:</strong> <?php echo $row['num_domiciliation']; ?></p>
+                <p><strong>Scan du fichier DOM:</strong> <a
+                        href="../view_user/<?php echo htmlspecialchars($row['pj_domiciliation_pv'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_domiciliation'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
+                </p>
+            </div>
             <div class="alert alert-light" role="alert">
                 <h5 id="list-item-5">Information sur LP3 E</h5>
                 <hr>
@@ -702,27 +951,65 @@ if(isset($_SESSION['toast_message'])) {
                     <?php echo date('d/m/Y', strtotime($row['date_lp3e'])); ?></p>
 
             </div>
+            <?php }else{ ?>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-5">Information sur l'attestation de valeur</h5>
+                <hr>
+                <p><strong>Numéro de l'attestation de valeur:</strong> <?php echo $row['num_attestation']; ?></p>
+                <p><strong>Scan de l'attestation de valeur:</strong> <a
+                        href="../view_user/<?php echo $row['pj_attestation']; ?>"><?php echo $row['num_attestation']; ?>.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row['date_attestation'])); ?></p>
+            </div>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-5">Information sur la fiche de contrôle</h5>
+                <hr>
+                <p><strong>Numéro de fiche de contrôle:</strong> <?php echo $row_4['numero_lp']; ?></p>
+                <p><strong>Scan de la fiche de contrôle:</strong> <a
+                        href="../view_user/<?php echo $row_4['scan_lp']; ?>"><?php echo $row_4['numero_lp']; ?>.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row_4['date_creation'])); ?></p>
+            </div>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-5">Information sur demande d'autorisation</h5>
+                <hr>
+                <p><strong>Scan de demande d'autorisation:</strong> <a
+                        href="../view_user/<?php echo $row['scan_demande_autorisation']; ?>">Scan.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row['date_demande_autorisation'])); ?></p>
+            </div>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-5">Information sur l'engagement de responsabilité</h5>
+                <hr>
+                <p><strong>Scan de l'engagement:</strong> <a
+                        href="../view_user/<?php echo $row['scan_engagement']; ?>">Scan.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row['date_engagement'])); ?></p>
+            </div>
+            <?php } ?>
         </div>
         <div class="info2">
             <div class="alert alert-light" role="alert">
                 <?php
-                                // Emplacement du fichier PDF
-                                $pj="";
-                                if(!empty($pj_cc)){
-                                    if (($validation_chef_services != "Validé")|| ($validation_directeur != "Validé")) {
-                                        $pj=$row['lien_cc'];
-                                    }else{
-                                        $pj=$pj_cc;
-                                    }
-                                }else{
-                                   $pj=$row['pj_pv_controle'];
-                                }
-                                $pdfFilePath = $pj;
-                                
-                                include "../cdc/convert.php";
-                            ?>
+                        // Emplacement du fichier PDF
+                    if (($validation_chef_services != "Validé")|| ($validation_directeur != "Validé")) {
+                        $pdfFilePath=$row['lien_cc'];
+                        include "../cdc/convert2.php";
+                    }else{
+                        //$pj=$pj_cc;
+                        $pdfFilePath=$row['pj_cc'];
+                        include "../cdc/convert4.php";
+                    }
+                        
+                    ?>
             </div>
         </div>
+        <div id="modifier_scan_form"></div>
+        <div id="nouveau_scan_form"></div>
+        <div id="modifier_scan_form_nc"></div>
+        <div id="nouveau_scan_form_nc"></div>
+        <div id="nouveau_form_ov"></div>
+        <div id="modifier_form_ov"></div>
     </div>
     <?php
     
@@ -736,6 +1023,69 @@ if(isset($_SESSION['toast_message'])) {
         $('#pdfIframe').attr('src', 'https://docs.google.com/gview?url=' + encodeURIComponent(
                 pdfFilePathSc) +
             '&embedded=true');
+    }
+    $(document).ready(function() {
+        $('.toast').toast('show');
+        $(".btn-nouveau-scan").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('nouveau_scan_form', '../pv_controle_gu/nouveau_scan.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        });
+        $(".btn-modifier-scan").click(function() {
+            var id_data_cc = $(this).data('id');
+            showEditForm('modifier_scan_form', '../pv_controle_gu/edit_scan.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        }); //btn-nouveau-ov
+        $(".btn-nouveau-ov").click(function() {
+            var id_data_cc = $(this).data('id');
+            showEditForm('nouveau_form_ov', './generate_ov.php?id=' +
+                id_data_cc,
+                'staticBackdrop_ov');
+
+        });
+        $(".btn-modifier-ov").click(function() {
+            var id_data_cc = $(this).data('id');
+            showEditForm('modifier_form_ov', './modifier_ov.php?id=' +
+                id_data_cc,
+                'staticBackdrop_ov2');
+
+        });
+        $(".btn-nouveau-scan_nc").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('nouveau_scan_form_nc', '../pv_controle_gu/nouveau_scan_nc.php?id=' +
+                id_data_cc,
+                'staticBackdrop3');
+
+        });
+        $(".btn-modifier-scan_nc").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('modifier_scan_form_nc', '../pv_controle_gu/edit_scan_nc.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        });
+
+
+        function showEditForm(editFormId, scriptPath, modalId) {
+            $("#" + editFormId).load(scriptPath, function() {
+                // Après le chargement du contenu, initialisez le modal manuellement
+                $("#" + modalId).modal('show');
+            });
+        }
+    });
+
+    function closeModal() {
+        console.log('consulter');
+        var myModal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop_ov2'));
+        if (myModal) {
+            myModal.hide();
+        } else {
+            console.log('consulter2');
+        }
     }
     </script>
 </body>

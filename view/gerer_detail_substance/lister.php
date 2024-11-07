@@ -194,7 +194,7 @@ if (!empty($edit_societe_id)) {
                 <h5>Liste des substances</h5>
             </div>
             <div class="col">
-                <input type="text" id="search" class="form-control mb-3" placeholder="Recherche...">
+                <input type="text" id="search" class="form-control mb-3" placeholder="Recherche par nom...">
             </div>
             <div class="col text-end">
                 <a class="btn btn-success btn-sm rounded-pill px-3 " href="./exporter.php?"><i

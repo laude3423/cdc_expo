@@ -2,8 +2,10 @@
 require(__DIR__ . '/../../scripts/db_connect.php');
 if (isset($_GET['id'])) {
     $id_contenu_facture= $_GET['id'];
-    $sql = "SELECT cf.*, sds.* FROM contenu_facture cf
+    $sql = "SELECT cf.*, sds.*, ts.* FROM contenu_facture cf
     LEFT JOIN substance_detaille_substance sds ON sds.id_detaille_substance = cf.id_detaille_substance
+    LEFT JOIN substance AS sub ON sds.id_substance = sub.id_substance
+    LEFT JOIN type_substance AS ts ON ts.id_type_substance = sub.id_type_substance
     WHERE id_contenu_facture = $id_contenu_facture;
     ";
 
@@ -13,7 +15,6 @@ if (isset($_GET['id'])) {
         $row_1 = $result->fetch_assoc();
         $poids_facture = $row_1["poids_facture"];
         $unite_poids_facture = $row_1["unite_poids_facture"];
-
         $prix_unitaire_facture2 = $row_1["prix_unitaire_facture"];
         $quantite_lp1_initial_lp1_suivis = $row_1["quantite_lp1_initial_lp1_suivis"];
         $quantite_lp1_actuel_lp1_suivis = $row_1["quantite_lp1_actuel_lp1_suivis"];
@@ -22,7 +23,9 @@ if (isset($_GET['id'])) {
         $id_lp1_info = $row_1["id_lp1_info"];
         $id_detaille_substance  = $row_1["id_detaille_substance"];
         $id_data_cc = $row_1["id_data_cc"];
-
+        $id_ancien_lp = $row_1['id_ancien_lp'];
+        $preforme = $row_1['preforme'];
+        $type_substance = intval($row_1['id_type_substance']);
         $id_substance = $row_1["id_substance"] ?? "";
         $id_couleur_substance = isset($row_1["id_couleur_substance"]) ? $row_1["id_couleur_substance"] : null;
         $id_granulo = isset($row_1["id_granulo"]) ? $row_1["id_granulo"] : null;
@@ -37,13 +40,15 @@ if (isset($_GET['id'])) {
         
     }
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
+$id_lp1_existe ="";
+if(!empty($id_lp1_info)){
+    $id_lp1_existe ="nouveau";
+}else if(!empty($id_ancien_lp)){
+    $id_lp1_existe ="ancien";
 }
 ?>
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 <script>
 $(document).ready(function() {
     $('#label-form2').on('submit', function(e) {
@@ -66,7 +71,21 @@ $(document).ready(function() {
                         var prix_unitaire = parseFloat(data.prix_substance);
                         var prix_unitaire_facture2 = parseFloat($('#prix_unitaire_facture2')
                             .val());
-                        console.log("Prix unitaire facture :", prix_unitaire_facture2);
+                        var unite_monetaire = $('#unite_monetaire_edit').val();
+                        switch (unite_monetaire) {
+                            case 'yen':
+                                prix_unitaire_facture *= 0.007;
+                                break;
+                            case 'euro':
+                                prix_unitaire_facture *= 1.08;
+                                break;
+                            case 'dollar':
+                                // Ne rien faire car le prix ne change pas
+                                break;
+                            default:
+                                alert('Unité monétaire non prise en charge');
+                                return;
+                        }
                         if (prix_unitaire_facture2 >= prix_unitaire) {
                             $('#label-form2').off('submit').submit(); // Submit the form
                         } else {
@@ -133,7 +152,8 @@ $(document).ready(function() {
 </style>
 
 <!-- Formulaire add_commune -->
-<div class="modal" tabindex="-1" role="dialog" id="edit_contenu_facture">
+<div class="modal fade" id="edit_contenu_facture" data-bs-backdrop="static" data-bs-keyboard="false"
+    aria-labelledby="staticBackdropLabel" style="font-size:90%; font-weight:bold">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -241,12 +261,34 @@ $(document).ready(function() {
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="prix_unitaire_facture2 " class="fw-bold">Prix unitaire en US
-                                    $/Unité:</label>
-                                <input type="number" class="form-control" id="prix_unitaire_facture2"
-                                    name="prix_unitaire_facture2" step="0.01"
-                                    value="<?php echo $prix_unitaire_facture2;?>">
+                            <div class="row">
+                                <div class="col">
+                                    <label for="prix_unitaire_facture2 " class="fw-bold">Prix unitaire en US
+                                        $/Unité:</label>
+                                    <input type="number" class="form-control" id="prix_unitaire_facture2"
+                                        name="prix_unitaire_facture2" step="0.01"
+                                        value="<?php echo $prix_unitaire_facture2;?>">
+                                </div>
+                                <div class="col">
+                                    <?php
+                                    $selectedValue_dire = 'dollar'; // Exemple de valeur
+                                    function isSelected_dire($value, $selectedValue_dire) {
+                                        return $value === $selectedValue_dire ? 'selected' : '';
+                                    }
+                                    ?>
+                                    <label for="unite_monetaire_edit" class="fw-bold">Unité monétaire</label>
+                                    <select class="form-select" id="unite_monetaire_edit" name="unite_monetaire_edit"
+                                        required>
+                                        <option value="">Sélectionner...</option>
+                                        <option value="dollar" <?= isSelected_dire('dollar', $selectedValue_dire) ?>>
+                                            DOLLAR
+                                        </option>
+                                        <option value="euro" <?= isSelected_dire('euro', $selectedValue_dire) ?>>EURO
+                                        </option>
+                                        <option value="yen" <?= isSelected_dire('yen', $selectedValue_dire) ?>>YEN
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -291,7 +333,11 @@ $(document).ready(function() {
                         <div class="col-md-6">
                             <?php if (!empty($id_degre_couleur)) { ?>
                             <div class="mb-3">
+                                <?php if ($type_substance==3) { ?>
+                                <label for="id_degre_couleur " class="fw-bold">Purité :</label>
+                                <?php }else { ?>
                                 <label for="id_degre_couleur " class="fw-bold">Degré de couleur :</label>
+                                <?php } ?>
                                 <select class="form-select" id="id_degre_couleur" name="id_degre_couleur">
                                     <option value="">Sélectionner...</option>
                                     <?php
@@ -324,7 +370,11 @@ $(document).ready(function() {
                         <div class="col-md-6">
                             <?php if (!empty($id_transparence)) { ?>
                             <div class="mb-3">
+                                <?php if ($type_substance==4) { ?>
+                                <label for="id_transparence " class="fw-bold">Qualité:</label>
+                                <?php }else { ?>
                                 <label for="id_transparence " class="fw-bold">Transparence :</label>
+                                <?php } ?>
                                 <select class="form-select" id="id_transparence" name="id_transparence">
                                     <option value="">Sélectionner...</option>
                                     <?php
@@ -391,19 +441,27 @@ $(document).ready(function() {
                             <?php } ?>
                         </div>
                         <div class="col-md-6">
-                            <?php if (!empty($id_categorie)) { ?>
+                            <?php if (!empty($id_categorie)) {?>
+
                             <div class="mb-3">
                                 <label for="id_categorie " class="fw-bold">Catégorie :</label>
                                 <select class="form-select" id="id_categorie" name="id_categorie">
                                     <option value="">Sélectionner...</option>
                                     <?php
                                     // Connexion à la base de données
+                                    $query_cat="";
                                     require '../../scripts/db_connect.php';
-                                    
-                                    // Récupérer les types de substance depuis la base de données
-                                    $query_cat = "SELECT DISTINCT cat.* FROM categorie cat 
+                                     if ($preforme == "3"){
+                                        $query_cat = "SELECT * FROM categorie";
+                                        $id_categorie = 3;
+                                    }else{
+                                         $query_cat = "SELECT DISTINCT cat.* FROM categorie cat 
                                                 INNER JOIN substance_detaille_substance sds ON cat.id_categorie = sds.id_categorie
                                                 WHERE sds.id_substance = $id_substance";
+                                    }
+                                    
+                                    // Récupérer les types de substance depuis la base de données
+                                   
                                     
                                     $result_cat = $conn->query($query_cat);
                                     while ($row_cat = $result_cat->fetch_assoc()) {
@@ -424,23 +482,22 @@ $(document).ready(function() {
                             <?php } ?>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6">
                             <?php if (!empty($id_forme_substance)) { ?>
                             <div class="mb-3">
-                                <label for="id_forme_substance " class="fw-bold">Forme :</label>
+                                <label for="id_forme_substance" class="fw-bold">Forme :</label>
                                 <select class="form-select" id="id_forme_substance" name="id_forme_substance">
                                     <option value="">Sélectionner...</option>
                                     <?php
                                     // Connexion à la base de données
                                     require '../../scripts/db_connect.php';
-                                    
+
                                     // Récupérer les types de substance depuis la base de données
                                     $query_fs = "SELECT DISTINCT fs.* FROM forme_substance fs 
                                                 LEFT JOIN substance_detaille_substance sds ON fs.id_forme_substance = sds.id_forme_substance
                                                 WHERE sds.id_substance = $id_substance";
-                                    
+
                                     $result_fs = $conn->query($query_fs);
                                     while ($row_fs = $result_fs->fetch_assoc()) {
                                         $selected = ($row_fs['id_forme_substance'] == $id_forme_substance) ? 'selected' : '';
@@ -451,7 +508,7 @@ $(document).ready(function() {
                             </div>
                             <?php } else { ?>
                             <div class="mb-3">
-                                <label for="id_couleur_substance " class="fw-bold">Forme :</label>
+                                <label for="id_couleur_substance" class="fw-bold">Forme :</label>
                                 <select class="form-select" id="id_couleur_substance" name="id_couleur_substance"
                                     disabled>
                                     <option value="">Sélectionner...</option>
@@ -460,50 +517,46 @@ $(document).ready(function() {
                             <?php } ?>
                         </div>
                         <div class="col-md-6">
-                            <?php if(!empty($id_dimension_diametre)){?>
+                            <?php if (!empty($id_dimension_diametre)) { ?>
                             <div class="mb-3">
-                                <label for="id_dimension_diametre " class="fw-bold">Dimension ou
-                                    diametre:</label>
+                                <label for="id_dimension_diametre" class="fw-bold">Dimension ou diametre :</label>
                                 <select class="form-select" id="id_dimension_diametre" name="id_dimension_diametre">
                                     <option value="">Sélectionner...</option>
                                     <?php
-                                // Connexion à la base de donnes
-                                require '../../scripts/db_connect.php';
-                                
-                                // Rcuprer les types de substance depuis la base de données
-                                $query_dd = "SELECT DISTINCT dd.* FROM  dimension_diametre dd 
-                                LEFT JOIN substance_detaille_substance sds ON dd.id_dimension_diametre = sds.id_dimension_diametre
-                                WHERE sds.id_substance = $id_substance";
-                                
-                                $result_dd = $conn->query($query_dd);
-                                while ($row_dd = $result_dd->fetch_assoc()) {
-                                    $selected = ($row_dd['id_dimension_diametre'] == $id_dimension_diametre) ? 'selected' : '';
-                                    echo "<option value='" . $row_dd['id_dimension_diametre'] . "'>" . $row_dd['nom_dimension_diametre'] . "</option>";
-                                }
-                                ?>
+                                    // Connexion à la base de données
+                                    require '../../scripts/db_connect.php';
+
+                                    // Récupérer les types de substance depuis la base de données
+                                    $query_dd = "SELECT DISTINCT dd.* FROM dimension_diametre dd 
+                                                LEFT JOIN substance_detaille_substance sds ON dd.id_dimension_diametre = sds.id_dimension_diametre
+                                                WHERE sds.id_substance = $id_substance";
+
+                                    $result_dd = $conn->query($query_dd);
+
+                                    while ($row_dd = $result_dd->fetch_assoc()) {
+                                        $selected = ($row_dd['id_dimension_diametre'] == $id_dimension_diametre) ? 'selected' : '';
+                                        echo "<option value='" . $row_dd['id_dimension_diametre'] . "' $selected>" . $row_dd['nom_dimension_diametre'] . "</option>";
+                                    }
+                                    ?>
                                 </select>
                             </div>
-                            <?php }else {
-                                ?><div class="mb-3">
-                                <label for="id_couleur_substance " class="fw-bold">Dimension ou
-                                    Diamètre:</label>
+                            <?php } else { ?>
+                            <div class="mb-3">
+                                <label for="id_couleur_substance" class="fw-bold">Dimension ou Diamètre :</label>
                                 <select class="form-select" id="id_couleur_substance" name="id_couleur_substance"
                                     disabled>
                                     <option value="">Sélectionner...</option>
-
                                 </select>
                             </div>
+                            <?php } ?>
                         </div>
-                        <?php
-                            }
-                                ?>
                     </div>
-                    <div class="mb-3">
-                        <label for="id_lp1_info " class="fw-bold ">Laissez passer I correspondant : </label>
-                        <select class="form-select" id="id_lp1_info" name="id_lp1_info" autocomplete="off">
+                    <div class="mb-3" id="lp1_info_container_edit" data-id-lp1-info="<?php echo $id_lp1_info; ?>">
+                        <label for="id_lp1_info_edit" class="fw-bold">Laissez passer I correspondant :</label>
+                        <select class="form-select" id="id_lp1_info_edit" name="id_lp1_info_edit" autocomplete="off">
                             <option value="">Sélectionner...</option>
-                            <!-- Remplir les options en récuprant les types de substance depuis la base de donnes -->
                             <?php
+                            // Récupérer les types de substance depuis la base de données
                             $sql = "SELECT * FROM substance WHERE id_substance = ?";
                             $stmt = $conn->prepare($sql);
                             $stmt->bind_param('i', $id_substance);
@@ -513,13 +566,13 @@ $(document).ready(function() {
                             $nom_substance = $row['nom_substance'];
                             $nom_substance = explode(' ', trim($nom_substance))[0];
                             require '../../scripts/connect_db_lp1.php';
-                            
-                            // Rcuprer les types de substance depuis la base de données
-                           $query = "SELECT lp.*, s.*, pr.* 
-                            FROM lp_info AS lp
-                            INNER JOIN produits pr ON lp.id_produit = pr.id_produit
-                            INNER JOIN substance s ON pr.id_substance = s.id_substance
-                            WHERE validation_admin = 1 AND s.nom_substance LIKE ?";
+
+                            // Récupérer les types de substance depuis la base de données
+                            $query = "SELECT lp.*, s.*, pr.* 
+                                    FROM lp_info AS lp
+                                    INNER JOIN produits pr ON lp.id_produit = pr.id_produit
+                                    INNER JOIN substance s ON pr.id_substance = s.id_substance
+                                    WHERE validation_admin = 1 AND s.nom_substance LIKE ?";
                             $stmt = $conn_lp1->prepare($query);
                             $like_nom_substance = "%$nom_substance%";
                             $stmt->bind_param('s', $like_nom_substance);
@@ -527,18 +580,40 @@ $(document).ready(function() {
                             $result = $stmt->get_result();
                             while ($row = $result->fetch_assoc()) {
                                 $selected = ($row['id_lp'] == $id_lp1_info) ? 'selected' : '';
-                                echo "<option value='" . $row['id_lp'] . "'$selected>" . $row['num_LP'] .'('.$row['nom_substance']. ")</option>";
+                                echo "<option value='" . $row['id_lp'] . "' $selected>" . $row['num_LP'] . ' (' . $row['nom_substance'] . ")</option>";
                             }
                             $conn_lp1->close();
                             ?>
                         </select>
                     </div>
+                    <div class="mb-3" id="lp1_info_ancien" data-id-ancien-lp="<?php echo $id_ancien_lp; ?>">
+                        <label for="ancien_lp_edit" class="fw-bold">Ancien LP1:</label>
+                        <select class="form-select" id="ancien_lp_edit" name="ancien_lp_edit">
+                            <option value="">Sélectionner...</option>
+                            <?php 
+                               $sql_ancien = "SELECT * FROM ancien_lp WHERE validation_lp='Validé'";
 
+                                    $result_ancien = $conn->query($sql_ancien);
+                                    while ($row_ancien = $result_ancien->fetch_assoc()) {
+                                        $selected = ($row_ancien['id_ancien_lp'] == $id_ancien_lp) ? 'selected' : '';
+                                        echo "<option value='" . $row_ancien['id_ancien_lp'] . "' $selected>" . $row_ancien['numero_lp'] . "</option>";
+                                    }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <input type="hidden" id="verified_lp" name="verified_lp"
+                                value="<?php echo $id_lp1_existe; ?>" class="form-control">
+                            <button type="button" id="btn_autre_edit" class="btn btn-primary">Ancien LP</button>
+                            <button type="button" id="btn_annuler_edit" class="btn btn-secondary"
+                                style="display: none;">Annuler</button>
+                        </div>
+                    </div><br>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <!-- Ajoutez ici d'autres boutons si nécessaire -->
                     </div>
+
                 </form>
             </div>
 
@@ -547,25 +622,45 @@ $(document).ready(function() {
 </div>
 
 <script>
-new TomSelect("#id_societe_expediteur", {
-    create: true,
-    sortField: {
-        field: "text",
-        direction: "asc"
-    }
-});
-</script>
-<script>
-new TomSelect("#id_societe_importateur", {
-    create: true,
-    sortField: {
-        field: "text",
-        direction: "asc"
-    }
-});
-</script>
-<script>
 $(document).ready(function() {
+    var lp1InfoContainerEdit = document.getElementById('lp1_info_container_edit');
+    if (lp1InfoContainerEdit) {
+        var idLp1Info = lp1InfoContainerEdit.getAttribute('data-id-lp1-info');
+        if (!idLp1Info) {
+            lp1InfoContainerEdit.style.display = 'none';
+        }
+    }
+
+    var lp1InfoAncien = document.getElementById('lp1_info_ancien');
+    if (lp1InfoAncien) {
+        var idAncienLp = lp1InfoAncien.getAttribute('data-id-ancien-lp');
+        console.log(idAncienLp);
+        if (!idAncienLp) {
+            lp1InfoAncien.style.display = 'none';
+        }
+    }
+    $('#btn_autre_edit').click(function() {
+        $('#btn_autre_edit').hide(); // Hide the "Autre Laissez passer" button
+        $('#lp1_info_container_edit').hide();
+        $('#lp1_info_ancien').show();
+        $('#btn_annuler_edit').show();
+        $('#id_lp1_info_edit select').attr('required', false);
+        $('#ancien_lp select').attr('required', true);
+        var verifiedLpInput = document.getElementById('verified_lp');
+        verifiedLpInput.value = 'ancien';
+    });
+
+    // Event handler for the "Annuler" button
+    $('#btn_annuler_edit').click(function() {
+        $('#btn_autre_edit').show(); // Show the "Autre Laissez passer" button
+        $('#btn_annuler_edit').hide(); // Hide the "Annuler" button
+        $('#lp1_info_container_edit').show();
+        $('#lp1_info_ancien').hide();
+        $('#id_lp1_info_edit select').attr('required', true);
+        $('#ancien_lp_edit select').attr('required', false);
+        var verifiedLpInput = document.getElementById('verified_lp');
+        verifiedLpInput.value = 'nouveau';
+    });
     // Lorsqu'une option est sélectionne dans le premier menu
     $("#id_substance").change(function() {
         var id_substance = $(this).val();

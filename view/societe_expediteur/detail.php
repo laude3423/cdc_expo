@@ -26,6 +26,11 @@
         $pj_instat = $row["pj_instat"] ?? "";
         $validation =$row['validation'] ?? "En attente";
         $nom_users = $row['nom_users'] ?? "";
+        $date_octroi_nif = $row['date_octroi_nif'];
+        $date_fin_nif = $row['date_fin_nif'];
+        $date_octroi_rcs = $row['date_octroi_rcs'];
+        $date_octroi_stat = $row['date_octroi_stat'];
+        $affilie = $row['affilie'];
 
         $stmt->close();
     } else {
@@ -47,18 +52,16 @@ if (isset($_POST['submit'])) {
     }
 if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -86,6 +89,34 @@ if(isset($_SESSION['toast_message'])) {
     </style>
     <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
     <style>
+    .info1 {
+        width: 40%;
+        float: left;
+
+    }
+
+    .info2 {
+        width: 57%;
+        float: right;
+
+    }
+
+    @media screen and (max-width: 800px) {
+
+        .infon1,
+        .info2 {
+            display: block;
+        }
+
+        .info1 {
+            width: 100%;
+        }
+
+        .info2 {
+            width: 100%;
+        }
+    }
+
     .container {
         font-size: small;
         /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
@@ -136,7 +167,7 @@ if(isset($_SESSION['toast_message'])) {
                     <input type="hidden" value="<?php echo $id_societe; ?>" name="id_societe" id="id_societe">
                     <select class="form-control" name="action" id="action" required>
                         <option value="">Séléctionner</option>
-                        <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                        <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À Refaire</option>
                         <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
                         <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente</option>
                     </select>
@@ -155,31 +186,49 @@ if(isset($_SESSION['toast_message'])) {
         }?>
 
         <hr>
-        <div class="alert alert-light" role="alert">
-            <h5 id="list-item-1">Détails d'une société expéditeur</h5>
-            <hr>
-            <p><strong>Nom de la société:</strong> <?php echo $nom_societe; ?></p>
-            <p><strong>Type:</strong><?php echo $row['type']; ?></p>
-            <p><strong>contact:</strong><?php echo $contact_societe; ?></p>
-            <p><strong>Email:</strong><?php echo $row['email_societe_expediteur']; ?></p>
-            <p><strong>Adresse:</strong><?php echo $adresse_societe; ?></p>
-            <p><strong>Responsable:</strong><?php echo $responsable; ?></p>
-            <p><strong>NIF:</strong><?php echo $nif; ?></p>
-            <p><strong>Télécharger:</strong> <a
-                    href="../view_user/<?php echo htmlspecialchars($row['pj_nif'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($nif, ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
-            </p>
-            <p><strong>STAT:</strong><?php echo $instat; ?></p>
-            <p><strong>Télécharger:</strong> <a
-                    href="../view_user/<?php echo htmlspecialchars($row['pj_instat'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($instat, ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
-            </p>
-            <p><strong>RCS:</strong><?php echo $rcs; ?></p>
-            <p><strong>Télécharger:</strong> <a
-                    href="../view_user/<?php echo htmlspecialchars($row['pj_rcs'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($rcs, ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
-            </p>
+        <div class="info1">
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-1">Détails d'une société expéditeur</h5>
+                <hr>
+                <p><strong>Nom de la société:</strong> <?php echo $nom_societe; ?></p>
+                <p><strong>Type:</strong><?php echo $row['type']; ?></p>
+                <p><strong>contact:</strong><?php echo $contact_societe; ?></p>
+                <p><strong>Email:</strong><?php echo $row['email_societe_expediteur']; ?></p>
+                <p><strong>Adresse:</strong><?php echo $adresse_societe; ?></p>
+                <p><strong>Responsable:</strong><?php echo $responsable; ?></p>
+                <p><strong>NIF :</strong> <?php echo $nif; ?> octroyé le
+                    <?php echo date('d/m/Y', strtotime($row['date_octroi_nif'])); ?> et suspendu le
+                    <?php echo date('d/m/Y', strtotime($row['date_fin_nif'])); ?></p>
+                <?php $fileName = basename($row['pj_nif']);?>
+                <p><strong>Télécharger:</strong> <a
+                        href="../upload/<?php echo htmlspecialchars($fileName, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($nif, ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
+                </p>
+                <p><strong>STAT:</strong><?php echo $instat; ?> du
+                    <?php echo date('d/m/Y', strtotime($row['date_octroi_stat'])); ?></p>
+
+                <p><strong>Télécharger:</strong> <a
+                        href="../upload/<?php echo htmlspecialchars(basename($row['pj_instat']), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($instat, ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
+                </p>
+                <?php if(!empty($rcs)){ ?>
+                <p><strong>RCS:</strong><?php echo $rcs; ?> du
+                    <?php echo date('d/m/Y', strtotime($row['date_octroi_rcs'])); ?></p>
+                <p><strong>Télécharger:</strong> <a
+                        href="../upload/<?php echo htmlspecialchars(basename($row['pj_rcs']), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($rcs, ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
+                </p>
+                <?php }?>
+            </div>
         </div>
-        <?php
-        include "../../shared/pied_page.php";
-        ?>
+        <div class="info2">
+            <div class="alert alert-light" role="alert">
+                <?php
+                                // Emplacement du fichier PDF
+                               
+                                $pdfFilePath = $pj_instat;
+                                
+                                include "../../view_user/cdc/convert.php";
+                            ?>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>

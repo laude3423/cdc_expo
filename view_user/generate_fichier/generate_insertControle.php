@@ -16,29 +16,30 @@ $date_maintenant = strftime("%e %B %Y", $date->getTimestamp());
 $mois_anglais = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
 $mois_francais = array('janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre');
 $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
-    $agent[]=$chef;
-    $agent[]=$qualite;
-     //données utilisés
-    if(count($agent) > 0){
-            for ($i = 0; $i < count($agent); $i++){
-                $query = "SELECT * FROM agent WHERE id_agent = ?";
-                $stmt = $conn->prepare($query);
-                $stmt->bind_param("i",$agent[$i]);
-                $stmt->execute();
-                $resu = $stmt->get_result();
-                $row = $resu->fetch_assoc();
-                $grade_agents["agent_" . $agent[$i]] = $row['grade_agent'];
-                $noms_agents["agent_" . $agent[$i]] = $row['nom_agent'];
-                $prenoms_agents["agent_" . $agent[$i]] = $row['prenom_agent'];
-                $fonction_agents["agent_" . $agent[$i]] = $row['fonction_agent'];
-            }
-        }
+    // $agent[]=$chef;
+    // $agent[]=$qualite;
+    //  //données utilisés
+    // if(count($agent) > 0){
+    //         for ($i = 0; $i < count($agent); $i++){
+    //             $query = "SELECT * FROM agent WHERE id_agent = ?";
+    //             $stmt = $conn->prepare($query);
+    //             $stmt->bind_param("i",$agent[$i]);
+    //             $stmt->execute();
+    //             $resu = $stmt->get_result();
+    //             $row = $resu->fetch_assoc();
+    //             $grade_agents["agent_" . $agent[$i]] = $row['grade_agent'];
+    //             $noms_agents["agent_" . $agent[$i]] = $row['nom_agent'];
+    //             $prenoms_agents["agent_" . $agent[$i]] = $row['prenom_agent'];
+    //             $fonction_agents["agent_" . $agent[$i]] = $row['fonction_agent'];
+    //         }
+    //     }
     //formater date
     $queryC = "SELECT * FROM data_cc WHERE id_data_cc=$id_data";
     $resultC = mysqli_query($conn, $queryC);
     $rowC = mysqli_fetch_assoc($resultC);
     $num_facture = $rowC['num_facture'];
     $date_facture = $rowC['date_facture'];
+    $date_format_dom = date('d-m-Y', strtotime($dateDom));
     $date_format_facture = date('d-m-Y', strtotime($date_facture));
     $date_format_declaration = date('d-m-Y', strtotime($date_declaration));
     $date_format_lp3e = date('d-m-Y', strtotime($date_lp3e));
@@ -49,6 +50,8 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
     $nom_societe_expediteur = $rowS1['nom_societe_expediteur'];
     $adresse_societe_expediteur = $rowS1['adresse_societe_expediteur'];
     $nom_responsable = $rowS1['responsable'];
+    $type_societe = $rowS1['type'];
+    
     
     $queryS2 = "SELECT * FROM societe_importateur WHERE id_societe_importateur=$importateur";
     $resultS2 = mysqli_query($conn, $queryS2);
@@ -56,6 +59,14 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
     $nom_societe_importateur = $rowS2['nom_societe_importateur'];
     $adresse_societe_importateur = $rowS2['adresse_societe_importateur'];
     $pays_destination = $rowS2['pays_destination'];
+
+    //$nom_societe_importateur = htmlspecialchars($nom_societe_importateur, ENT_QUOTES, 'UTF-8');
+    //$adresse_societe_importateur = htmlspecialchars($adresse_societe_importateur, ENT_QUOTES, 'UTF-8');
+    //$pays_destination = htmlspecialchars($pays_destination, ENT_QUOTES, 'UTF-8');
+
+    //$nom_societe_expediteur = htmlspecialchars($nom_societe_expediteur, ENT_QUOTES, 'UTF-8');
+    //$adresse_societe_expediteur = htmlspecialchars($adresse_societe_expediteur, ENT_QUOTES, 'UTF-8');
+    //$nom_responsable = htmlspecialchars($nom_responsable, ENT_QUOTES, 'UTF-8');
         //type et categorie
     $categorie_brute="";
     $categorie_taille="";
@@ -121,9 +132,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         }
         $nombreAvantLettre = nombreEnLettres($nombreAvant);
         if($type=="gemme"){
-            $poidsTotal=$nombreAvantLettre." grammes ". $nombreApresLettre . '('.$nombreFormat.'grs) de pierres gemmes et ou méteaux précieux';
+            $poidsTotal=$nombreAvantLettre." grammes ". $nombreApresLettre . '('.$nombreFormat.'g) de pierres gemmes';
         }else{
-            $poidsTotal=$nombreAvantLettre." kilogrammes ". $nombreApresLettre . '('.$nombreFormat.'kgs) de pierres ordinaires';
+            $poidsTotal=$nombreAvantLettre." kilogrammes ". $nombreApresLettre . '('.$nombreFormat.'kg) de pierres';
         }
         return $poidsTotal;
     }
@@ -395,15 +406,15 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
                                 ----------------------                
                                         DIRECTION GENERALE DES MINES
                                                 ---------------------
-                                                    DIRECTION DES EXPORTATIONS ET VALEURS
+                                                    DIRECTION DES EXPORTATIONS ET DE LA VALEUR
                                                         --------------------- 
-                                                            GUICHET UNIQUE
+                                                            GUICHET UNIQUE D'EXPORTATION
                                                                 ---------------------
 ";
 $nom_entete1="Directeur des Mines et de la Géologie";
-$nom_entete2="Directeur des Exportations et Valeurs";
+$nom_entete2="Directeur des Exportations et de la Valeur";
 $nom_direction1 = "la DIRECTION ".$typeDirection." ".$nomDirection;
-$nom_direction2 = "GUICHET UNIQUE";
+$nom_direction2 = "la Direction des Exportations et de la Valeur";
 $entete="";
 $nom_entete="";
 $vrai_nom_direction="";
@@ -416,35 +427,40 @@ if($groupeID === 1){
     $nom_entete=$nom_entete2;
     $vrai_nom_direction = $nom_direction2;
 }
+    $nom_societe_expediteur = $nom_societe_expediteur." ".$type_societe;
+    $nom_societe_expediteur=htmlspecialchars($nom_societe_expediteur);
     $templateScan->setValue('num_pv', $num_pv);
     $templateScan->setValue('num_pv2', $num_pv);
     $templateScan->setValue('entete', $entete);
     //societe
+    $nom_societe_importateur = htmlspecialchars($nom_societe_importateur, ENT_QUOTES, 'UTF-8');
     $templateScan->setValue('nom_societe_exp', $nom_societe_expediteur);
     $templateScan->setValue('nom_societe_imp', $nom_societe_importateur);
     $templateScan->setValue('adresse_societe_imp', $adresse_societe_importateur);
     $templateScan->setValue('adresse_societe_exp', $adresse_societe_expediteur);
     $templateScan->setValue('destination_finale', $pays_destination);
-    $templateScan->setValue('date', $dateEnTexte);
     $templateScan->setValue('num_facture', $num_facture);
+    //
     $templateScan->setValue('date_facture', $date_format_facture);
     $templateScan->setValue('num_fiche_declaration', $num_fiche_declaration);
     $templateScan->setValue('date_fiche_declaration', $date_format_declaration);
     $templateScan->setValue('num_domiciliation', $num_domiciliation);
+    $templateScan->setValue('date_dom', $date_format_dom);
     $templateScan->setValue('num_lp3e', $num_lp3e);
+    //
     $templateScan->setValue('date_lp3e', $date_format_lp3e);
     $templateScan->setValue('lieu_embarquement', $lieu_embarquement);
     $templateScan->setValue('mode_emballage', $mode_emballage);
     $templateScan->setValue('date_creation', $dateMaintenant);
     $templateScan->setValue('lieu_controle', $lieu_controle);
     $templateScan->setValue('total_general', $poidsTotal);
-    $remplace_agent = array();
+    // $remplace_agent = array();
     
-    foreach ($agent as $agent_id) {
-        $agent_concat= "- " . $grade_agents["agent_" . $agent_id] . " " . $noms_agents["agent_" . $agent_id] . $prenoms_agents["agent_" . $agent_id] . ", " . $fonction_agents["agent_" . $agent_id] . "\n";
-        $remplace_agent[] = array('nom'=>$agent_concat);
-    }
-    $templateScan->cloneBlock('block_name_nom', 0, true, false, $remplace_agent);
+    // foreach ($agent as $agent_id) {
+    //     $agent_concat= "- " . $grade_agents["agent_" . $agent_id] . " " . $noms_agents["agent_" . $agent_id] . $prenoms_agents["agent_" . $agent_id] . ", " . $fonction_agents["agent_" . $agent_id] . "\n";
+    //     $remplace_agent[] = array('nom'=>$agent_concat);
+    // }
+    // $templateScan->cloneBlock('block_name_nom', 0, true, false, $remplace_agent);
     $destinationFolder =  '../fichier/';
     $numPVClear=preg_replace('/[^a-zA-Z0-9]/', '-', $num_pv);
     $nouveau_nom_fichier2 = $numPVClear . '.docx';
@@ -459,8 +475,9 @@ if($groupeID === 1){
         $pathToSave = $directory . '/' . $numPVClear . '.pdf';
     // Utiliser soffice pour convertir le DOCX en PDF
         $commande = 'soffice --headless --convert-to pdf --outdir "' . $directory . '" "' . $outputFilePath . '"';
-        shell_exec($commande);
-
+        $output = shell_exec($commande);
+        echo "OUTPUT:<pre>$output</pre>";
+        echo shell_exec("echo 'shell_exec est activé'");
         // Générer un lien de tléchargement vers le fichier PDF
         echo 'Le publipostage Scan a été généré avec succès : <a href="' . $pathToSave . '" download>Télécharger Scan ici PDF</a>';
         echo 'Le publipostage Scan a ét généré avec succès : <a href="' . $outputFilePath . '" download>Télécharger Scan ici DOCX 1 </a>';
@@ -486,6 +503,7 @@ if($groupeID === 1){
     $template->setValue('num_pv', $num_pv);
     $template->setValue('num_pv2', $num_pv);
     //societe
+    
     $template->setValue('nom_societe_exp', $nom_societe_expediteur);
     $template->setValue('nom_societe_imp', $nom_societe_importateur);
     $template->setValue('adresse_societe_imp', $adresse_societe_importateur);
@@ -497,13 +515,14 @@ if($groupeID === 1){
     $template->setValue('num_fiche_declaration', $num_fiche_declaration);
     $template->setValue('date_fiche_declaration', $date_format_declaration);
     $template->setValue('num_domiciliation', $num_domiciliation);
+    $template->setValue('date_dom', $date_format_dom);
     $template->setValue('num_lp3e', $num_lp3e);
     $template->setValue('date_lp3e', $date_format_lp3e);
     $template->setValue('lieu_embarquement', $lieu_embarquement);
     $template->setValue('mode_emballage', $mode_emballage);
     $template->setValue('date_creation', $dateMaintenant);
     $template->setValue('lieu_controle', $lieu_controle);
-    $template->cloneBlock('block_name_nom', 0, true, false, $remplace_agent);
+    // $template->cloneBlock('block_name_nom', 0, true, false, $remplace_agent);
     $template->setValue('total_general', $poidsTotal);
 
         // Enregistrer le nouveau document DOCX
@@ -624,9 +643,9 @@ if($groupeID === 1){
     $templateCdcScan->setValue('nom_societe_imp', $nom_societe_importateur);
     $templateCdcScan->setValue('adresse_societe_imp', $adresse_societe_importateur);
     $templateCdcScan->setValue('nom_responsable', $nom_responsable);
-    $templateCdcScan->setValue('nom_responsable_imp', $nom_responsable);
     $templateCdcScan->setValue('destination_finale', $pays_destination);
-    $templateCdcScan->setValue('nom_entete', $nom_entete);
+    $templateCdcScan->setValue('nom_entete', $nom_entete);//$lieu_emission
+    $templateCdcScan->setValue('nom_emplacement', $lieu_emission);
     $templateCdcScan->setValue('vrai_nom_direction', $vrai_nom_direction);
     $numCCClear=preg_replace('/[^a-zA-Z0-9]/', '-', $num_cc);
     $destinationFolder =  '../fichier/';
@@ -664,10 +683,11 @@ if($groupeID === 1){
     $templateCdc->setValue('nom_societe_imp', $nom_societe_importateur);
     $templateCdc->setValue('adresse_societe_imp', $adresse_societe_importateur);
     $templateCdc->setValue('nom_responsable', $nom_responsable);
-    $templateCdc->setValue('nom_responsable_imp', $nom_responsable);
+    $templateCdc->setValue('nom_responsable_imp', $nom_societe_importateur);
     $templateCdc->setValue('destination_finale', $pays_destination);
     $templateCdc->setValue('nom_entete', $nom_entete);
     $templateCdc->setValue('vrai_nom_direction', $vrai_nom_direction);
+    $templateCdc->setValue('nom_emplacement', $lieu_emission);
     $nouveau_nom2 = $numCCClear  . '.docx';
     $fileCdc = $destinationFolder . $nouveau_nom2;
     $templateCdc->saveAs($fileCdc);

@@ -1,7 +1,7 @@
 <?php
 require '../../../scripts/db_connect.php';
 $typeSubstanceId = intval($_GET['typeSubstanceId']);
-$query = "SELECT * FROM substance WHERE id_type_substance = ?";
+$query = "SELECT * FROM substance WHERE id_type_substance = ? ORDER BY nom_substance ASC";
 $stmt = $conn->prepare($query);
 $stmt->bind_param('i', $typeSubstanceId);
 $stmt->execute();

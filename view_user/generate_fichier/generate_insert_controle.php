@@ -73,6 +73,7 @@ WHERE id_data_cc=$id_data";
     $nom_societe_importateur = $rowS2['nom_societe_importateur'];
     $adresse_societe_importateur = $rowS2['adresse_societe_importateur'];
     $pays_destination = $rowS2['pays_destination'];
+    echo $nom_societe_importateur.$adresse_societe_importateur.$pays_destination;
         //type et categorie
     $categorie_brute="";
     $categorie_taille="";
@@ -137,9 +138,9 @@ WHERE id_data_cc=$id_data";
         }
         $nombreAvantLettre = nombreEnLettres($nombreAvant);
         if($type=="gemme"){
-            $poidsTotal=$nombreAvantLettre." grammes ". $nombreApresLettre . '('.$nombreFormat.'grs) de pierres gemmes et ou méteaux précieux';
+            $poidsTotal=$nombreAvantLettre." grammes ". $nombreApresLettre . '('.$nombreFormat.'g) de pierres gemmes et ou méteaux précieux';
         }else{
-            $poidsTotal=$nombreAvantLettre." kilogrammes ". $nombreApresLettre . '('.$nombreFormat.'kgs) de pierres ordinaires';
+            $poidsTotal=$nombreAvantLettre." kilogrammes ". $nombreApresLettre . '('.$nombreFormat.'kg) de pierres';
         }
         return $poidsTotal;
     }
@@ -402,9 +403,9 @@ WHERE id_data_cc=$id_data";
                                 ----------------------                
                                         DIRECTION GENERALE DES MINES
                                                 ---------------------
-                                                    DIRECTION DES EXPORTATIONS ET VALEURS
+                                                    DIRECTION DES EXPORTATIONS ET DE LA VALEUR
                                                         --------------------- 
-                                                            GUICHET UNIQUE
+                                                            GUICHET UNIQUE D'EXPORTATION
                                                                 ---------------------
 ";
     $categorie_existe=$type_categorie1.$type_categorie2;

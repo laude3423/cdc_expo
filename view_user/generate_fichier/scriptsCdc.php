@@ -1,54 +1,109 @@
 <?php
 require_once('../../scripts/db_connect.php');
 require_once '../../vendor/autoload.php';
-use \setasign\Fpdi\Tcpdf\Fpdi; // Utilise FPDI comme une extension de TCPDF
 
-// Démarrer la capture de sortie
-ob_start();
-
-$lien_controle = '';
-$lien_scellage = '';
-$lien_cc = '';
-
-if (isset($_GET['id_data_cc'])) {
-    $id = $_GET['id_data_cc'];
-    $sql = "SELECT num_cc, scan_controle, scan_scellage FROM data_cc WHERE id_data_cc=$id";
-    $result = mysqli_query($conn, $sql);
-    $row = mysqli_fetch_assoc($result);
-    if (!empty($row['scan_scellage'])) {
-        $num_cc = $row['num_cc'];
-        $num_cc=preg_replace('/[^a-zA-Z0-9]/', '-', $num_cc);
-        $lien_pv_controle = $row["scan_controle"];
-        $lien_pv_scellage = $row["scan_scellage"];
-        // Remplacement de '_QR.pdf' par '.pdf' dans les liens
-        // Créer un nouvel objet PDF avec FPDI en tant qu'extension de TCPDF
-        $pdf = new Fpdi();
-
-        // Ajouter les pages PDF au document
-        if (file_exists($lien_pv_controle)) {
-            $pdf->setSourceFile($lien_pv_controle);
-            $tplIdx = $pdf->importPage(1);
-            $pdf->AddPage();
-            $pdf->useTemplate($tplIdx, 0, 0, 210);
-        }
-
-        if (file_exists($lien_pv_scellage)) {
-            $pdf->setSourceFile($lien_pv_scellage);
-            $tplIdx = $pdf->importPage(1);
-            $pdf->AddPage();
-            $pdf->useTemplate($tplIdx, 0, 0, 210);
-        }
-
-        // Nettoyer la capture de sortie avant de générer le PDF
-        ob_end_clean();
-
-        // Générer et télécharger le document PDF
-        $pdf->Output($num_cc . '.pdf', 'D');
-        exit;
-    } else {
-        // Nettoyer la capture de sortie avant d'afficher un message
-        ob_end_clean();
-        echo 'Aucun scan correspondant !';
-    }
-}
 ?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer</title>
+    <style>
+    /* Basic styling for the modal */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        padding-top: 100px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        border-radius: 1rem;
+        max-width: 600px;
+        text-align: center;
+    }
+
+    .close-btn {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        margin-top: 20px;
+        border: none;
+        cursor: pointer;
+        float: right;
+    }
+    </style>
+</head>
+
+<body>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <div class="text-center">
+                <img src="/logo/logo.png" alt="img" width="20%" height="20%">
+            </div>
+            <p>Bonjour!</p>
+            <p>Ce certificat de conformité est délivré par le Ministère des Mines.</p>
+        </div>
+    </div>
+
+    <div id="fileLink" style="display:none;">
+        <div class="container">
+            <?php
+        if (isset($_GET['id_data_cc'])) {
+            $id = $_GET['id_data_cc'];
+            $sql = "SELECT num_cc, scan_controle, scan_scellage FROM data_cc WHERE id_data_cc=$id";
+            $result = mysqli_query($conn, $sql);
+            $row = mysqli_fetch_assoc($result);
+
+            if (!empty($row['scan_controle'])) {
+                $num_cc = $row['num_cc'];
+                $num_cc = preg_replace('/[^a-zA-Z0-9]/', '-', $num_cc);
+                $lien_pv_controle = $row["scan_controle"];
+                $lien_pv_scellage = $row["scan_scellage"];
+                
+                $pdfFilePath1 = $lien_pv_scellage;
+                $pdfFilePath2 = $lien_pv_controle;
+                include "../cdc/convert3.php";
+                
+            } else {
+                echo 'Aucun scan correspondant !';
+            }
+        }
+        ?>
+        </div>
+    </div>
+
+    <script>
+    // Show the modal when the page loads
+    window.onload = function() {
+        console.log('Page loaded');
+        document.getElementById('myModal').style.display = 'block';
+        console.log('Modal should be displayed');
+
+        setTimeout(closeModal, 3500);
+    };
+
+    // Function to close the modal and show the file link
+    function closeModal() {
+        document.getElementById('myModal').style.display = 'none';
+        document.getElementById('fileLink').style.display = 'block';
+    }
+    </script>
+
+</body>
+
+</html>

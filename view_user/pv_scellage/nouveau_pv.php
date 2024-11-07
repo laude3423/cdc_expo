@@ -76,7 +76,7 @@ include_once('../../scripts/db_connect.php');
                             <label for="agent_scellage" name="agent_scellage" class="col-form-label">Agent de
                                 scellage:</label>
                             <select id="agent_scellage" name="agent_scellage[]" placeholder="Choisir ..."
-                                autocomplete="off" required style="font-size:90%" multiple>
+                                autocomplete="off" style="font-size:90%" multiple>
                                 <option value="">Choisir ...</option>
                                 <?php    
                                         $query = "SELECT * FROM agent WHERE fonction_agent='Agent de scellage'";
@@ -86,6 +86,45 @@ include_once('../../scripts/db_connect.php');
                                         
                                         while ($rowSub = $resu->fetch_assoc()) {
                                             echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] .' '. $rowSub['prenom_agent']. "</option>";
+                                        }
+                                        ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label for="fraude" name="fraude" class="col-form-label">Agent de l'Agence Nationale
+                                Anti-Fraude:</label>
+                            <select id="fraude" name="fraude" placeholder="Choisir ..." autocomplete="off" required
+                                style="font-size:90%">
+                                <option value="">Choisir ...</option>
+                                <?php    
+                                        $query = "SELECT * FROM agent WHERE fonction_agent=\"Agent de l'Agence Nationale Anti-Fraude\"";
+                                        $stmt = $conn->prepare($query);
+                                        $stmt->execute();
+                                        $resu = $stmt->get_result();
+
+                                        while ($rowSub = $resu->fetch_assoc()) {
+                                            echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] . ' ' . $rowSub['prenom_agent'] . "</option>";
+                                        }
+
+                                        ?>
+                            </select>
+                        </div>
+                        <div class="col mb-3">
+                            <label for="qualite" name="qualite" class="col-form-label">Responsable de la qualité du
+                                Laboratoire:</label>
+                            <select id="qualite" name="qualite" placeholder="Choisir ..." autocomplete="off" required
+                                style="font-size:90%">
+                                <option value="">Choisir ...</option>
+                                <?php    
+                                        $query = "SELECT * FROM agent WHERE fonction_agent='Responsable de la qualité du Laboratoire des Mines'";
+                                        $stmt = $conn->prepare($query);
+                                        $stmt->execute();
+                                        $resu = $stmt->get_result();
+                                        
+                                        while ($rowSub = $resu->fetch_assoc()) {
+                                            echo "<option value='" . $rowSub['id_agent'] ."'>" . $rowSub['nom_agent'] .' '.$rowSub['prenom_agent']. "</option>";
                                         }
                                         ?>
                             </select>
@@ -120,6 +159,8 @@ function selectTom() {
     new TomSelect("#agent_scellage", selectOptions);
     new TomSelect("#douane", selectOptions);
     new TomSelect("#police", selectOptions);
+    new TomSelect("#fraude", selectOptions);
+    new TomSelect("#qualite", selectOptions);
 
 };
 </script>

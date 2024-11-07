@@ -10,16 +10,6 @@ if (isset($_POST['id_substance'])) {
 ini_set('display_errors', 1);
 
 ob_start();
-    // Récupérer les districts en fonction de la région sélectionnée
-    // $query = "SELECT * FROM substance_detaille_substance sds 
-    // LEFT JOIN couleur_substance cs ON cs.id_couleur_substance = sds.id_couleur_substance
-    // LEFT JOIN degre_couleur  dc ON dc.id_degre_couleur = sds.id_degre_couleur
-    // LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre
-    // LEFT JOIN durete d ON d.id_durete = sds.id_durete
-    // LEFT JOIN granulo g ON g.id_granulo = sds.id_granulo
-    // LEFT JOIN forme_substance fs ON fs.id_forme_substance = sds.id_forme_substance
-    // LEFT JOIN categorie  c ON c.id_categorie = sds.id_categorie
-    // WHERE id_substance = $id_substance";
     $query = "SELECT DISTINCT cs.* FROM substance_detaille_substance sds 
     LEFT JOIN couleur_substance cs ON cs.id_couleur_substance = sds.id_couleur_substance
     WHERE sds.id_substance = $id_substance AND sds.id_categorie =$id_categorie AND cs.id_couleur_substance IS NOT NULL";
@@ -42,18 +32,37 @@ ob_start();
         $options_degre_couleur .= "<option value='" . $row_degre_couleur['id_degre_couleur'] . "'>" . $row_degre_couleur['nom_degre_couleur'] . "</option>";
     }
 
-    $query_dd = "SELECT DISTINCT dd.* FROM substance_detaille_substance sds 
-    LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre
-    WHERE sds.id_substance = $id_substance AND sds.id_categorie =$id_categorie AND sds.id_dimension_diametre IS NOT NULL";
+    if($id_categorie=="2"){
+        $query_dd = "SELECT DISTINCT dd.* FROM substance_detaille_substance sds 
+        LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre
+        WHERE sds.id_substance = $id_substance AND sds.id_categorie =$id_categorie";
 
-    $result_dd = $conn->query($query_dd);
+        $result_dd = $conn->query($query_dd);
 
-    $options_dimension_diametre = "<option value=''>Sélectionner...</option>";
+        $options_dimension_diametre = "<option value=''>Sélectionner...</option>";
 
-    if ($result_dd->num_rows > 0) {
-        while ($row_dd = $result_dd->fetch_assoc()) {
-            if (isset($row_dd["id_dimension_diametre"])) {
-                $options_dimension_diametre .= "<option value='" . $row_dd['id_dimension_diametre'] . "'>" . $row_dd['nom_dimension_diametre'] . "</option>";
+        if ($result_dd->num_rows > 0) {
+            while ($row_dd = $result_dd->fetch_assoc()) {
+                $id_dimension_diametre = $row_dd['id_dimension_diametre'];
+                $nom_dimension_diametre = isset($id_dimension_diametre) ? $row_dd['nom_dimension_diametre'] : "Aucune";
+
+                $options_dimension_diametre .= "<option value='" . ($id_dimension_diametre ?? '') . "'>" . $nom_dimension_diametre . "</option>";
+            }
+        }
+    }else{
+        $query_dd = "SELECT DISTINCT dd.* FROM substance_detaille_substance sds 
+        LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre
+        WHERE sds.id_substance = $id_substance AND sds.id_categorie =$id_categorie AND sds.id_dimension_diametre";
+
+        $result_dd = $conn->query($query_dd);
+
+        $options_dimension_diametre = "<option value=''>Sélectionner...</option>";
+
+        if ($result_dd->num_rows > 0) {
+            while ($row_dd = $result_dd->fetch_assoc()) {
+                if (isset($row_dd["id_dimension_diametre"])) {
+                    $options_dimension_diametre .= "<option value='" . $row_dd['id_dimension_diametre'] . "'>" . $row_dd['nom_dimension_diametre'] . "</option>";
+                }
             }
         }
     }
@@ -104,19 +113,6 @@ ob_start();
             
         }
 
-    // $query_c = "SELECT DISTINCT c.* FROM substance_detaille_substance sds 
-    // LEFT JOIN categorie  c ON c.id_categorie = sds.id_categorie
-    // WHERE sds.id_substance = $id_substance AND sds.id_categorie IS NOT NULL";
-    
-    // $result_c = $conn->query($query_c);
-
-    // $options_categorie = "<option value=''>Sélectionner...</option>";
-    // while ($row_c = $result_c->fetch_assoc()) {
-    //     if (isset($row_c["id_categorie"])) {
-    //         $options_categorie .= "<option value='" . $row_c['id_categorie'] . "'>" . $row_c['nom_categorie'] . "</option>";
-    //     }
-        
-    // }
 
     $query_t = "SELECT DISTINCT t.* FROM substance_detaille_substance sds 
     LEFT JOIN transparence t ON t.id_transparence = sds.id_transparence
@@ -162,27 +158,23 @@ $row = $resu->fetch_assoc();
 $nom_substance = $row['nom_substance'];
 $nom_substance = explode(' ', trim($nom_substance))[0];
 
-// Connexion à la deuxième base de données
 require '../../../scripts/connect_db_lp1.php';
-
-$query = "SELECT lp.*, s.*, pr.* 
+$options_direction = "<option value=''>Sélectionner...</option>";
+$query = "SELECT DISTINCT dir.*
           FROM lp_info AS lp
           INNER JOIN produits pr ON lp.id_produit = pr.id_produit
           INNER JOIN substance s ON pr.id_substance = s.id_substance
-          WHERE validation_admin = 1 AND s.nom_substance LIKE ?";
-$stmt_lp1 = $conn_lp1->prepare($query);
-$search_term = '%' . $conn_lp1->real_escape_string($nom_substance) . '%';
-$stmt_lp1->bind_param('s', $search_term);
-$stmt_lp1->execute();
-$result = $stmt_lp1->get_result();
-
-// Génération des options
-$options_lp1 = "<option value=''>Sélectionner...</option>";
-while ($row = $result->fetch_assoc()) {
-    if (isset($row["id_lp"])) {
-        $options_lp1 .= "<option value='" . $row['id_lp'] . "'>" . $row['num_LP'] . " (" . $row['nom_substance'] . ") (" . $row['unite'] . ")</option>";
+          INNER JOIN directions dir ON lp.id_direction = dir.id_direction WHERE s.nom_substance LIKE ?";
+    $stmt_lp1 = $conn_lp1->prepare($query);
+    $search_term = '%' . $conn_lp1->real_escape_string($nom_substance) . '%';
+    $stmt_lp1->bind_param('s', $search_term);
+    $stmt_lp1->execute();
+    $result_dir = $stmt_lp1->get_result();
+    while ($row_dir = $result_dir->fetch_assoc()) {
+        if (isset($row_dir["id_direction"])) {
+            $options_direction .= "<option value='" . $row_dir['id_direction'] . "'>" . $row_dir['nom_direction'] . "</option>";
+        }
     }
-}
 $output = ob_get_clean();
 
 if (!empty($output)) {
@@ -200,7 +192,7 @@ echo json_encode([
     'options_categorie' => $options_categorie ?? '',
     'options_transparence' => $options_transparence ?? '',
     'options_unite' => $options_unite ?? '',
-    'options_lp1' => $options_lp1
+    'options_direction' => $options_direction ?? ''
 ]);
 }
 ?>

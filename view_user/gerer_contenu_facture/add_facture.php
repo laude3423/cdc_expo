@@ -105,7 +105,7 @@
                         <div class="col">
                             <label for="pj_facture" name="pj_facture" class="fw-bold ">Pièce joint de
                                 la facture:</label>
-                            <input type="file" class="form-control" name="pj_facture" id="pj_facture"
+                            <input type="file" class="form-control" name="pj_facture" id="pj_facture" accept=".pdf"
                                 placeholder="scan de la facture" required style="font-size:90%">
                         </div>
                     </div>
@@ -159,4 +159,18 @@ function isValidDate(dateString) {
 
     return dateString === date.toISOString().split('T')[0];
 }
+
+function validatePDFInput(event) {
+    var fileInput = event.target;
+    var filePath = fileInput.value;
+    var allowedExtension = /(\.pdf)$/i;
+
+    if (!allowedExtension.exec(filePath)) {
+        alert('Veuillez choisir un fichier PDF.');
+        fileInput.value = '';
+        return false;
+    }
+}
+
+document.getElementById('pj_facture').addEventListener('change', validatePDFInput);
 </script>

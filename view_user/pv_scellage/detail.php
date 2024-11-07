@@ -2,6 +2,8 @@
     require_once('../../scripts/db_connect.php');
     require_once('../generate_fichier/nombreEnLettre.php');
     require_once('../../scripts/session.php');
+    require_once('../../histogramme/insert_logs.php');
+    $activite = "Validation d'un PV de scellage";
     $validation_sce = $fonctionUsers. ' ' . $nom_user. ' '.$prenom_user;
     if (isset($_GET['id'])) {
         $id_data_cc = $_GET['id'];
@@ -53,7 +55,8 @@
         $num_domiciliation = $row["num_domiciliation"] ?? "";
         $pj_domiciliation = $row["pj_domiciliation"] ?? "";
         $nombre_colis = $row["nombre_colis"] ?? "";   
-        $lieu_scellage = $row["lieu_scellage_pv"] ?? "";   
+        $lieu_scellage = $row["lieu_scellage_pv"] ?? "";  
+        $scan = $row['scan_scellage'];
         $lieu_embarquement = $row["lieu_embarquement_pv"] ?? "";   
         $type_colis = $row["type_colis"] ?? "";   
         $num_fiche_declaration = $row["num_fiche_declaration_pv"] ?? "";   
@@ -67,6 +70,8 @@
         $id_pv_controle=$row['num_pv_controle']?? "";
         $validation_scellage=$row['validation_scellage'] ?? "En attente";
         $user_scellage = $row['user_validation_scellage'] ?? "";
+        $validation_chef_services =$row['validation_chef'] ?? "En attente";
+        $validation_directeur =$row['validation_directeur'] ?? "En attente";
 
         //
         $id_agent_chef = $row1["id_agent"] ?? "";
@@ -74,7 +79,6 @@
         $id_agent_scellage = $row3["id_agent"] ?? "";
         $id_agent_douane = $row4["id_agent"] ?? "";
         $id_agent_police = $row5["id_agent"] ?? "";
-        
         $id_agent_scellage = array();
 
         if($result3){
@@ -97,6 +101,7 @@ if (isset($_POST['submit'])) {
         $sql="UPDATE `data_cc` SET `validation_scellage`='$action', `user_validation_scellage`='$validation_sce' WHERE id_data_cc=$id";
         $result = mysqli_query($conn, $sql);
         if ($result) {
+            insertLogs($conn, $userID, $activite);
             $_SESSION['toast_message'] = "Modification réussie.";
              header("Location: https://cdc.minesmada.org/view_user/pv_scellage/detail.php?id=" . $id);
             exit();
@@ -106,24 +111,41 @@ if (isset($_POST['submit'])) {
     }  
 if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
 
     // Effacer le message du Toast de la variable de session
     unset($_SESSION['toast_message']);
+}
+if(isset($_SESSION['toast_message2'])) {
+    echo '
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message2']);
 }
 
 ?>
@@ -133,6 +155,7 @@ if(isset($_SESSION['toast_message'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../../logo/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!--Font awesome-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -272,6 +295,7 @@ if(isset($_SESSION['toast_message'])) {
                     }
     ?>
     <div class="info container">
+        <p class="text-center mb-0">Détails du PV de scellage</p>
         <hr>
         <div class="partie1">
             <?php 
@@ -281,7 +305,7 @@ if(isset($_SESSION['toast_message'])) {
                 
                 $result = $conn->query($query12);
                 if ($result->num_rows > 0) { 
-                    if (($code_fonction == 'B' || $code_fonction == 'A') && ($validation_scellage == "En attente" || empty($validation_scellage))) {?>
+                    if (($code_fonction == 'B' || $code_fonction == 'A') && (($validation_scellage == "En attente") || empty($validation_scellage))) {?>
             <form action="" method="post">
                 <?php
                 // Supposons que $selectedValue contient la valeur récupérée de la base de données.
@@ -315,7 +339,7 @@ if(isset($_SESSION['toast_message'])) {
                         <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
                         <select class="form-control" name="action" id="action" required>
                             <option value="">Séléctionner</option>
-                            <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                            <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À Refaire</option>
                             <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
                             <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente
                             </option>
@@ -328,7 +352,83 @@ if(isset($_SESSION['toast_message'])) {
                 </div>
             </form>
             <?php
-        }else{
+        }else if($groupeID===3){
+             ?>
+            <div class="row">
+                <div class="col">
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            Voir les détails associer
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item"
+                                    href="../gerer_contenu_facture/liste_contenu_facture.php?id=<?php echo $id_data_cc; ?>">Voir
+                                    détails de facture</a></li>
+                            <hr class="dropdown-divider">
+                            <li><a class="dropdown-item"
+                                    href="../pv_controle_gu/detail.php?id=<?php echo $id_data_cc; ?>">Voir
+                                    PV de controle</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item"
+                                    href="../pv_controle/detail.php?id=<?php echo $id_data_cc; ?>">Voir la
+                                    certificat de conformité</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <?php if(($code_fonction=="A")||($code_fonction=="B")){?>
+                <div class="col">
+                    <form action="" method="post">
+                        <?php
+                        // Supposons que $selectedValue contient la valeur récupérée de la base de données.
+                        $selectedValue = $validation_scellage; // Exemple de valeur
+                        function isSelectedy($value, $selectedValue) {
+                            return $value === $selectedValue ? 'selected' : '';
+                        }
+                        ?>
+                        <div class="row">
+                            <div class="col">
+                                <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
+                                <select class="form-control" name="action" id="action" required>
+                                    <option value="">Séléctionner</option>
+                                    <option value="À Refaire" <?= isSelectedy('À Refaire', $selectedValue) ?>>À Refaire
+                                    </option>
+                                    <option value="Validé" <?= isSelectedy('Validé', $selectedValue) ?>>Validé</option>
+                                    <option value="En attente" <?= isSelectedy('En attente', $selectedValue) ?>>En
+                                        attente
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
+                                    name="submit">Enregistrer</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <?php } if((empty($scan))){?>
+
+                <div class="col">
+                    <?php if($validation_scellage=="Validé") {?>
+                    <a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan"
+                        data-id="<?php echo $id_data_cc; ?>">Insérer scan</a>
+                    <?php }else{echo "PV de scellage:".$validation_scellage;}?>
+                </div>
+                <?php }else{ ?>
+                <div class="col">
+                    <?php 
+                    if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                    echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan"
+                                    data-id="' . $id_data_cc . '">Modifier scan</a>';
+                    }
+                ?>
+                </div>
+                <?php  }?>
+            </div>
+
+            <?php }
             if($groupeID ===2){
                  ?>
             <div class="row">
@@ -339,15 +439,19 @@ if(isset($_SESSION['toast_message'])) {
                             Voir les détails associer
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=" .
-                                    $id_data_cc.">Voir
+                            <li><a class="dropdown-item"
+                                    href="../gerer_contenu_facture/liste_contenu_facture.php?id=<?php echo $id_data_cc; ?>">Voir
                                     détails de facture</a></li>
-                            <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=" . $id_data_cc.">Voir
+                            <hr class="dropdown-divider">
+                            <li><a class="dropdown-item"
+                                    href="../pv_controle_gu/detail.php?id=<?php echo $id_data_cc; ?>">Voir
                                     PV de controle</a></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item" href="../pv_controle/detail.php?id=" . $id_data_cc.">Voir la
+                            <li><a class="dropdown-item"
+                                    href="../pv_controle/detail.php?id=<?php echo $id_data_cc; ?>">Voir
+                                    la
                                     certificat de conformité</a></li>
                         </ul>
                     </div>
@@ -360,11 +464,10 @@ if(isset($_SESSION['toast_message'])) {
                                 return $value === $selectedValue ? 'selected' : '';
                             }
                             ?>
-
                         <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
                         <select class="form-control" name="action" id="action" required>
                             <option value="">Séléctionner</option>
-                            <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire
+                            <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À Refaire
                             </option>
                             <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
                             <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En
@@ -378,38 +481,29 @@ if(isset($_SESSION['toast_message'])) {
                 </div>
                 </form>
             </div>
-            <hr>
             <?php
-            }else{
-            ?><div class="dropdown">
-                <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                    Voir les détails associer
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item"
-                            href="../gerer_contenu_facture/liste_contenu_facture.php?id=<?php echo $id_data_cc; ?>">Voir
-                            détails de facture</a></li>
-                    <li><a class="dropdown-item" href="../pv_controle_gu/detail.php?id=<?php echo $id_data_cc; ?>">Voir
-                            PV de controle</a></li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li><a class="dropdown-item" href="../pv_controle/detail.php?id=<?php echo $id_data_cc; ?>">Voir la
-                            certificat de conformité</a></li>
-                </ul>
-            </div>
-            <hr><?php
-        }
     }
+    }else{
+        echo 'vide';
     }
     
     ?>
             <?php 
-          if(($validation_scellage=='Validé')&&($groupeID != 2)){
-            echo '<p class="alert alert-info">Status:'.$validation_scellage.' par '.$user_scellage.'.</p><hr>';
-          }else if(($validation_scellage!='Validé')&&($code_fonction=='C')){
+          if(($validation_scellage=='Validé')&&($groupeID !== 2)){
+            ?>
+            <hr>
+            <?php 
+            echo '<p class="alert alert-info">Status:'.$validation_scellage.', Validateur: '.$user_scellage.'.</p>';
+          }else if(($validation_scellage=='En attente')&&($code_fonction=='C')){
+            ?>
+            <hr>
+            <?php 
             echo '<p class="alert alert-info">Status:'.$validation_scellage.'.</p>';
+          }else{
+            ?>
+            <hr>
+            <?php 
+            echo '<p class="alert alert-info">Status:'.$validation_scellage.', Validateur: '.$user_scellage.'.</p>';
           }
     ?>
 
@@ -451,7 +545,6 @@ if(isset($_SESSION['toast_message'])) {
                 <p><strong>Contact de la société:</strong><?php echo $row['contact_societe_importateur']; ?></p>
                 <p><strong>Email de la société:</strong> <?php echo $row['email_societe_importateur']; ?></p>
                 <p><strong>Pays de destination:</strong> <?php echo $row['pays_destination']; ?></p>
-                <p><strong>Date de départ:</strong> <?php echo date('d/m/Y', strtotime($row['date_depart'])); ?></p>
 
             </div>
             <div class="alert alert-light" role="alert">
@@ -630,20 +723,23 @@ if(isset($_SESSION['toast_message'])) {
             </div>
         </div>
         <div class="info2">
-
             <div class="alert alert-light" role="alert">
                 <?php
                 $pdfFilePath ="";
                                 // Emplacement du fichier PDF
                     if ($validation_scellage != "Validé") {
                             $pdfFilePath = $row['lien_pv_scellage'];
+                            include "../cdc/convert2.php";
                     }else{
                          $pdfFilePath = $row['pj_pv_scellage'];
+                         include "../cdc/convert4.php";
                     }
-                        include "../cdc/convert.php";
+                        
                     ?>
             </div>
         </div>
+        <div id="nouveau_scan_form"></div>
+        <div id="modifier_scan_form"></div>
     </div>
 
     <!--Bootstrap-->
@@ -665,6 +761,31 @@ if(isset($_SESSION['toast_message'])) {
         $('#pdfIframe').attr('src', 'https://docs.google.com/gview?url=' + encodeURIComponent(pdfFilePathSc) +
             '&embedded=true');
     }
+    $(document).ready(function() {
+
+        $(".btn-nouveau-scan").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('nouveau_scan_form', '../pv_controle_gu/nouveau_scan.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        });
+        $(".btn-modifier-scan").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('modifier_scan_form', '../pv_controle_gu/edit_scan.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        });
+
+
+        function showEditForm(editFormId, scriptPath, modalId) {
+            $("#" + editFormId).load(scriptPath, function() {
+                // Après le chargement du contenu, initialisez le modal manuellement
+                $("#" + modalId).modal('show');
+            });
+        }
+    });
     </script>
 </body>
 

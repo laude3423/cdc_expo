@@ -1,6 +1,6 @@
 <?php
 include_once('../../scripts/db_connect.php');
-
+//test
 
 ?>
 <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false"

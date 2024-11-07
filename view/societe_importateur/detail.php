@@ -131,7 +131,7 @@ if(isset($_SESSION['toast_message'])) {
                     <input type="hidden" value="<?php echo $id_societe; ?>" name="id_societe" id="id_societe">
                     <select class="form-control" name="action" id="action" required>
                         <option value="">Séléctionner</option>
-                        <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                        <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À Refaire</option>
                         <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
                         <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente</option>
                     </select>

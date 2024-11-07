@@ -27,7 +27,7 @@
 
     </div>
     <div class="footerBottom">
-        <p>Copyright &copy;2024</p>
+        <p>Copyright &copy;2024</p>version 1.0.0
     </div>
 </footer>
 <style>

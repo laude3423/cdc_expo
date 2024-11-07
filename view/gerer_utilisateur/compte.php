@@ -183,17 +183,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div class="container">
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col">
                                 <label for="groupe" class="form-label">Matricule:</label>
                                 <input type="text" class="form-control" id="contact" name="contact"
                                     value="<?php echo $row['matricule_user']; ?>" readonly>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col">
                                 <label for="groupe" class="form-label">Direction:</label>
                                 <input type="text" class="form-control" id="contact" name="contact"
                                     value="<?php echo $row['nom_direction']; ?>" readonly>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col">
                                 <label for="status" class="form-label">Status:</label>
                                 <input type="text" class="form-control" id="contact" name="contact" value="<?php
                                 switch ($row['status_user']) {
@@ -213,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             ?>" readonly>
 
                             </div>
-                            <div class="col-md-3">
+                            <div class="col">
                                 <label for="groupe" class="form-label">Groupe:</label>
                                 <input type="text" class="form-control" id="groupe" name="groupe"
                                     value="<?php echo getRoleName($row['id_groupe']); ?>" readonly>

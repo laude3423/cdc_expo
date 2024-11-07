@@ -8,9 +8,9 @@
         LEFT JOIN societe_expediteur societe_exp ON datacc.id_societe_expediteur= societe_exp.id_societe_expediteur
         WHERE id_data_cc = $id_data_cc";
         $sql1 = "SELECT ag.*, assiste_agent.* FROM pv_agent_assister assiste_agent
-        LEFT JOIN agent ag ON assiste_agent.id_agent=ag.id_agent WHERE ag.fonction_agent='Chef de Division Exportation Minière' AND assiste_agent.id_data_cc=$id_data_cc";
+        LEFT JOIN agent ag ON assiste_agent.id_agent=ag.id_agent WHERE ag.fonction_agent='Agent de Scellage' AND assiste_agent.id_data_cc=$id_data_cc";
         $sql2 = "SELECT ag.*, assiste_agent.* FROM pv_agent_assister assiste_agent
-        LEFT JOIN agent ag ON assiste_agent.id_agent=ag.id_agent WHERE ag.fonction_agent='Responsable qualité Laboratoire des Mines' AND assiste_agent.id_data_cc=$id_data_cc";
+        LEFT JOIN agent ag ON assiste_agent.id_agent=ag.id_agent WHERE ag.fonction_agent='Responsable de la qualité du Laboratoire des Mines' AND assiste_agent.id_data_cc=$id_data_cc";
         
         $sql4 = "SELECT ag.*, assiste_agent.* FROM pv_agent_assister assiste_agent
         LEFT JOIN agent ag ON assiste_agent.id_agent=ag.id_agent WHERE ag.fonction_agent='Agent de douane' AND assiste_agent.id_data_cc=$id_data_cc";
@@ -69,6 +69,14 @@
         $id_agent_scellage = $row3["id_agent"] ?? "";
         $id_agent_douane = $row4["id_agent"] ?? "";
         $id_agent_police = $row5["id_agent"] ?? "";
+
+        $sql6 = "SELECT ag.*, assiste_agent.* FROM pv_agent_assister assiste_agent
+        LEFT JOIN agent ag ON assiste_agent.id_agent=ag.id_agent WHERE ag.fonction_agent='Agent de l\'Agence Nationale Anti-Fraude' AND assiste_agent.id_data_cc=$id_data_cc";
+        $stmt6 = $conn->prepare($sql6);
+        $stmt6->execute();
+        $resu6 = $stmt6->get_result();
+        $row6 = $resu6->fetch_assoc();
+        $id_fraude = $row6['id_agent'] ?? "";
         
         $id_agent_scellage = array();
 
@@ -182,7 +190,52 @@
                                         ?>
                             </select>
                         </div>
-                    </div></br>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="faude" name="faude" class="col-form-label">Agent de l'Agence Nationale
+                                Anti-Fraude:</label>
+                            <select id="faude" name="faude" placeholder="Choisir ..." autocomplete="off" required
+                                style="font-size:90%">
+                                <option value="">Choisir ...</option>
+                                <?php    
+                                        $query = "SELECT * FROM agent WHERE fonction_agent=\"Agent de l'Agence Nationale Anti-Fraude\"";
+                                            $stmt = $conn->prepare($query);
+                                            $stmt->execute();
+                                            $resu = $stmt->get_result();
+                                            
+                                            while ($rowSub = $resu->fetch_assoc()) {
+                                                $selected = ($rowSub["id_agent"] == $id_fraude) ? "selected" : "";
+                                                echo "<option value='" . $rowSub['id_agent'] ."'$selected>". $rowSub['nom_agent'] .' '. $rowSub['prenom_agent']. "</option>";
+                                            }
+                                        
+                                            ?>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="qualite" name="qualite" class="col-form-label">Responsable de
+                                qualité,
+                                laboratoire<span class="required">*</span></label>
+                            <select id="qualite" name="qualite" placeholder="Choisir ..." autocomplete="off" required
+                                style="font-size:90%">
+                                <option value="">Choisir ...</option>
+                                <?php 
+                                if(!empty($id_agent_qualite)){
+                                    $query = "SELECT * FROM agent WHERE fonction_agent='Responsable de la qualité du Laboratoire des Mines'";
+                                    $stmt = $conn->prepare($query);
+                                    $stmt->execute();
+                                    $resu = $stmt->get_result();
+                                        
+                                        while ($rowSub = $resu->fetch_assoc()) {
+                                            $selected = ($rowSub["id_agent"] == $id_agent_qualite) ? "selected" : "";
+                                            echo "<option value='" . $rowSub['id_agent'] ."'$selected>". $rowSub['nom_agent'] .' '.$rowSub['prenom_agent']. "</option>";
+                                        }
+                                }   
+                                    
+                                        ?>
+                            </select>
+                        </div>
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-sm btn-secondary" onclick="closeModal()">Close</button>
                         <button class="btn btn-sm btn-primary" type="submit2" name="submit2">Enregistrer</button>
@@ -212,6 +265,8 @@ function selectTom() {
     new TomSelect("#police", selectOptions);
     new TomSelect("#douane", selectOptions);
     new TomSelect("#agent_scellage", selectOptions);
+    new TomSelect("#faude", selectOptions);
+    new TomSelect("#qualite", selectOptions);
 
 };
 </script>

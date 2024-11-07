@@ -3,9 +3,11 @@
 // Connexion à la base de données
 require(__DIR__ . '/../../scripts/db_connect.php');
 require(__DIR__ . '/../../scripts/session.php');
+include '../../histogramme/insert_logs.php';
 if($groupeID!==2){
     require_once('../../scripts/session_actif.php');
 }
+$validation_v = $fonctionUsers. ' ' . $nom_user. ' '.$prenom_user;
 $id_data_cc='';
 if (isset($_GET['id'])) {
     $id_data_cc= $_GET['id'];
@@ -42,15 +44,18 @@ if (isset($_GET['id'])) {
         $validation_facture=$row_1['validation_facture'] ?? "";
         $nom_users = $row_1['fonction'] ?? "";
         $nom_utilisateur = $row_1['nom_user']. ' '.$row_1['prenom_user'];
+        $user_validation_facture=$row_1['user_validation_facture'];
     }
 
 }
 if (isset($_POST['submit'])) {
+    $activite="Validation d'une contenue de la facture";
         $id_data_cc = $_POST['id_data'];
         $action = $_POST['action'];
-        $sql="UPDATE `data_cc` SET `validation_facture`='$action', `id_user`='$userID' WHERE id_data_cc=$id_data_cc";
+        $sql="UPDATE `data_cc` SET `validation_facture`='$action', `user_validation_facture`='$validation_v' WHERE id_data_cc=$id_data_cc";
         $result = mysqli_query($conn, $sql);
         if ($result) {
+            insertLogs($conn, $userID, $activite);
             $_SESSION['toast_message'] = "Modification réussie.";
              header("Location: ./liste_contenu_facture.php?id=" . $id_data_cc);
              //header("Location: ".$_SERVER['PHP_SELF']);
@@ -61,18 +66,16 @@ if (isset($_POST['submit'])) {
     }
 if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -80,21 +83,18 @@ if(isset($_SESSION['toast_message'])) {
     // Effacer le message du Toast de la variable de session
     unset($_SESSION['toast_message']);
 }
-
 if(isset($_SESSION['toast_message2'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
                     <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message2'] . '
-                </div>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -104,14 +104,7 @@ if(isset($_SESSION['toast_message2'])) {
 }
 ?>
 <?php 
-$date_depart="";
-    $reqte="SELECT cfac.*, dcc.date_depart FROM contenu_facture cfac LEFT JOIN data_cc dcc ON dcc.id_data_cc=cfac.id_data_cc WHERE cfac.id_data_cc=$id_data_cc";
-    $results = $conn->query($reqte);
 
-    if ($results->num_rows > 0) {
-        $row_1 = $results->fetch_assoc();
-        $date_depart = $row_1["date_depart"];
-    }
 ?>
 <!DOCTYPE html>
 <html>
@@ -249,12 +242,15 @@ $date_depart="";
 
 <body>
     <?php include_once('../../view/shared/navBar.php'); 
+   
     $compte="";?>
 
     <div class=" info container">
-        <?php include('./add_contenu_facture.php'); ?>
+        <?php  include('./add_contenu_facture.php'); ?>
         <div id="edit_contenu_facture_form"></div>
         <div id="ajout_pv_controle_form"></div>
+
+        <div id="ajout_pv_contenu_dire"></div>
         <div id="ajout_pv_scellage_form"></div>
         <div id="sow_contenu_form"></div>
         <h6 style="text-align: center;">Liste des contenus de factures N° <?php echo $num_facture;?> du
@@ -319,6 +315,9 @@ $date_depart="";
                                         </div>';
                                 }
                             }else{
+                                echo '
+                                            <a class="btn btn-dark rounded-pill px-3 btn-ajout_pv_controle" data-id="' . $id_data_cc . '">Générer PV contrôle</a>
+                                        ';
                                 if(!empty($num_pv_controle)&&!empty($num_pv_scellage)){
                                     echo '
                                         <div class="dropdown">
@@ -365,10 +364,17 @@ $date_depart="";
                             //         // Comparer les dates
                             // if ( $date_depart_obj >  $date_today_obj ) {
                                 if($validation_facture !='Validé'){
-                                     echo '
-                                    <a class="btn btn-dark rounded-pill px-3  btn-add-contenu-facture"
-                                    data-id-data-cc="' . $id_data_cc . '"><i
-                                    class="fa-solid fa-add me-1"></i>Ajouter un contenu</a>';
+                                     if($groupeID===1){
+                                        echo '
+                                                <a class="btn btn-dark rounded-pill px-3 btn-add-contenu-dire"
+                                                data-id-data-cc="' . $id_data_cc . '"><i
+                                                class="fa-solid fa-add me-1"></i>Ajouter un contenu</a>';
+                                        }else{
+                                             echo '
+                                            <a class="btn btn-dark rounded-pill px-3  btn-add-contenu-facture"
+                                            data-id-data-cc="' . $id_data_cc . '"><i
+                                            class="fa-solid fa-add me-1"></i>Ajouter un contenu</a>';
+                                        }
                                 }
                             // }
                             
@@ -393,7 +399,7 @@ $date_depart="";
                     <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
                     <select class="form-control" name="action" id="action" required>
                         <option value="">Séléctionner</option>
-                        <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                        <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À Refaire</option>
                         <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
                         <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente
                         </option>
@@ -422,7 +428,7 @@ $date_depart="";
                     <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
                     <select class="form-control" name="action" id="action" required>
                         <option value="">Séléctionner</option>
-                        <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire</option>
+                        <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À Refaire</option>
                         <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
                         <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En attente
                         </option>
@@ -438,7 +444,7 @@ $date_depart="";
             }else if(empty($validation_facture)||($validation_facture=='En attente')){
                 echo '<p class="alert alert-info">Status: En attente.</p>';
             }else {
-                echo '<p class="alert alert-info">Status: '.$validation_facture.' par '.$nom_users.': '.$nom_utilisateur.'.</p>';
+                echo '<p class="alert alert-info">Status: '.$validation_facture.', Validateur: '.$user_validation_facture.'.</p>';
             }
         }
     }?>
@@ -450,19 +456,19 @@ $date_depart="";
                     <hr>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item list-group-item-light">
-                            <strong>Nom du société : </strong> <?php echo $nom_societe_expediteur; ?>
+                            <strong>Nom du société: </strong> <?php echo $nom_societe_expediteur; ?>
                         </li>
                         <li class="list-group-item list-group-item-light">
-                            <strong>Adresse : </strong> <?php echo $adresse_societe_expediteur; ?>
+                            <strong>Adresse: </strong> <?php echo $adresse_societe_expediteur; ?>
                         </li>
                         <li class="list-group-item list-group-item-light">
-                            <strong>NIF : </strong> <?php echo $nif_societe_expediteur; ?>
+                            <strong>NIF: </strong> <?php echo $nif_societe_expediteur; ?>
                         </li>
                         <li class="list-group-item list-group-item-light">
-                            <strong>Contact : </strong> <?php echo $contact_societe_expediteur; ?>
+                            <strong>Contact: </strong> <?php echo $contact_societe_expediteur; ?>
                         </li>
                         <li class="list-group-item list-group-item-light">
-                            <strong>Mail : </strong> <?php echo $email_societe_expediteur; ?>
+                            <strong>E-mail: </strong> <?php echo $email_societe_expediteur; ?>
                         </li>
                     </ul>
 
@@ -495,22 +501,65 @@ $date_depart="";
         <hr>
 
         <?php
-        $sql="SELECT cfac.prix_unitaire_facture, cfac.poids_facture
-        FROM contenu_facture cfac INNER JOIN data_cc dcc ON dcc.id_data_cc = cfac.id_data_cc WHERE dcc.id_data_cc = $id_data_cc";
+        $sql="SELECT * FROM contenu_facture WHERE id_data_cc = $id_data_cc";
         $result = $conn->query($sql);
         $montant=0;
+        $poidsTotal = 0;$poidsTotal_g=0;$poidsTotal_kg=0;
         while($row1 = mysqli_fetch_assoc($result)){
-            $montant += floatval($row1['prix_unitaire_facture']*$row1['poids_facture']);
+            if ($row1['unite'] == "ct") {
+                $montant += floatval($row1['prix_unitaire_facture']*5) * floatval($row1['poids_facture']);
+            } else if($row1['unite'] == "g"){
+                $montant += floatval($row1['prix_unitaire_facture']) * floatval($row1['poids_facture']);
+                
+            }
+            else if($row1['unite'] == "g_pour_kg"){
+                $montant += floatval($row1['prix_unitaire_facture']*5000) * floatval($row1['poids_facture']);
+                
+            }else{
+                $montant += floatval($row1['prix_unitaire_facture']) * floatval($row1['poids_facture']);
+                
+            }
+            if ($row1['unite_poids_facture'] == "ct") {
+               $poidsTotal += floatval($row1['poids_facture']) * 5;
+            } else if($row1['unite_poids_facture'] == "g"){
+                $poidsTotal_g += floatval($row1['poids_facture']);
+            }else{
+              $poidsTotal_kg += floatval($row1['poids_facture']);
+            }
+        }
+        if(($poidsTotal > 0)&&($poidsTotal_g> 0)&&($poidsTotal_kg> 0)){
+            $poidsTotal =$poidsTotal / 1000 + $poidsTotal_g / 1000 + $poidsTotal_kg;
+            $unite_affiche='kg';
+            echo 'consulte';
+        }else if(($poidsTotal > 0)&&($poidsTotal_g > 0)){
+            $poidsTotal =$poidsTotal + $poidsTotal_g;
+            $unite_affiche='g';
+        }else if(($poidsTotal_g > 0)&&($poidsTotal_kg> 0)) {
+            $poidsTotal =$poidsTotal_g / 1000 + $poidsTotal_kg;
+            $unite_affiche='kg';
+        }else if(($poidsTotal> 0)&&($poidsTotal_kg> 0)) {
+            $poidsTotal =$poidsTotal / 1000 + $poidsTotal_kg;
+            $unite_affiche='kg';
+            
+        }else if($poidsTotal > 0) {;
+            $unite_affiche='g';
+        }else if($poidsTotal_g > 0) {;
+            $poidsTotal =$poidsTotal_g;
+
+            $unite_affiche='g';
+        }else if($poidsTotal_kg > 0) {;
+            $poidsTotal =$poidsTotal_kg;
+            $unite_affiche='kg';
         }
         $query = "
-        SELECT dcc.date_depart, cfac.*, sds.*, s.*, g.*, sds.prix_substance
+        SELECT  cfac.*, sds.*, s.*, g.*, sds.prix_substance
         FROM contenu_facture cfac
         INNER JOIN data_cc dcc ON dcc.id_data_cc = cfac.id_data_cc
         INNER JOIN substance_detaille_substance sds ON cfac.id_detaille_substance = sds.id_detaille_substance
         LEFT JOIN substance s ON sds.id_substance = s.id_substance
         LEFT JOIN granulo g ON sds.id_granulo = g.id_granulo
         WHERE dcc.id_data_cc = $id_data_cc
-        ORDER BY cfac.id_contenu_facture DESC
+        ORDER BY cfac.id_contenu_facture ASC
         ";
         
         $result = $conn->query($query);
@@ -542,23 +591,40 @@ $date_depart="";
                     <tr>
                         <td>✅</td>
                         <td><?php echo htmlspecialchars($row['nom_substance']) ?></td>
+                        <?php if($row['unite']=='ct'){ ?>
+                        <td><?php echo htmlspecialchars($row['poids_facture']* 5) . ' ct' ?>
+                            <?php } else{ ?>
                         <td><?php echo htmlspecialchars($row['poids_facture']) . ' ' . htmlspecialchars($row['unite_poids_facture']) ?>
+                            <?php }?>
+
                         </td>
                         <?php
                 if ($row['prix_unitaire_facture'] == $row['prix_substance']) {
-                    echo '<td>' . number_format($row["prix_unitaire_facture"], 3, ',', ' ') . ' US $</td>';
+                    echo '<td>' . number_format($row["prix_unitaire_facture"], 2, ',', ' ') . ' US $</td>';
                 } else if($row['prix_unitaire_facture'] > $row['prix_substance']){
                     echo '<td style="color: green;">' . number_format($row["prix_unitaire_facture"], 2, ',', ' ') . ' US $</td>';
                 } else {
+                  if($row['unite'] == 'g_pour_kg'){
+                     echo '<td>' . number_format($row["prix_unitaire_facture"], 2, ',', ' ') . ' US $</td>';
+                  }else{
                     echo '<td style="color: red;">' . number_format($row["prix_unitaire_facture"], 2, ',', ' ') . ' US $</td>';
+                 }
                 }
-            ?>
+                if($row['unite'] == 'ct'){ ?>
+                        <td><?php echo number_format($row['poids_facture'] * $row["prix_unitaire_facture"]*5, 2, ',', ' ') . ' US $'; ?>
+                        </td>
+                        <?php }else if($row['unite'] == 'g_pour_kg'){ ?>
+                        <td><?php echo number_format($row['poids_facture'] * $row["prix_unitaire_facture"]*5000, 2, ',', ' ') . ' US $'; ?>
+                        </td>
+                        <?php }else{ ?>
                         <td><?php echo number_format($row['poids_facture'] * $row["prix_unitaire_facture"], 2, ',', ' ') . ' US $'; ?>
                         </td>
+                        <?php }
+            ?>
                         <td>
+                            <a class="link-dark"
+                                href="./sow_contenu.php?id=<?php echo $row['id_contenu_facture']; ?>">détails</a>
                             <?php if($validation_facture !='Validé') { ?>
-                            <a class="link-dark btn-sow-contenu" href="#"
-                                data-id="<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>">détails</a>
                             <a class="link-dark btn-edit-contenu-facture"
                                 data-id-contenu-facture="<?php echo htmlspecialchars($row["id_contenu_facture"]) ?>">
                                 <i class="fa-solid fa-pen-to-square me-2"></i>
@@ -578,28 +644,26 @@ $date_depart="";
                     <?php } ?>
                 </tbody>
             </table>
-
-
-            <?php echo "MONTANT TOTAL: ".number_format($montant, 3, ',', ' ') . ' US $' ?>
+            <?php echo "MONTANT TOTAL: ".number_format($montant, 2, ',', ' ') . ' US $ POIDS TOTAL:'.number_format($poidsTotal, 3, ',', ' ') .$unite_affiche ?>
         </div>
         <?php
-                    $conn->close();
-                    } else {
-                        echo '<div class="info1"><p class="alert alert-info">Aucune contenu de la facture.</p></div>';
-                    }
-                    ?>
+            $conn->close();
+            } else {
+                echo '<div class="info1"><p class="alert alert-info">Aucune contenu de la facture.</p></div>';
+            }
+            ?>
 
         <div class="info2">
             <div class="alert alert-light" role="alert">
                 <?php
-                                if(!empty($pj_facture)){
-                                     $pdfFilePath = $pj_facture;
-                                include "../cdc/convert.php";
-                                }else{
-                                   echo ' <p class="alert alert-info">Aucun scan de la facture trouvé.</p>';
-                                }
-                               
-                            ?>
+                    if(!empty($pj_facture)){
+                            $pdfFilePath = $pj_facture;
+                    include "../cdc/convert.php";
+                    }else{
+                        echo ' <p class="alert alert-info">Aucun scan de la facture trouvé.</p>';
+                    }
+                    
+                ?>
             </div>
         </div>
     </div>
@@ -720,6 +784,11 @@ $date_depart="";
             $("#add_contenu_facture").modal('show');
             $("#id_data_cc").val(id_data_cc);
         });
+        $(".btn-add-contenu-dire").click(function() {
+            id_data_cc = $(this).data('id-data-cc'); // Correction ici
+            showEditForm('ajout_pv_contenu_dire', './add_contenu_direction.php?id=' + id_data_cc,
+                'staticBackdrop3');
+        });
         $(".btn-ajout_pv_controle").click(function() {
             var id_data_cc = $(this).data('id');
             showEditForm('ajout_pv_controle_form', '../pv_controle/ajout_pv_controle.php?id=' +
@@ -769,97 +838,6 @@ $date_depart="";
     }
     </script>
 
-    <!-- <script>
-        $(document).ready(function(){
-            // Afficher le formulaire modal lorsqu'on clique sur le bouton
-            $("#btn-modifier-facture").click(function(){
-                $("#edit_contenu_facture").modal('show');
-            });
-        });
-    </script> -->
-    <!-- <script>
-    // Définir les variables (en supposant qu'elles sont définies ailleurs dans le code)
-// var id_data_cc;
-// var num_facture;
-// var date_facture;
-// var id_societe_importateur;
-// var id_societe_expediteur;
-
-$(document).ready(function() {
-    // Initialiser TomSelect pour id_societe_expediteur_edit
-    // var id_societe_expediteur_edit_value = new TomSelect("#id_societe_expediteur_edit", {
-    //     create: true,
-    //     sortField: {
-    //         field: "text",
-    //         direction: "asc"
-    //     }
-    // });
-    // var id_societe_importateur_edit_value = new TomSelect("#id_societe_importateur_edit", {
-    //     create: true,
-    //     sortField: {
-    //         field: "text",
-    //         direction: "asc"
-    //     }
-    // });
-
-    // Afficher le formulaire modal lorsqu'on clique sur le bouton
-    $(".btn-edit-contenu-facture").click(function() {
-        id_data_cc = $(this).data('id-data-cc');
-        id_contenu_facture = $(this).data('id-contenu-facture');
-        id_substance = $(this).data('id-substance');
-        id_couleur_substance = $(this).data('id-couleur-substance');
-        poids_facture = $(this).data('poids-facture');
-        unite_poids_facture = $(this).data('unite-poids-facture');
-        prix_unitaire_facture = $(this).data('prix-unitaire-facture');
-        granulo_facture = $(this).data('granulo-facture');
-        id_degre_couleur = $(this).data('id-degre-couleur');
-        id_transparence = $(this).data('id-transparence');
-        id_durete_edit = $(this).data('id-durete-edit');
-        id_categorie = $(this).data('id-categorie');
-        id_forme_substance = $(this).data('id-forme-substance');
-        id_dimension_diametre = $(this).data('id-dimension-diametre');
-        id_lp1_info = $(this).data('id-lp1-info');
-        // Définir les valeurs pour les champs du formulaire
-        $("#edit_contenu_facture").modal('show');
-        $("#id_data_cc_edit").val(id_data_cc);
-        $("#id_contenu_facture_edit").val(id_contenu_facture);
-        $("#id_substance_edit").val(id_substance);
-        $("#id_couleur_substance_edit").val(id_couleur_substance);
-        $("#poids_facture_edit").val(poids_facture);
-        $("#unite_poids_facture_edit").val(unite_poids_facture);
-        $("#prix_unitaire_facture_edit").val(prix_unitaire_facture);
-        $("#granulo_facture_edit").val(granulo_facture);
-        $("#id_degre_couleur_edit").val(id_degre_couleur);
-        $("#id_transparence_edit").val(id_transparence);
-        $("#id_durete_edit_edit").val(id_durete_edit);
-        $("#id_categorie_edit").val(id_categorie);
-        $("#id_forme_substance_edit").val(id_forme_substance);
-        $("#id_dimension_diametre_edit").val(id_dimension_diametre);
-        $("#id_lp1_info_edit").val(id_lp1_info);
-        // id_societe_expediteur_edit_value.setValue(id_societe_expediteur);
-        // id_societe_importateur_edit_value.setValue(id_societe_importateur);
-    });
-});
-
-</script> -->
-    <!-- <script>
-    $(document).ready(function () {
-        // Fonction pour afficher le formulaire d'ajout de membre
-        function showEditForm(editFormId, scriptPath, modalId) {
-            $("#" + editFormId).load(scriptPath, function () {
-                // Après le chargement du contenu, initialisez le modal manuellement
-                $("#" + modalId).modal('show');
-            });
-        }
-
-        // Associez les fonctions aux clics des boutons
-        $(".btn-edit-contenu-facture").click(function () {
-            var id_contenu_facture = $(this).data('id-contenu-facture');
-            // Assure-toi que les éléments HTML existent avant d'appeler showEditForm
-            showEditForm('edit_contenu_facture_form', 'edit_contenu_facture.php?id=' + id_contenu_facture,'edit_contenu_facture');
-        });
-    });
-</script> -->
     <script>
     $(document).ready(function() {
         $('.toast').toast('show');

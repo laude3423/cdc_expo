@@ -2,6 +2,7 @@
     require_once('../../scripts/db_connect.php');
     require_once('../generate_fichier/nombreEnLettre.php');
     require('../../scripts/session.php');
+    include '../../histogramme/insert_logs.php';
     $validation_cont = $fonctionUsers. ' ' . $nom_user. ' '.$prenom_user;
     if (isset($_GET['id'])) {
         $id_data_cc = $_GET['id'];
@@ -69,7 +70,6 @@
         $scan = $row['scan_controle'] ?? "";
         $lien_cc = $row['lien_cc'] ?? "";
         $pj_cc = $row['pj_cc'] ?? "";
-        $date_depart = $row['date_depart'] ?? "";
         $num_pv_scellage=$row['num_pv_scellage'] ?? "";
         
         $num_pv_controle = $row["num_pv_controle"] ?? "";
@@ -81,6 +81,8 @@
         $validation_controle = $row['validation_controle'] ?? "En attente";
         $users_validation_controle = $row['users_validation_controle'];
         $validation_scellage=$row['validation_scellage'] ?? "En attente";
+        $validation_chef_services =$row['validation_chef'] ?? "En attente";
+        $validation_directeur =$row['validation_directeur'] ?? "En attente";
 
         //
         $id_agent_chef = $row1["id_agent"] ?? "";
@@ -96,6 +98,66 @@
                 $id_agent_scellage[] = $row3['id_agent'];
             }
         }
+        $query = "SELECT * FROM data_cc WHERE  num_facture  IS NOT NULL AND id_data_cc=$id_data_cc";
+        $result = $conn->query($query);
+        if ($result->num_rows > 0) {
+            $facturation = 'avec';
+        }
+        $query2 = "SELECT * FROM data_cc WHERE  num_facture  IS NULL AND id_data_cc=$id_data_cc";
+        $result = $conn->query($query2);
+        if ($result->num_rows > 0) {
+            $attestation = 'avec';
+        }
+        
+        $texte ="";
+        if(!empty($attestation)){
+            $query = "SELECT sub.nom_substance FROM contenu_attestation AS catt 
+          LEFT JOIN substance2 AS sub ON sub.id_substance = catt.id_substance 
+          WHERE  catt.id_data_cc=?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $id_data_cc);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $substances = [];
+            while ($row_2 = $result->fetch_assoc()) {
+                $nom_substance = $row_2['nom_substance'];
+                
+                // Vérifie si le premier caractère est une voyelle (en minuscule ou majuscule)
+                if (preg_match('/^[aeiouAEIOU]/', $nom_substance)) {
+                    $substances[] = "d'" . $nom_substance;
+                } else {
+                    $substances[] = "de " . $nom_substance;
+                }
+            }
+
+            // Join the substance names with commas, and replace the last comma with ' et '
+            $substances_sentence = implode(', ', $substances);
+            $substances_sentence = preg_replace('/, ([^,]+)$/', ' et $1', $substances_sentence);
+
+            $query= "SELECT SUM(poids_attestation) AS somme, unite FROM contenu_attestation WHERE id_data_cc='$id_data_cc'";
+            $result= mysqli_query($conn, $query);
+            $row_2= mysqli_fetch_assoc($result);
+            $somme = floatval($row_2['somme']);
+            $unite = $row_2['unite'];
+            $nombre = nombreEnLettres($somme);
+            $unite_affiche="";
+            if(($unite=='kg')&&($somme < 2)){
+                $unite_affiche="kilogramme";
+            }else if(($unite=='kg')&&($somme >= 2)){
+                $unite_affiche="kilogrammes";
+            }else if(($unite=='g')&&($somme < 2)){
+                $unite_affiche="gramme";
+            }else if(($unite=='g')&&($somme >= 2)){
+                $unite_affiche="grammes";
+            }
+            $texte = $nombre .' '.$unite_affiche.' '.$substances_sentence.'.';
+
+            $query= "SELECT an.* FROM data_cc AS dcc LEFT JOIN ancien_lp AS an ON an.id_ancien_lp = dcc.id_ancien_lp  WHERE dcc.id_data_cc=$id_data_cc";
+            $result= mysqli_query($conn, $query);
+            $row_4= mysqli_fetch_assoc($result);
+        }
+
         $stmt->close();
         $stmt1->close();
         $stmt2->close();
@@ -110,6 +172,8 @@
         $sql="UPDATE `data_cc` SET `validation_controle`='$action', `users_validation_controle`='$validation_cont' WHERE id_data_cc=$id";
         $result = mysqli_query($conn, $sql);
         if ($result) {
+            $activite="Validation d'un PV de contrôle";
+            insertLogs($conn, $userID, $activite);
             $_SESSION['toast_message'] = "Modification réussie.";
              header("Location: https://cdc.minesmada.org/view_user/pv_controle_gu/detail.php?id=" . $id);
             exit();
@@ -118,26 +182,43 @@
         }
     }  
     
-    if(isset($_SESSION['toast_message'])) {
+ if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
 
     // Effacer le message du Toast de la variable de session
     unset($_SESSION['toast_message']);
+}
+if(isset($_SESSION['toast_message2'])) {
+    echo '
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+                    <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
+            </div>
+        </div>
+    </div>';
+
+    // Effacer le message du Toast de la variable de session
+    unset($_SESSION['toast_message2']);
 }
 
 ?>
@@ -192,8 +273,8 @@
     }
 
     .info {
-        padding-left: 8.5%;
-        padding-right: 8.5%;
+        margin-left: 8.5%;
+        margin-right: 8.5%;
         font-size: small;
     }
 
@@ -260,22 +341,33 @@
     }
     ?>
     <div class="info container">
+        <p class="text-center mb-0">Détails du PV de contrôle</p>
         <hr>
         <div class="partie d-flex justify-content-between align-items-center">
             <div class="partie1">
                 <?php 
                         if($groupeID === 2){
                             if($validation_controle !='Validé'){
-                                    echo'<a class="btn btn-dark rounded-pill px-3" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                     if(!empty($facturation)){
+                                        echo'<a class="btn btn-dark rounded-pill px-3" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                    }else{
+                                        echo'<a class="btn btn-dark rounded-pill px-3" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_data_cc.'">Contenu de l\'Attestation</a>';
+                                    }
                                 }else{
-                                    if(!empty($num_pv_controle)&&!empty($num_pv_scellage)){
+                                    if(!empty($num_pv_scellage)){
                                     echo '
                                         <div class="dropdown">
                                             <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                                 Voir les détails associer
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li>';
+                                                if(!empty($facturation)){
+                                                    echo'<a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                                }else{
+                                                    echo'<a class="dropdown-item" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_data_cc.'">Contenu de l\'Attestation</a>';
+                                                }
+                                                echo '</li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV de scellage</a></li>
                                                 <li><hr class="dropdown-divider"></li>
@@ -290,7 +382,13 @@
                                                 Voir les détails associer
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                               <li>';
+                                                if(!empty($facturation)){
+                                                    echo'<a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                                }else{
+                                                    echo'<a class="dropdown-item" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_data_cc.'">Contenu de l\'Attestation</a>';
+                                                }
+                                                echo '</li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
                                             </ul>
@@ -298,43 +396,37 @@
                                     ';
                                 }
                             }
-                        } else if($groupeID===1) {
+                        } else if(($groupeID===1)||(empty($facturation))) {
                             if($validation_controle !='Validé'){
+                                if(!empty($facturation)){
                                     echo'<a class="btn btn-dark rounded-pill px-3" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
                                 }else{
-                                    echo '<div class="dropdown">
-                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Voir les détails associer
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
-                                            </ul>
-                                        </div>';
+                                    echo'<a class="btn btn-dark rounded-pill px-3" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_data_cc.'">Contenu de l\'Attestation</a>';
                                 }
+                            }else{
+                                echo '<div class="dropdown">
+                                        <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Voir les détails associer
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>';
+                                            if(!empty($facturation)){
+                                                echo'<a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                            }else{
+                                                echo'<a class="dropdown-item" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_data_cc.'">Contenu de l\'Attestation</a>';
+                                            }
+                                            echo '</li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
+                                        </ul>
+                                    </div>';
+                            }
                         }else{
                                 if(empty($num_pv_scellage)){
-                                    $date_today_obj = new DateTime('now');
-                                    $date_depart_obj = new DateTime($date_depart);
-                                    // Comparer les dates
-                                    if ($date_depart_obj>= $date_today_obj) {
-                                        if($validation_controle=='Validé'){
-                                            echo '<a class="btn btn-dark rounded-pill px-3 btn_add_pv_scellage" data-id="' . $id_data_cc . '">Générer PV de scellage</a>';
-                                        }else{
-                                            echo'<a class="btn btn-dark rounded-pill px-3" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
-                                        }
+                                    if($validation_controle=='Validé'){
+                                        echo '<a class="btn btn-dark rounded-pill px-3 btn_add_pv_scellage" data-id="' . $id_data_cc . '">Générer PV de scellage</a>';
                                     }else{
-                                        echo'<div class="dropdown">
-                                            <button type="button" class="btn btn-dark rounded-pill px-3 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Voir les détails associer
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item" href="../pv_controle/detail.php?id=' . $id_data_cc.'">Voir le certificat de conformité</a></li>
-                                            </ul>
-                                        </div>';
+                                        echo'<a class="btn btn-dark rounded-pill px-3" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
                                     }
                                 }else{
                                     echo '<div class="dropdown">
@@ -342,7 +434,13 @@
                                                 Voir les détails associer
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a></li>
+                                                <li>';
+                                            if(!empty($facturation)){
+                                                echo'<a class="dropdown-item" href="../gerer_contenu_facture/liste_contenu_facture.php?id=' . $id_data_cc.'">Voir contenus de facture</a>';
+                                            }else{
+                                                echo'<a class="dropdown-item" href="../attestation_valeur/liste_contenu_attestation.php?id=' . $id_data_cc.'">Contenu de l\'Attestation</a>';
+                                            }
+                                            echo '</li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item" href="../pv_scellage/detail.php?id=' . $id_data_cc.'">Voir PV scellage</a></li>
                                                 <li><hr class="dropdown-divider"></li>
@@ -355,10 +453,9 @@
                     
                     ?>
             </div>
-            <div class=" partie2 text-end">
-                <?php
-                    if ($groupeID !== 2) {
-                        if(($validation_controle!='Validé')&&(($code_fonction=='B')||($code_fonction=='A'))){ ?>
+            <?php
+                        if(($code_fonction=='B')||($code_fonction=='A')){ ?>
+            <div class="col">
                 <div class="row">
                     <div class="col">
                         <form action="" method="post">
@@ -368,73 +465,99 @@
                                         return $value === $selectedValue ? 'selected' : '';
                                     }
                                     ?>
-
                             <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
                             <select class="form-control" name="action" id="action" required>
                                 <option value="">Séléctionner</option>
-                                <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire
+                                <option value="À Refaire" <?= isSelected('À Refaire', $selectedValue) ?>>À
+                                    Refaire
                                 </option>
-                                <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
+                                <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé
+                                </option>
                                 <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En
                                     attente
                                 </option>
                             </select>
                     </div>
-                    <div class="col text-end">
+                    <div class="col">
                         <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
                             name="submit">Enregistrer</button>
                     </div>
                     </form>
                 </div>
-                <?php }else if(($validation_controle=="Validé")&&($validation_scellage=="Validé")){
-                    if((!empty($num_pv_scellage))&&(empty($scan))){
+            </div>
+            <?php } ?>
+            <div class="col text-end">
+                <?php 
+                if(($groupeID ===3)&&($validation_controle=="Validé")&&($validation_scellage=="Validé")){
+                    //if(($validation_chef_services!='Validé')||($validation_directeur!='Validé')){
+                        // if(empty($revenu)){
+                        //     echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-ov"
+                        //                                             data-id="' . $id_data_cc . '">Générer O.V</a>';
+                        // }else{
+                        //     echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-ov"
+                        //                                             data-id="' . $id_data_cc . '">Modifier O.V</a>';
+                        // }
+                    //}
+                    if(!empty($facturation)){
+                        if(empty($scan)){
                                      echo '
                                     <a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan"
                                     data-id="' . $id_data_cc . '">Insérer scan</a>';
+                        }else if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                                        echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan"
+                                                                        data-id="' . $id_data_cc . '">Modifier scan</a>';
                         }
-                }
-                        
-                            
                     }else{
-                        ?>
-                <div class="row">
-                    <div class="col">
-                        <form action="" method="post">
-                            <?php
-                                    $selectedValue = $validation_controle; // Exemple de valeur
-                                    function isSelected($value, $selectedValue) {
-                                        return $value === $selectedValue ? 'selected' : '';
-                                    }
-                                    ?>
-
-                            <input type="hidden" value="<?php echo $id_data_cc; ?>" name="id_data" id="id_data">
-                            <select class="form-control" name="action" id="action" required>
-                                <option value="">Séléctionner</option>
-                                <option value="Refaire" <?= isSelected('Refaire', $selectedValue) ?>>Refaire
-                                </option>
-                                <option value="Validé" <?= isSelected('Validé', $selectedValue) ?>>Validé</option>
-                                <option value="En attente" <?= isSelected('En attente', $selectedValue) ?>>En
-                                    attente
-                                </option>
-                            </select>
-                    </div>
-                    <div class="col text-end">
-                        <button class="btn btn-dark btn-sm rounded-pill px-3" type="submit"
-                            name="submit">Enregistrer</button>
-                    </div>
-                    </form>
-                </div>
-                <?php
+                        if(empty($scan)){
+                                     echo '
+                                    <a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan_nc"
+                                    data-id="' . $id_data_cc . '">Insérer scan</a>';
+                        }else if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                                        echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan_nc"
+                                                                        data-id="' . $id_data_cc . '">Modifier scan</a>';
+                        }
                     }
-                        ?>
+                }else if(($groupeID==1)&&($validation_controle=="Validé")){
+                    //if(($validation_chef_services!='Validé')||($validation_directeur!='Validé')){
+                        // if(empty($revenu)){
+                        //     echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-ov"
+                        //                                             data-id="' . $id_data_cc . '">Générer O.V</a>';
+                        // }else{
+                        //     echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-ov"
+                        //                                             data-id="' . $id_data_cc . '">Modifier O.V</a>';
+                        // }
+                    //}
+                    if(!empty($facturation)){
+                        if(empty($scan)){
+                                     echo '
+                                    <a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan"
+                                    data-id="' . $id_data_cc . '">Insérer scan</a>';
+                        }else if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                        echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan"
+                                        data-id="' . $id_data_cc . '">Modifier scan</a>';
+                        }
+                    }else{
+                        if(empty($scan)){
+                                     echo '
+                                    <a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan_nc"
+                                    data-id="' . $id_data_cc . '">Insérer scan</a>';
+                        }else if(($validation_chef_services=="À Refaire")||($validation_directeur=="À Refaire")){
+                            echo '<a class="btn btn-dark rounded-pill px-3  btn-modifier-scan_nc"
+                                        data-id="' . $id_data_cc . '">Modifier scan</a>';
+                        }
+                    }
+                } ?>
+
             </div>
         </div>
         <hr>
         <?php 
-          if(($validation_controle=='Validé')&&($groupeID != 2)){
-            echo '<p class="alert alert-info">Status:'.$validation_controle.' par '.$users_validation_controle.'.</p><hr>';
-          }else if(($validation_controle!='Validé')&&($code_fonction=='C')){
-            echo '<p class="alert alert-info">Status:En attente.</p><hr>';
+          if(($validation_controle==='Validé')&&($groupeID != 2)){
+            echo '<p class="alert alert-info">Status:'.$validation_controle.', Validateur: '.$users_validation_controle.'.</p><hr>';
+          }else if(($validation_controle=='En attente')&&($code_fonction=='C')){
+            echo '<p class="alert alert-info">Status:'.$validation_controle.'.</p><hr>';
+          }else if($code_fonction=='C'){
+                echo '<p class="alert alert-info">Status:'.$validation_controle.', Validateur: '.$users_validation_controle.'.</p><hr>';
           }
             ?>
         <div class="info1">
@@ -464,8 +587,9 @@
                 <p><strong>Nombre et d' emballage:</strong><?php echo $row['mode_emballage']; ?></p>
                 <p><strong>Lien d'mbarquement:</strong><?php echo $row['lieu_embarquement_pv']; ?></p>
                 <?php if ($validation_controle == "Validé") { ?>
+
                 <p><strong>Télécharger:</strong> <a
-                        href="../view_user/<?php echo htmlspecialchars($row['pj_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
+                        href="../fichier/<?php echo htmlspecialchars(basename($row['pj_pv_controle']), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_pv_controle'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
                 </p>
                 <?php }?>
             </div>
@@ -497,7 +621,6 @@
                 <p><strong>Contact de la société:</strong><?php echo $row['contact_societe_importateur']; ?></p>
                 <p><strong>Email de la société:</strong> <?php echo $row['email_societe_importateur']; ?></p>
                 <p><strong>Pays de destination:</strong> <?php echo $row['pays_destination']; ?></p>
-                <p><strong>Date de départ:</strong> <?php echo date('d/m/Y', strtotime($row['date_depart'])); ?></p>
 
             </div>
             <div class="alert alert-light" role="alert">
@@ -623,39 +746,30 @@
                     ?>
                 </div>
                 <?php
-                    include '../pv_scellage/recherche.php';
-
-                    
-                    if(count($afficheWord_brute) > 0) {
-                        echo "Catégorie Brute : ";
-                        for ($i = 0; $i < count($afficheWord_brute); $i++) {
-                            echo $afficheWord_brute[$i] .', ';
-                        }
-                        echo '</br> POIDS: '.$ecrit_b;
-                    }
-                    if(count($afficheWord) > 0) {
-                        echo "Catégorie Taillée ou Travaillée : ";
-                        for ($i = 0; $i < count($afficheWord); $i++) {
-                            if($i == count($afficheWord) - 1){
-                                echo $afficheWord[$i];
-                            } else {
-                                echo $afficheWord[$i] . ', ';
+                    if(empty($facturation)){
+                        echo $texte;
+                    }else{
+                        include '../pv_scellage/recherche.php';
+                        if(count($afficheWord_brute) > 0) {
+                            echo "Catégorie Brute : ";
+                            for ($i = 0; $i < count($afficheWord_brute); $i++) {
+                                echo $afficheWord_brute[$i] .', ';
                             }
+                            echo '</br> POIDS: '.$ecrit_b;
                         }
-                        echo '<br> POIDS: '.$ecrit_t;
+                        if(count($afficheWord) > 0) {
+                            echo "Catégorie Taillée ou Travaillée : ";
+                            for ($i = 0; $i < count($afficheWord); $i++) {
+                                if($i == count($afficheWord) - 1){
+                                    echo $afficheWord[$i];
+                                } else {
+                                    echo $afficheWord[$i] . ', ';
+                                }
+                            }
+                            echo '<br> POIDS: '.$ecrit_t;
+                        }
                     }
-                    
-           
                 ?>
-            </div>
-
-            <div class="alert alert-light" role="alert">
-                <h5 id="list-item-4">Informations sur DOM</h5>
-                <hr>
-                <p><strong>Numéro de domiciliation:</strong> <?php echo $row['num_domiciliation']; ?></p>
-                <p><strong>Scan du fichier DOM:</strong> <a
-                        href="../view_user/<?php echo htmlspecialchars($row['pj_domiciliation_pv'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_domiciliation'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
-                </p>
             </div>
             <div class="alert alert-light" role="alert">
                 <h5 id="list-item-4">Informations sur le fichier de déclaration</h5>
@@ -665,9 +779,16 @@
                 <p><strong>Scan de fiche de déclaration :</strong> <a
                         href="../view_user/<?php echo $row['pj_fiche_declaration_pv']; ?>"><?php echo $row['num_fiche_declaration_pv']; ?>.pdf</a>
                     du <?php echo date('d/m/Y', strtotime($row['date_fiche_declaration_pv'])); ?></p>
-
             </div>
-
+            <?php if(!empty($facturation)){ ?>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-4">Informations sur DOM</h5>
+                <hr>
+                <p><strong>Numéro de domiciliation:</strong> <?php echo $row['num_domiciliation']; ?></p>
+                <p><strong>Scan du fichier DOM:</strong> <a
+                        href="../view_user/<?php echo htmlspecialchars($row['pj_domiciliation_pv'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['num_domiciliation'], ENT_QUOTES, 'UTF-8'); ?>.pdf</a>
+                </p>
+            </div>
             <div class="alert alert-light" role="alert">
                 <h5 id="list-item-5">Information sur LP3 E</h5>
                 <hr>
@@ -678,17 +799,54 @@
                     <?php echo date('d/m/Y', strtotime($row['date_lp3e'])); ?></p>
 
             </div>
+            <?php }else{ ?>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-5">Information sur l'attestation de valeur</h5>
+                <hr>
+                <p><strong>Numéro de l'attestation de valeur:</strong> <?php echo $row['num_attestation']; ?></p>
+                <p><strong>Scan de l'attestation de valeur:</strong> <a
+                        href="../view_user/<?php echo $row['pj_attestation']; ?>"><?php echo $row['num_attestation']; ?>.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row['date_attestation'])); ?></p>
+            </div>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-5">Information sur la fiche de contrôle</h5>
+                <hr>
+                <p><strong>Numéro de fiche de contrôle:</strong> <?php echo $row_4['numero_lp']; ?></p>
+                <p><strong>Scan de la fiche de contrôle:</strong> <a
+                        href="../view_user/<?php echo $row_4['scan_lp']; ?>"><?php echo $row_4['numero_lp']; ?>.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row_4['date_creation'])); ?></p>
+            </div>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-5">Information sur demande d'autorisation</h5>
+                <hr>
+                <p><strong>Scan de demande d'autorisation:</strong> <a
+                        href="../view_user/<?php echo $row['scan_demande_autorisation']; ?>">Scan.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row['date_demande_autorisation'])); ?></p>
+            </div>
+            <div class="alert alert-light" role="alert">
+                <h5 id="list-item-5">Information sur l'engagement de responsabilité</h5>
+                <hr>
+                <p><strong>Scan de l'engagement:</strong> <a
+                        href="../view_user/<?php echo $row['scan_engagement']; ?>">Scan.pdf</a>
+                    du
+                    <?php echo date('d/m/Y', strtotime($row['date_engagement'])); ?></p>
+            </div>
+            <?php } ?>
         </div>
         <div class="info2">
             <div class="alert alert-light" role="alert">
                 <?php
-                $pdfFilePath="";
                     if ($validation_controle !="Validé") {
                             $pdfFilePath = $row['lien_pv_controle'];
+                            include "../cdc/convert2.php";
                     }else{
                          $pdfFilePath = $row['pj_pv_controle'];
+                         include "../cdc/convert4.php";
                     }
-                        include "../cdc/convert.php";
+                        
                    
                 ?>
             </div>
@@ -696,6 +854,9 @@
     </div>
     <div id="add_pv_scellage_form"></div>
     <div id="nouveau_scan_form"></div>
+    <div id="modifier_scan_form"></div>
+    <div id="nouveau_scan_form_nc"></div>
+    <div id="modifier_scan_form_nc"></div>
     <!--Bootstrap-->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -720,6 +881,27 @@
             var id_data_cc = $(this).data('id');
             console.log(id_data_cc);
             showEditForm('nouveau_scan_form', './nouveau_scan.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        });
+        $(".btn-nouveau-scan").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('nouveau_scan_form_nc', './nouveau_scan_nc.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        });
+        $(".btn-modifier-scan").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('modifier_scan_form', './edit_scan.php?id=' + id_data_cc,
+                'staticBackdrop3');
+
+        });
+        $(".btn-modifier-scan_nc").click(function() {
+            var id_data_cc = $(this).data('id');
+            console.log(id_data_cc);
+            showEditForm('modifier_scan_form_nc', './edit_scan_nc.php?id=' + id_data_cc,
                 'staticBackdrop3');
 
         });

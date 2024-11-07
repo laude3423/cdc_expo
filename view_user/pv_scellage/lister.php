@@ -1,21 +1,30 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require_once('../../scripts/session.php');
+require_once('../../histogramme/insert_logs.php');
 if($groupeID!==2){
     require_once('../../scripts/session_actif.php');
 }
+$activite="Insertion d'un nouvel PV de Scellage";
+
+$currentYear = date('Y');
+$years = range($currentYear - 6, $currentYear);
+$annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
 ?>
+
 
 <?php
  if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $facture=$_POST['id'];
         $id_data=$_POST['id'];
-        $lieu_sce = $_POST['lieu_scellage'];
-        $nombre = $_POST['nombre'];
-        $type_colis= $_POST["type_colis"];
+        $lieu_sce = htmlspecialchars($_POST['lieu_scellage']);
+        $nombre = htmlspecialchars($_POST['nombre']);
+        $type_colis= htmlspecialchars($_POST["type_colis"]);
         $agent_scellage= $_POST["agent_scellage"];
         $police = $_POST["police"];
         $douane = $_POST["douane"];
+        $fraude = $_POST["fraude"];
+        $qualite = $_POST["qualite"];
         // $chef = $_POST["chef"];
         // $qualite = $_POST["qualite"];
 
@@ -23,13 +32,16 @@ if($groupeID!==2){
         $resultC = mysqli_query($conn, $requte);
         $rowA = mysqli_fetch_assoc($resultC);
 
-        $monde_emballage = $rowA["mode_emballage"];
-        $lieu_emb = $rowA["lieu_embarquement_pv"];
-        $numDom = $rowA["num_domiciliation"];
-        $declaration = $rowA["num_fiche_declaration_pv"];
+        $monde_emballage = htmlspecialchars($rowA["mode_emballage"]);
+        $lieu_emb = htmlspecialchars($rowA["lieu_embarquement_pv"]);
+        $numDom = htmlspecialchars($rowA["num_domiciliation"]);
+        $dateDom = $rowA["date_dom"];
+        $declaration = htmlspecialchars($rowA["num_fiche_declaration_pv"]);
         $date_declaration = $rowA["date_fiche_declaration_pv"];
-        $num_lp3 = $rowA["num_lp3e_pv"];
+        $num_lp3 = htmlspecialchars($rowA["num_lp3e_pv"]);
         $date_lp3 = $rowA["date_lp3e"];
+        $date_dom = $rowA["date_dom"];
+        $date_facture = $rowA["date_facture"];
         $expediteur = $rowA['id_societe_expediteur'];
         $destination = $rowA['id_societe_importateur'];
 
@@ -37,53 +49,22 @@ if($groupeID!==2){
         $date = date($dateFormat);
         $anneeActuelle = date('Y');
         $moisActuel = date('m');
-
-        $date_creation="";
-        $num_pv_scellage="";
         $num_pv="";
-        $codeSql="SELECT dcc.date_creation_pv_scellage, dcc.id_data_cc, dcc.num_pv_scellage FROM data_cc AS dcc
-        INNER JOIN users AS us ON dcc.id_user=us.id_user
-        LEFT JOIN direction AS di ON us.id_direction=di.id_direction
-        WHERE dcc.num_pv_controle IS NOT NULL AND di.id_direction=$id_direction";
+        $codeSql="SELECT num_pv_controle FROM data_cc WHERE id_data_cc=$id_data";
         $resultCode = mysqli_query($conn, $codeSql);
-
-        $max_id_data_cc = null;
-        $date_creation = null;
         $num_pv_scellage=null;
-
         while ($row = mysqli_fetch_assoc($resultCode)) {
-            // Vérifier si c'est le premier élément ou si l'actuel id_data_cc est supérieur au max actuel
-            if ($max_id_data_cc === null || $row['id_data_cc'] > $max_id_data_cc) {
-                $max_id_data_cc = $row['id_data_cc'];
-                $date_creation = $row['date_creation_pv_scellage'];
-                $num_pv_scellage = $row['num_pv_scellage'];
-
-            }
+            $num_pv_scellage = $row['num_pv_controle'];
         }
         if ($num_pv_scellage !== null) {
-                $parts = explode("-", $num_pv_scellage);
-                // Si la chaîne a bien été divisée
-                if(count($parts) === 2) {
-                $incrementation = substr($parts[0], 2); // "0001"
-                } else {
-                echo "La chaîne n'a pas pu être divisée comme prévu.";
-                }
-                $nouvelle_incrementation = intval($incrementation) + 1;
-                $nouvelle_incrementation_formattee = sprintf("%03d", $nouvelle_incrementation);
-                $anneeFacture = date('Y', strtotime($date_creation));
-                $moisFacture = date('m', strtotime($date_creation));
-                if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
-                $num_pv = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PSC";
-                }else{
-                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PSC";
-                }
-            }else{
-                $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GU/PSC";
-            }
+            $num_pv = preg_replace('/\.[^.]+$/', '.PVSC', $num_pv_scellage);
+        }else{
+            $num_pv = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.PVSC";
+        }
         // execution de requête
         
         include "../generate_fichier/generate_insert_scellage.php";
-        include "./traitement.php";
+         include "./traitement.php";
            
         
     }
@@ -91,18 +72,16 @@ if($groupeID!==2){
     
     if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -112,18 +91,16 @@ if($groupeID!==2){
 }
 if(isset($_SESSION['toast_message2'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
                     <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message2'] . '
-                </div>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -198,6 +175,17 @@ if (!empty($edit_societe_id)) {
             <div class="col">
                 <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
             </div>
+            <div class="col">
+                <form method="GET" action="">
+                    <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
+                        <?php foreach ($years as $year): ?>
+                        <option value="<?php echo $year; ?>" <?php echo ($year == $annee) ? 'selected' : ''; ?>>
+                            <?php echo $year; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
             <div class="col text-end">
                 <a class="btn btn-success btn-sm rounded-pill px-3" href="../cdc/exporter.php?"><i
                         class="fas fa-file-excel"></i> Exporter en excel</a>
@@ -212,7 +200,7 @@ if (!empty($edit_societe_id)) {
             INNER JOIN societe_expediteur societe_exp ON datacc.id_societe_expediteur= societe_exp.id_societe_expediteur
             LEFT JOIN users us ON datacc.id_user = us.id_user
             LEFT JOIN direction di ON us.id_direction=di.id_direction
-            WHERE datacc.num_pv_scellage IS NOT NULL
+            WHERE YEAR(datacc.date_modification_pv_scellage) = $annee AND datacc.num_pv_scellage IS NOT NULL
             ORDER BY datacc.date_modification_pv_scellage DESC";
         }else{
             $sql="SELECT datacc.*, societe_imp.*, societe_exp.* FROM data_cc datacc
@@ -220,7 +208,7 @@ if (!empty($edit_societe_id)) {
             INNER JOIN societe_expediteur societe_exp ON datacc.id_societe_expediteur= societe_exp.id_societe_expediteur
             LEFT JOIN users us ON datacc.id_user = us.id_user
             LEFT JOIN direction di ON us.id_direction=di.id_direction
-            WHERE datacc.num_pv_scellage IS NOT NULL AND di.id_direction=$id_direction
+            WHERE YEAR(dcc.date_modification_pv_scellage) = $annee AND datacc.num_pv_scellage IS NOT NULL AND di.id_direction=$id_direction
             ORDER BY datacc.date_modification_pv_scellage DESC";
         }
         
@@ -236,7 +224,7 @@ if (!empty($edit_societe_id)) {
             <thead class="table-dark">
                 <tr>
                     <th scope="col"></th>
-                    <th scope="col">Numéro de PV de scellage</th>
+                    <th scope="col">Numéro du PV</th>
                     <th class="masque2" scope="col">Date</th>
                     <th class="masque2" scope="col">Numéro Facture</th>
                     <th class="masque1" scope="col">Société expéditeur</th>
@@ -253,11 +241,14 @@ if (!empty($edit_societe_id)) {
                     <?php  if( $row['validation_scellage']=='Validé'){
                     ?>
                     <td>✅</td>
-                    <?php  }else {?>
+                    <?php  }else if($row["validation_scellage"]=='À Refaire'){
+                            echo'<td>❌</td>';
+                        } else {?>
                     <td>⚠️</td>
                     <?php }?>
                     <td><?php echo $row['num_pv_scellage'] ?></td>
-                    <td class="masque2"><?php echo $row['date_creation_pv_scellage'] ?></td>
+                    <td class="masque2"><?php echo date('d/m/Y', strtotime($row['date_modification_pv_scellage'])); ?>
+                    </td>
                     <td class="masque2"><?php echo $row['num_facture'] ?></td>
                     <td class="masque1"><?php echo $row['nom_societe_expediteur'] ?></td>
                     <td class="masque1"><?php echo $row['pays_destination'] ?></td>

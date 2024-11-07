@@ -9,6 +9,9 @@ require('../../scripts/session.php');
 if($groupeID!==2){
     require_once('../../scripts/session_actif.php');
 }
+$currentYear = date('Y');
+$years = range($currentYear - 6, $currentYear);
+$annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
 $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 
     if (isset($_POST['submit'])) {
@@ -88,18 +91,16 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
     
     if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -109,18 +110,16 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 }
 if(isset($_SESSION['toast_message2'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
                     <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message2'] . '
-                </div>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -245,6 +244,17 @@ if (!empty($edit_societe_id)) {
             <div class="col">
                 <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
             </div>
+            <div class="col">
+                <form method="GET" action="">
+                    <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
+                        <?php foreach ($years as $year): ?>
+                        <option value="<?php echo $year; ?>" <?php echo ($year == $annee) ? 'selected' : ''; ?>>
+                            <?php echo $year; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
             <div class="col text-end">
                 <a class="btn btn-success rounded-pill px-3" href="./exporter.php?" style="font-size: 90%;"><i
                         class="fas fa-file-excel"></i>
@@ -262,7 +272,7 @@ if (!empty($edit_societe_id)) {
                   INNER JOIN societe_expediteur societe_exp ON datacc.id_societe_expediteur= societe_exp.id_societe_expediteur
                   LEFT JOIN users us ON us.id_user=datacc.id_user
                   LEFT JOIN direction di ON us.id_direction = di.id_direction 
-                  WHERE datacc.num_cc IS NOT NULL
+                  WHERE YEAR(datacc.date_cc) = $annee AND datacc.num_cc IS NOT NULL
                   ORDER BY datacc.date_cc DESC";
             }else{
                 $sql="SELECT datacc.*, societe_imp.*, societe_exp.*
@@ -271,7 +281,7 @@ if (!empty($edit_societe_id)) {
                   INNER JOIN societe_expediteur societe_exp ON datacc.id_societe_expediteur= societe_exp.id_societe_expediteur
                   LEFT JOIN users us ON us.id_user=datacc.id_user
                   LEFT JOIN direction di ON us.id_direction = di.id_direction 
-                  WHERE datacc.num_cc IS NOT NULL AND di.id_direction=$id_direction
+                  WHERE YEAR(datacc.date_cc) = $annee AND datacc.num_cc IS NOT NULL AND di.id_direction=$id_direction
                   ORDER BY datacc.date_cc DESC";
             }
                 
@@ -306,7 +316,7 @@ if (!empty($edit_societe_id)) {
                     <td>⚠️</td>
                     <?php } ?>
                     <td><?php echo $row['num_cc'] ?></td>
-                    <td><?php echo $row['date_cc'] ?></td>
+                    <td class="masque2"><?php echo date('d/m/Y', strtotime($row['date_cc'])); ?></td>
                     <td class="masque1"><?php echo $row['nom_societe_importateur'] ?></td>
                     <td class="masque1"><?php echo $row['pays_destination'] ?></td>
                     <td><?php echo $row['validation_chef'] ?></td>

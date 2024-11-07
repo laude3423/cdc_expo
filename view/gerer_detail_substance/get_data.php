@@ -4,12 +4,13 @@ include "../db_connect.php";
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
 
-    $sql="SELECT sub_detail.*, sub.*, trans.*, dure.*, forme.*, cate.*, diam.*,gra.*, degre.*
+    $sql="SELECT sub_detail.*, sub.*, trans.*, dure.*, forme.*, cate.*, diam.*,gra.*, degre.*, couleur.*
                   FROM substance_detaille_substance sub_detail
                   INNER JOIN substance sub ON sub_detail.id_substance= sub.id_substance
                   LEFT JOIN transparence trans ON sub_detail.id_transparence= trans.id_transparence
                   LEFT JOIN categorie cate ON sub_detail.id_categorie= cate.id_categorie
                   LEFT JOIN durete dure ON sub_detail.id_durete= dure.id_durete
+                   LEFT JOIN couleur_substance couleur ON sub_detail.id_couleur_substance = couleur.id_couleur_substance
                   LEFT JOIN forme_substance forme ON sub_detail.id_forme_substance= forme.id_forme_substance
                   LEFT JOIN dimension_diametre diam ON sub_detail.id_dimension_diametre= diam.id_dimension_diametre
                   LEFT JOIN granulo gra  ON sub_detail.id_granulo= gra.id_granulo

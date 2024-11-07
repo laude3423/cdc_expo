@@ -122,21 +122,18 @@
     </div>
 </div>
 
-<!-- <script>
-        $id_societe_expediteur_edit_value = new TomSelect("#id_societe_expediteur_edit",{
-            create: true,
-            sortField: {
-                field: "text",
-                direction: "asc"
-            }
-        });
-    </script>
-    <script>
-        $id_societe_importateur_edit_value = new TomSelect("#id_societe_importateur_edit",{
-            create: true,
-            sortField: {
-                field: "text",
-                direction: "asc"
-            }
-        });
-    </script> -->
+<script>
+function validatePDFInput(event) {
+    var fileInput = event.target;
+    var filePath = fileInput.value;
+    var allowedExtension = /(\.pdf)$/i;
+
+    if (!allowedExtension.exec(filePath)) {
+        alert('Veuillez choisir un fichier PDF.');
+        fileInput.value = '';
+        return false;
+    }
+}
+
+document.getElementById('pj_facture').addEventListener('change', validatePDFInput);
+</script>

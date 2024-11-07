@@ -8,24 +8,24 @@ include 'nombre_en_lettre.php';
 $agent = array();
 
 // Correction de la requête
-$requete = "SELECT pv.*, ag.*  FROM pv_agent_assister AS pv 
-            LEFT JOIN agent AS ag ON pv.id_agent = ag.id_agent 
-            WHERE (fonction_agent = 'Chef de Division Exportation Minière' OR fonction_agent = 'Responsable qualité Laboratoire des Mines') 
-            AND id_data_cc = ?";
-$stmt = $conn->prepare($requete);
-if ($stmt) {
-    // Liaison du paramètre
-    $stmt->bind_param('i', $facture);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $agent[] = $row['id_agent'];
-        }
-    }else{
-        echo 'vide';
-    } 
-}
+// $requete = "SELECT pv.*, ag.*  FROM pv_agent_assister AS pv 
+//             LEFT JOIN agent AS ag ON pv.id_agent = ag.id_agent 
+//             WHERE (fonction_agent = 'Chef de section scellage' OR fonction_agent = 'Responsable de la qualité du Laboratoire des Mines') 
+//             AND id_data_cc = ?";
+// $stmt = $conn->prepare($requete);
+// if ($stmt) {
+//     // Liaison du paramètre
+//     $stmt->bind_param('i', $facture);
+//     $stmt->execute();
+//     $result = $stmt->get_result();
+//     if ($result->num_rows > 0) {
+//         while ($row = $result->fetch_assoc()) {
+//             $agent[] = $row['id_agent'];
+//         }
+//     }else{
+//         echo 'vide';
+//     } 
+// }
 
 //vérification et traitement de $agent_scellage
 if(count($agent_scellage)> 0){
@@ -37,10 +37,17 @@ if(count($agent_scellage)> 0){
 if ($douane) {
     $agent[] = $douane;
 }
+if ($qualite) {
+    $agent[] = $qualite;
+}
+
 //Vérification et traitement de $police
 if ($police) {
     //$agent_scellage = array_push($agent_scellage, $police);
     $agent[] = $police;
+}
+if ($fraude) {
+    $agent[] = $fraude;
 }
 
     if(count($agent) > 0){
@@ -112,13 +119,12 @@ if ($police) {
                     }else{
                         $categorie_taille="Taillées";
                     }
-                    $nom_substance_pp[] = $rowpp['nom_substance'];
+                    $nom_substance[] = $rowpp['nom_substance'];
                     if(empty($rowpp['nom_couleur_substance'])){
-                        $couleur_substance_pp []='vide';
+                        $couleur_substance[]='vide';
                     }else{
-                        $couleur_substance_pp[] = $rowpp['nom_couleur_substance'];
+                        $couleur_substance[] = $rowpp['nom_couleur_substance'];
                     }
-                    $couleur_substance_pp[] = $rowpp['nom_couleur_substance'];
                 }
             if(!empty($categorie_brute)&&!empty($categorie_taille)) {
                 $categorie = $categorie_brute .','. $categorie_taille;
@@ -131,7 +137,7 @@ if ($police) {
             $type="Pierres Précieuses";
             $sommePoids_pp = $sommePoids_ct_pp * 0.2 + $sommePoids_g_pp + $sommePoids_kg_pp;
             $phrase_pp = poidsEnLettre($sommePoids_pp, $unite2, $type, $categorie_brute, $categorie_taille);
-            $afficheWord_pp = generateAfficheWord($nom_substance_pp,$couleur_substance_pp);
+            // $afficheWord_pp = generateAfficheWord($nom_substance_pp,$couleur_substance_pp);
             }
     //somme de poids par type de substance PF
     $queryPF = "SELECT dcc.*, cfac.poids_facture,csub.nom_couleur_substance,cate.nom_categorie, s.nom_substance, cfac.unite_poids_facture FROM contenu_facture cfac 
@@ -163,11 +169,11 @@ if ($police) {
                     }else{
                         $categorie_taille="Taillées";
                     }
-                $nom_substance_pf[] = $rowpf['nom_substance'];
+                $nom_substance[] = $rowpf['nom_substance'];
                 if(empty($rowpf['nom_couleur_substance'])){
-                        $couleur_substance_pf []='vide';
+                        $couleur_substance[]='vide';
                     }else{
-                        $couleur_substance_pf[] = $rowpf['nom_couleur_substance'];
+                        $couleur_substance[] = $rowpf['nom_couleur_substance'];
                     }
                 }
             if(!empty($categorie_brute)&&!empty($categorie_taille)) {
@@ -183,8 +189,15 @@ if ($police) {
             if($sommePoids_kg_pf != 0){
                 $phrase_pf2 = poidsEnLettre($sommePoids_kg_pf, $unite_kg2, $type, $categorie_brute, $categorie_taille);
             }
+            if(($sommePoids_kg_pf!=0)&&($sommePoids_pf!=0)){
+                $sommePoids_pf = $sommePoids_kg_pf + $sommePoids_pf / 1000;
+                $unite_pf ="KILOGRAMMES";$unite2='kologrammes';
+            }else if($sommePoids_kg_pf!=0){
+                $sommePoids_pf = $sommePoids_kg_pf;
+                $unite_pf ="KILOGRAMMES";$unite2='kologrammes';
+            }
             $phrase_pf = poidsEnLettre($sommePoids_pf, $unite2, $type, $categorie_brute, $categorie_taille);
-            $afficheWord_pf = generateAfficheWord($nom_substance_pf,$couleur_substance_pf);
+            // $afficheWord_pf = generateAfficheWord($nom_substance_pf,$couleur_substance_pf);
             }
     //somme de poids par type de substance PIM
     $querypim = "SELECT dcc.*,cfac.unite_poids_facture,csub.nom_couleur_substance,cate.nom_categorie, s.nom_substance, cfac.poids_facture FROM contenu_facture cfac 
@@ -214,13 +227,13 @@ if ($police) {
                      if($rowpim['nom_categorie']=="Brute"){
                         $categorie_brute="Brutes";
                     }else{
-                        $categorie_taille="Taillées";
+                        $categorie_taille="Travaillées";
                     }
-                    $nom_substance_pim[] = $rowpim['nom_substance'];
+                    $nom_substance[] = $rowpim['nom_substance'];
                     if(empty($rowpim['nom_couleur_substance'])){
-                        $couleur_substance_pim []='vide';
+                        $couleur_substance[]='vide';
                     }else{
-                        $couleur_substance_pim[] = $rowpim['nom_couleur_substance'];
+                        $couleur_substance[] = $rowpim['nom_couleur_substance'];
                     }
                 }
             if(!empty($categorie_brute)&&!empty($categorie_taille)) {
@@ -234,7 +247,7 @@ if ($police) {
             $type="Pierres Industrielles et Minerais";
             $sommePoids_pim = $sommePoids_ct_pim * 0.2 + $sommePoids_g_pim + $sommePoids_kg_pim;
             $phrase_pim = poidsEnLettre($sommePoids_pim, $unite2, $type, $categorie_brute, $categorie_taille);
-            $afficheWord_pim = generateAfficheWord($nom_substance_pim,$couleur_substance_pim);
+            // $afficheWord_pim = generateAfficheWord($nom_substance_pim,$couleur_substance_pim);
             }
         //somme de poids par type de substance MP
         $queryMP = "SELECT dcc.*,cfac.unite_poids_facture,csub.nom_couleur_substance,cate.nom_categorie, s.nom_substance, cfac.poids_facture FROM contenu_facture cfac 
@@ -266,11 +279,11 @@ if ($police) {
                     }else{
                         $categorie_taille="Taillées";
                     }
-                    $nom_substance_mp[] = $rowMP['nom_substance'];
+                    $nom_substance[] = $rowMP['nom_substance'];
                     if(empty($rowMP['nom_couleur_substance'])){
-                        $couleur_substance_mp []='vide';
+                        $couleur_substance []='vide';
                     }else{
-                        $couleur_substance_mp[] = $rowMP['nom_couleur_substance'];
+                        $couleur_substance[] = $rowMP['nom_couleur_substance'];
                     }
                 }
             if(!empty($categorie_brute)&&!empty($categorie_taille)) {
@@ -284,7 +297,7 @@ if ($police) {
             $type="Méteaux Précieux";
             $sommePoids_mp = $sommePoids_ct_mp * 0.2 + $sommePoids_g_mp + $sommePoids_kg_mp;
             $phrase_mp = poidsEnLettre($sommePoids_mp, $unite2, $type, $categorie_brute, $categorie_taille);
-            $afficheWord_mp = generateAfficheWord($nom_substance_mp,$couleur_substance_mp);
+            // $afficheWord_mp = generateAfficheWord($nom_substance_mp,$couleur_substance_mp);
         }
     $amort="SELECT sds.*, cfac.id_data_cc, cfac.poids_facture, cfac.unite_poids_facture, sub.*, ts.* FROM contenu_facture AS cfac 
         INNER JOIN substance_detaille_substance AS sds ON cfac.id_detaille_substance= sds.id_detaille_substance
@@ -293,8 +306,8 @@ if ($police) {
         $result= mysqli_query($conn, $amort);
         $poids_somme=0;
                 $categorie_pa = 'Travaillées';$unite_pa='KILOGRAMMES';
-                $nom_substance =array();
-                $couleur_substance =  array();
+                // $nom_substance =array();
+                // $couleur_substance =  array();
                 $nom_type="";$unite ="KILOGRAMMES"; $unite2 = "kgs";
                 if(mysqli_num_rows($result)> 0){
                     $pa="existe";
@@ -308,7 +321,7 @@ if ($police) {
                     }
                     $categorie_brute='';
                 $phrase_pa = poidsEnLettre($poids_somme, $unite2, $type, $categorie_brute, $categorie_pa);
-                $afficheWord_pa = generateAfficheWord($nom_substance_mp,$couleur_substance_mp);
+                // $afficheWord_pa = generateAfficheWord($nom_substance,$couleur_substance);
                 }
 
         $amorti="SELECT sds.*, cfac.id_data_cc, cfac.poids_facture, cfac.unite_poids_facture, sub.*, ts.* FROM contenu_facture AS cfac 
@@ -318,8 +331,6 @@ if ($police) {
         $result_amort= mysqli_query($conn, $amorti);
         $poids_somme=0;
                 $categorie_ft = 'Taillé';
-                $nom_substance =array();
-                $couleur_substance =  array();
                 $nom_type="";$unite ="KILOGRAMMES"; $unite2 = "kgs";$unite_ft='KILOGRAMMES';
                 if(mysqli_num_rows($result_amort)> 0){
                     $ft='existe';
@@ -333,8 +344,10 @@ if ($police) {
                     }
                 $categorie_brute='';
                 $phrase_pa = poidsEnLettre($poids_somme, $unite2, $type, $categorie_brute, $categorie_ft);
-                $afficheWord_pa = generateAfficheWord($nom_substance_mp,$couleur_substance_mp);
+                
                 }
+            //appelle pour le substance_detaille_substance
+            $afficheWord_generale = generateAfficheWord($nom_substance,$couleur_substance);
                 
 
     //recherche de nom et adresse de societe expediteur
@@ -348,6 +361,7 @@ if ($police) {
     $resultImportateur = mysqli_query($conn, $queryImportateur);
     $rowImportateur = mysqli_fetch_assoc($resultImportateur);
     $pays_destination= $rowImportateur['pays_destination'];
+    $pays_destination = htmlspecialchars($pays_destination, ENT_QUOTES, 'UTF-8');
     $visa= "";
    
     
@@ -370,13 +384,27 @@ if ($police) {
             }
 
             // Affichage des résultats
+            // foreach ($substances_couleurs as $substance => $couleurs) {
+            //     $couleurs_uniques = array_unique($couleurs);
+            //     if (empty($couleurs_uniques) || in_array('vide', $couleurs_uniques, true)) {
+            //         $afficheWord .= $substance. PHP_EOL;
+            //     } else {
+            //         $afficheWord .= $substance . '(' . implode(', ', $couleurs_uniques) . ')'. PHP_EOL;
+            //     }
+            // }
+             $liste_substances = array();
             foreach ($substances_couleurs as $substance => $couleurs) {
                 $couleurs_uniques = array_unique($couleurs);
                 if (empty($couleurs_uniques) || in_array('vide', $couleurs_uniques, true)) {
-                    $afficheWord .= $substance. PHP_EOL;
+                    $liste_substances[] = $substance;
                 } else {
-                    $afficheWord .= $substance . '(' . implode(', ', $couleurs_uniques) . ')'. PHP_EOL;
+                    $liste_substances[] = $substance . '(' . implode(', ', $couleurs_uniques) . ')';
                 }
+            }
+            if (count($liste_substances) > 1) {
+                $afficheWord = implode(', ', array_slice($liste_substances, 0, -1)) . ' et ' . end($liste_substances);
+            } else {
+                $afficheWord = $liste_substances[0];
             }
 
         return $afficheWord;
@@ -416,49 +444,47 @@ if ($police) {
     $template = new TemplateProcessor($templatePath);
     $phrase='';
 
-    function updateValues(&$contenu, &$affiche_word, &$totalePoids, &$phrase, $categorie, $afficheWord, $sommePoids, $unite, $phrasePart, $isFirst = false) {
+    function updateValues(&$contenu,  &$totalePoids, &$phrase, $categorie,  $sommePoids, $unite, $phrasePart, $isFirst = false) {
         if ($isFirst) {
             $contenu = $categorie;
-            $affiche_word = $afficheWord;
             $totalePoids = number_format($sommePoids, 2, '.', '') . $unite;
         } else {
             $contenu .= ' et ' . $categorie;
-            $affiche_word .= ' et ' . $afficheWord;
             $totalePoids .= ' et ' . number_format($sommePoids, 2, '.', '') . $unite;
         }
         $phrase .= $phrasePart;
     }
     $contenu = '';
-        $affiche_word = '';
+        $affiche_word = $afficheWord_generale.".";
         $totalePoids = '';
         $phrase = '';
         $first=true;
 
         if (!empty($pim)) {
-            updateValues($contenu, $affiche_word, $totalePoids, $phrase, 'Pierres Industrielles et Minerais(' . $categorie_pim . ')', $afficheWord_pim, $sommePoids_pim, $unite_pim, $phrase_pim, $first);
+            updateValues($contenu,  $totalePoids, $phrase, 'Pierres Industrielles et Minerais(' . $categorie_pim . ')',  $sommePoids_pim, $unite_pim, $phrase_pim, $first);
             $first=false;
         }
 
         if (!empty($pa)) {
-            updateValues($contenu, $affiche_word, $totalePoids, $phrase, 'Pierres Assorties(' . $categorie_pa . ')', $afficheWord_pa, $sommePoids_pa, $unite_pa, $phrase_pa, $first);
+            updateValues($contenu,  $totalePoids, $phrase, 'Pierres Assorties(' . $categorie_pa . ')',  $sommePoids_pa, $unite_pa, $phrase_pa, $first);
             $first=false;
         }
 
         if (!empty($ft)) {
-            updateValues($contenu, $affiche_word, $totalePoids, $phrase, 'Fossille(' . $categorie_ft . ')', $afficheWord_ft, $sommePoids_ft, $unite_ft, $phrase_ft, $first);
+            updateValues($contenu,  $totalePoids, $phrase, 'Fossille(' . $categorie_ft . ')',  $sommePoids_ft, $unite_ft, $phrase_ft, $first);
             $first=false;
         }
         if (!empty($pp)) {
-            updateValues($contenu, $affiche_word, $totalePoids, $phrase, 'Pierres Précieuses(' . $categorie_pp . ')', $afficheWord_pp, $sommePoids_pp, $unite_pp, $phrase_pp, $first);
+            updateValues($contenu,  $totalePoids, $phrase, 'Pierres Précieuses(' . $categorie_pp . ')', $sommePoids_pp, $unite_pp, $phrase_pp, $first);
             $first=false;
         } 
         if (!empty($pf)) {
-            updateValues($contenu, $affiche_word, $totalePoids, $phrase, 'Pierres Fines(' . $categorie_pf . ')', $afficheWord_pf, $sommePoids_pf, $unite_pf, $phrase_pf,$first);
+            updateValues($contenu,  $totalePoids, $phrase, 'Pierres Fines(' . $categorie_pf . ')',  $sommePoids_pf, $unite_pf, $phrase_pf,$first);
             $first=false;
         }
 
         if (!empty($mp)) {
-            updateValues($contenu, $affiche_word, $totalePoids, $phrase, 'Méteaux Précieux(' . $categorie_mp . ')', $afficheWord_mp, $sommePoids_mp, $unite_mp, $phrase_mp,$first);
+            updateValues($contenu,  $totalePoids, $phrase, 'Méteaux Précieux(' . $categorie_mp . ')',  $sommePoids_mp, $unite_mp, $phrase_mp,$first);
             $first=false;
         }
 
@@ -483,12 +509,17 @@ if ($police) {
                                 ----------------------                
                                         DIRECTION GENERALE DES MINES
                                                 ---------------------
-                                                    DIRECTION DES EXPORTATIONS ET VALEURS
+                                                    DIRECTION DES EXPORTATIONS ET DE LA VALEUR
                                                         --------------------- 
-                                                            GUICHET UNIQUE
+                                                            GUICHET UNIQUE D'EXPORTATION
                                                                 ---------------------
 ";
     //societe
+    $date_format_facture = date('d-m-Y', strtotime($date_facture));
+    $date_format_declaration = date('d-m-Y', strtotime($date_declaration));
+    $date_format_lp3 = date('d-m-Y', strtotime($date_lp3));
+    $dateDom = date('d-m-Y', strtotime($date_dom));
+
     $templateScan->setValue('entete', $entete);
     $templateScan->setValue('num_pv', $num_pv);
     $templateScan->setValue('nom_societe', $nom_societe_expediteur);
@@ -499,12 +530,13 @@ if ($police) {
     $templateScan->setValue('date', $dateEnTexte);
     $templateScan->setValue('poidsEnLettre', $phrase);
     $templateScan->setValue('num_facture', $num_facture);
-    $templateScan->setValue('date_facture', $date);
+    $templateScan->setValue('date_facture', $date_format_facture);
     $templateScan->setValue('num_fiche_declaration', $declaration);
-    $templateScan->setValue('date_fiche_declaration', $date_declaration);
+    $templateScan->setValue('date_fiche_declaration', $date_format_declaration);
     $templateScan->setValue('num_domiciliation', $numDom);
+    $templateScan->setValue('date_dom', $dateDom);
     $templateScan->setValue('num_lp3e', $num_lp3);
-    $templateScan->setValue('date_lp3e', $date_lp3);
+    $templateScan->setValue('date_lp3e', $date_format_lp3);
     $templateScan->setValue('nombre_colis', $nombre);
     $templateScan->setValue('type_colis', $type_colis);
     $templateScan->setValue('lieu_scellage', $lieu_sce);
@@ -545,6 +577,7 @@ if ($police) {
 
         //------------------------------------------------------------------------------------------
         
+
          //societe
         $template->setValue('entete', $entete);
         $template->setValue('num_pv', $num_pv);
@@ -556,12 +589,13 @@ if ($police) {
         $template->setValue('date', $dateEnTexte);
         $template->setValue('poidsEnLettre', $phrase);
         $template->setValue('num_facture', $num_facture);
-        $template->setValue('date_facture', $date);
+        $template->setValue('date_facture', $date_format_facture);
         $template->setValue('num_fiche_declaration', $declaration);
-        $template->setValue('date_fiche_declaration', $date_declaration);
+        $template->setValue('date_fiche_declaration', $date_format_declaration);
         $template->setValue('num_domiciliation', $numDom);
+        $template->setValue('date_dom', $dateDom);
         $template->setValue('num_lp3e', $num_lp3);
-        $template->setValue('date_lp3e', $date_lp3);
+        $template->setValue('date_lp3e', $date_format_lp3);
         $template->setValue('nombre_colis', $nombre);
         $template->setValue('type_colis', $type_colis);
         $template->setValue('lieu_scellage', $lieu_sce);

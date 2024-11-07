@@ -53,15 +53,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             header("Location: ../index.php?success=true");
         } else {
             if ($code != $code_renew) {
-                $activite_user_2 = 'Le code de reinitialisation ne correspond pas lors du reinitialisation du mots de passe de ' . $destinataire; 
-                $HInsertQuery_2 = "INSERT INTO historique_users (activite_user, ip_user) VALUES ('$activite_user_2', '$ip_address')";
-                $conn->query($HInsertQuery_2);
+                // $activite_user_2 = 'Le code de reinitialisation ne correspond pas lors du reinitialisation du mots de passe de ' . $destinataire; 
+                // $HInsertQuery_2 = "INSERT INTO historique_users (activite_user, ip_user) VALUES ('$activite_user_2', '$ip_address')";
+                // $conn->query($HInsertQuery_2);
                 echo '<div class="text-center text-danger">Verifier votre code de réinitialisation.</div>';
             }
             if ($mail_user != $destinataire) {
-                $activite_user_3 = 'L adresse mail ne correspond pas lors du reinitialisation du mots de passe avec succes de ' . $destinataire; 
-                $HInsertQuery_3 = "INSERT INTO historique_users (activite_user, ip_user) VALUES ('$activite_user_3', '$ip_address')";
-                $conn->query($HInsertQuery_3);
+                // $activite_user_3 = 'L adresse mail ne correspond pas lors du reinitialisation du mots de passe avec succes de ' . $destinataire; 
+                // $HInsertQuery_3 = "INSERT INTO historique_users (activite_user, ip_user) VALUES ('$activite_user_3', '$ip_address')";
+                // $conn->query($HInsertQuery_3);
                 echo '<div class="text-center text-danger">Verifier votre adresse email.</div>';
             }
             // echo "code renew" .$code_renew;

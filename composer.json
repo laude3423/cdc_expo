@@ -4,6 +4,7 @@
         "tecnickcom/tcpdf": "^6.7",
         "setasign/fpdi": "^2.6",
         "phpoffice/phpspreadsheet": "^1.29",
-        "phpmailer/phpmailer": "^6.9"
+        "phpmailer/phpmailer": "^6.9",
+        "twilio/sdk": "^8.3"
     }
 }

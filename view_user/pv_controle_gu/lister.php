@@ -45,20 +45,18 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
     }
     //modification
     
-    if(isset($_SESSION['toast_message'])) {
+ if(isset($_SESSION['toast_message'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
-                    <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message'] . '
-                </div>
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <img src="../../view/images/succes.png" class="rounded me-2" alt="" style="width:20px;height:20px">
+                <strong class="me-auto">Notifications</strong>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -68,18 +66,16 @@ $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
 }
 if(isset($_SESSION['toast_message2'])) {
     echo '
-    <div style="left=50px;top=50px">
-        <div class="toast-container"">
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
+    <div class="toast-container-centered">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                 <img src="../../view/images/warning.jpeg" class="rounded me-2" alt="" style="width:20px;height:20px">
                     <strong class="me-auto">Notifications</strong>
-                    <small class="text-muted">Maintenant</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    ' . $_SESSION['toast_message2'] . '
-                </div>
+                <small class="text-muted">Maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ' . $_SESSION['toast_message'] . '
             </div>
         </div>
     </div>';
@@ -211,12 +207,19 @@ if (!empty($edit_societe_id)) {
                     <?php  if( $row['validation_controle']=='Validé'){
                     ?>
                     <td>✅</td>
-                    <?php  }else {?>
+                    <?php  }
+                    else if($row["validation_controle"]=='À Refaire'){
+                            echo'<td>❌</td>';
+                        } else{?>
                     <td>⚠️</td>
                     <?php }?>
                     <td><?php echo $row['num_pv_controle'] ?></td>
-                    <td class="masque2"><?php echo $row['date_creation_pv_controle'] ?></td>
+                    <td class="masque2"><?php echo date('d/m/Y', strtotime($row['date_creation_pv_controle'])); ?></td>
+                    <?php if(empty($row['num_facture'])){?>
+                    <td class="masque2">Non commerçant</td>
+                    <?php }else{ ?>
                     <td class="masque2"><?php echo $row['num_facture'] ?></td>
+                    <?php }?>
                     <td class="masque1"><?php echo $row['nom_societe_expediteur'] ?></td>
                     <td class="masque1"><?php echo $row['pays_destination'] ?></td>
                     <td><?php echo $row['validation_controle'] ?></td>
@@ -233,7 +236,7 @@ if (!empty($edit_societe_id)) {
                             } else {
                                     ?>
                         <a href="#" class="link-dark" data-toggle="tooltip"
-                            title="Modification non autorisée : PP déjà validé">
+                            title="Modification non autorisée : PV déjà validé">
                             <i class="fa-solid fa-pen-to-square me-3"></i>
                         </a>
                         <?php
@@ -331,7 +334,7 @@ if (!empty($edit_societe_id)) {
 
         $(".btn_edit_pv_controle").click(function() {
             var id_data_cc = $(this).data('id');
-            showEditForm('edit_pv_controle_form', './edit_pv.php?id=' + id_data_cc,
+            showEditForm('edit_pv_controle_form', '../pv_controle/edit_pv.php?id=' + id_data_cc,
                 'staticBackdrop2');
 
         });

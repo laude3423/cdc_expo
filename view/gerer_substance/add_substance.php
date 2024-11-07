@@ -3,7 +3,8 @@ include "../db_connect.php";
 ?>
 <?php 
 if (isset($_POST['submit'])) {
-    $substance = $_POST['substance'];
+     //$id_substance = intval($_POST['substance']);
+    $id_substance = isset($_POST["substance"]) ? $_POST["substance"] : array();
     $forme = isset($_POST["forme"]) ? $_POST["forme"] : array(); 
     $durete = isset($_POST["durete"]) ? $_POST["durete"] : array(); 
     $dimension = isset($_POST["dimension"]) ? $_POST["dimension"] : array();
@@ -18,12 +19,14 @@ if (isset($_POST['submit'])) {
     $id_detail = $_POST['id'];
     $id_type_substance = $_POST['type_substance'];
 
-    // Préparer la requête SQL
-    $subInsertQuery = "INSERT INTO `substance`( `nom_substance`, `id_type_substance`) VALUES ('$substance','$id_type_substance')";
-    $conn->query($subInsertQuery);
-    $id_substance = $conn->insert_id; 
+    //Préparer la requête SQL
+    // $subInsertQuery = "INSERT INTO `substance`( `nom_substance`, `id_type_substance`) VALUES ('$substance','$id_type_substance')";
+    // $conn->query($subInsertQuery);
+    // $id_substance = $conn->insert_id; 
 
     // Parcourir les tableaux pour insérer les données non vides
+// if(count($id_substance) > 0){
+//     for ($q = 0; $q < count($id_substance); $q++) {
     if(count($categorie) > 0){
         for ($i = 0; $i < count($categorie); $i++) {
             if(count($granulo) > 0){
@@ -1041,7 +1044,7 @@ if (isset($_POST['submit'])) {
                                                             }else{//tsis granulo couleur forme degre dimension
                                                                  $query = "INSERT INTO `substance_detaille_substance` (`id_substance`, `id_transparence`,  `id_durete`, `id_categorie`,  `unite_prix_substance`) VALUES (?, ?, ?, ?, ?)";
                                                                     $stmt = $conn->prepare($query);
-                                                                    $stmt->bind_param("iiiis", $id_substance,  $transparence[$l], $durete[$o], $categorie[$i], $unite);
+                                                                    $stmt->bind_param("iiiis", $id_substance[$q],  $transparence[$l], $durete[$o], $categorie[$i], $unite);
                                                                     $stmt->execute();
                                                             }
                                                             
@@ -1214,7 +1217,10 @@ if (isset($_POST['submit'])) {
                   
             }
         }
-     }//else{//categorie
+     }
+//     }
+// }
+     //else{//categorie
     //     if(count($granulo) > 0){
     //         for ($j = 0; $j < count($granulo); $j++) {
     //                 if(count($couleur) > 0){
@@ -2174,8 +2180,6 @@ if (isset($_POST['submit'])) {
     $conn->close();
 }
 ?>
-
-?>
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
@@ -2226,7 +2230,7 @@ $(document).ready(function() {
                             <label for="type_substance" name="type_substance" class="col-form-label">Type de la
                                 substance: <span style="color:rgb(247, 62, 6)">*</span></label>
                             <select id="type_substance" name="type_substance" placeholder="Choisir ..."
-                                autocomplete="off" required>
+                                autocomplete="off">
                                 <option value="">Choisir ...</option>
                                 <?php    
                                 $query = "SELECT * FROM type_substance";
@@ -2241,18 +2245,9 @@ $(document).ready(function() {
                             </select>
                         </div>
                         <div class="col">
-                            <label for="substance" name="substance" class="col-form-label">Nom de la
-                                substance:</label>
-                            <input type="text" class="form-control" name="substance" id="substance"
-                                placeholder="Nom de la substance" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
                             <label for="couleur" name="couleur" class="col-form-label">Couleur de la
                                 substance:</label>
-                            <select id="couleur" name="couleur[]" placeholder="Choisir ..." autocomplete="off" multiple
-                                required>
+                            <select id="couleur" name="couleur[]" placeholder="Choisir ..." autocomplete="off" multiple>
                                 <option value="">Choisir ...</option>
                                 <?php    
                                 $query = "SELECT * FROM couleur_substance";
@@ -2266,10 +2261,30 @@ $(document).ready(function() {
                                 ?>
                             </select>
                         </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="substance" name="substance" class="col-form-label">Nom de la
+                                substance:</label>
+                            <!-- <input type="text" class="form-control" name="substance" id="substance"> -->
+                            <select id="substance" name="substance" placeholder="Choisir ..." autocomplete="off"
+                                multiple>
+                                <option value="">Choisir ...</option>
+                                <?php    
+                                $queryAZ = "SELECT * FROM substance";
+                                $stmtAZ = $conn->prepare($queryAZ);
+                                $stmtAZ->execute();
+                                $resuAZ = $stmtAZ->get_result();
+                                while ($rowSub = $resuAZ->fetch_assoc()) {
+                                    echo "<option value='" . $rowSub['id_substance'] . "'>" . $rowSub['nom_substance'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
                         <div class="col">
                             <label for="categorie" name="categorie" class="col-form-label">Catégorie:</label>
                             <select id="categorie" name="categorie[]" placeholder="Choisir ..." autocomplete="off"
-                                multiple>
+                                required multiple>
                                 <option value="">Choisir</option>
                                 <?php    
                                 $query = "SELECT id_categorie, nom_categorie FROM categorie";
@@ -2430,6 +2445,7 @@ function selectTom() {
         }
     };
     new TomSelect("#type_substance", selectOptions);
+    new TomSelect("#substance", selectOptions);
     new TomSelect("#granulo", selectOptions);
     new TomSelect("#transparence", selectOptions);
     new TomSelect("#degre", selectOptions);
