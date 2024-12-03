@@ -11,14 +11,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mode_emballage = htmlspecialchars($_POST["mode_emballage"]);
         $lieu_controle = htmlspecialchars($_POST["lieu_controle"]);
         $lieu_embarquement = htmlspecialchars($_POST["lieu_emb"]);
-        $num_domiciliation = htmlspecialchars($_POST["numDom"]);
+        // $num_domiciliation = htmlspecialchars($_POST["numDom"]);
         $num_fiche_declaration = htmlspecialchars($_POST["declaration"]);
         $date_declaration =htmlspecialchars($_POST["date_declaration"]);
         $num_lp3e = htmlspecialchars($_POST["num_lp3"]);
         $date_lp3e = $_POST["date_lp3"];
         // $chef = $_POST["chef"];
         // $qualite = $_POST["qualite"];
-        $dateDom=$_POST['date_dom'];
+        // $dateDom=$_POST['date_dom'];
 
         $id_data = htmlspecialchars($_POST['id']);
         $dateFormat = "Y-m-d";

@@ -1,6 +1,7 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
+require_once('../../scripts/session_actif.php');
 ?>
 <?php
 $edit_societe_id = isset($_GET['edit_id']) ? $_GET['edit_id'] : null;
@@ -322,6 +323,12 @@ if (!empty($edit_societe_id)) {
         font-size: 20px;
         /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
     }
+
+    @media screen and (max-width: 600px) {
+        .masque2 {
+            display: none;
+        }
+    }
     </style>
     <title>Ministere des mines</title>
     <?php 
@@ -357,9 +364,9 @@ if (!empty($edit_societe_id)) {
                 <tr>
                     <th scope="col"></th>
                     <th scope="col">Nom</th>
-                    <th scope="col">Adresse</th>
+                    <th class="masque2" scope="col">Adresse</th>
                     <th scope="col">NIF</th>
-                    <th scope="col">Contact</th>
+                    <th class="masque2" scope="col">Contact</th>
                     <th scope="col">Status</th>
                     <th scope="col">Actions</th>
                 </tr>
@@ -380,9 +387,9 @@ if (!empty($edit_societe_id)) {
                     <td>⚠️</td>
                     <?php  }?>
                     <td><?php echo $row['nom_societe_expediteur'] ?></td>
-                    <td><?php echo $row['adresse_societe_expediteur'] ?></td>
+                    <td class="masque2"><?php echo $row['adresse_societe_expediteur'] ?></td>
                     <td><?php echo $row['nif_societe_expediteur'] ?></td>
-                    <td><?php echo $row['contact_societe_expediteur'] ?></td>
+                    <td class="masque2"><?php echo $row['contact_societe_expediteur'] ?></td>
                     <td><?php echo $row['validation'] ?></td>
                     <td>
                         <a class="link-dark"

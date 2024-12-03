@@ -81,14 +81,14 @@ function nombreEnLettres($chiffre){
     $templateScan = new TemplateProcessor($templatePathScan);
     $template = new TemplateProcessor($templatePath);
     
-    $entete="
+$entete="
             MINISTERE DES MINES                
             -----------------------                
                 SECRETARIAT GENERAL DES MINES                 
                                 ----------------------                
                                         DIRECTION GENERALE DES MINES
                                                 ---------------------
-                                                    DIRECTION DES EXPORTATIONS ET VALEURS
+                                                    DIRECTION DES EXPORTATIONS ET DE LA VALEUR
                                                         --------------------- 
                                                             GUICHET UNIQUE D'EXPORTATION
                                                                 ---------------------

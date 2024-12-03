@@ -1,7 +1,7 @@
 <?php
 $dataRis = array_fill(0, 12, 0); // Initialiser un tableau avec 12 mois, tous à 0
 $dataRed = array_fill(0, 12, 0); // Même chose pour les redevances
-$taux_conversion = 4590;
+
 
 // Récupérer les sommes par mois
 $sql = "SELECT MONTH(date_cc) AS mois, SUM(ristourne) AS sommeRistourne, SUM(redevance) AS sommeRedevance 

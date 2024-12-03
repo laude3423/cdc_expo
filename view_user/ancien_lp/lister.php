@@ -1,6 +1,10 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
+require_once('../../scripts/session_actif.php');
+$currentYear = date('Y');
+$years = range($currentYear - 6, $currentYear);
+$annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
 ?>
 <?php
 if (isset($_POST['submit'])) {
@@ -217,14 +221,28 @@ if(isset($_SESSION['toast_message2'])) {
             <div class="col">
                 <input type="text" id="search" class="form-control" placeholder="Recherche...">
             </div>
+            <div class="col-2">
+                <form method="GET" action="">
+                    <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
+                        <?php foreach ($years as $year): ?>
+                        <option value="<?php echo $year; ?>" <?php echo ($year == $annee) ? 'selected' : ''; ?>>
+                            <?php echo $year; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
+            <?php if($groupeID != 2){ ?>
             <div class="col text-end">
                 <a class="btn btn-dark btn-sm rounded-pill px-3 " href="#" onclick="openModal()"><i
                         class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
             </div>
+            <?php } ?>
+
         </div>
         <hr>
         <?php 
-                $sql="SELECT * FROM `ancien_lp` WHERE validation_lp IS NOT NULL";
+                $sql="SELECT * FROM `ancien_lp` WHERE YEAR(date_insertion) = $annee AND validation_lp IS NOT NULL";
                 $result= mysqli_query($conn, $sql);
                  if ($result->num_rows > 0) { ?>
         <div id="loadingSpinner" class="text-center">
@@ -236,7 +254,7 @@ if(isset($_SESSION['toast_message2'])) {
             <thead class="table-dark">
                 <tr>
                     <th scope="col"></th>
-                    <th scope="col">Numéro</th>
+                    <th scope="col">Numéro LP</th>
                     <th scope="col">Date</th>
                     <th class="masque2" scope="col">N° folio</th>
                     <th class="masque2" scope="col">Titulaire</th>
@@ -260,6 +278,7 @@ if(isset($_SESSION['toast_message2'])) {
                     <td class="masque1"><?php echo $row['validation_lp'] ?></td>
                     <td>
                         <a class="link-dark" href="./detail.php?id=<?php echo $row['id_ancien_lp']; ?>">détails</a>
+                        <?php if($groupeID != 2) { ?>
                         <?php if($row['validation_lp']=='Validé') { ?>
                         <a href="#" class="link-dark" data-toggle="tooltip" title="LP déjà validée">
                             <i class="fa-solid fa-pen-to-square me-3"></i>
@@ -267,7 +286,6 @@ if(isset($_SESSION['toast_message2'])) {
                         <a href="#" data-toggle="tooltip" title="LP déjà validée" class="link-dark">
                             <i class="fa-solid fa-trash"></i>
                         </a>
-
                         <?php } else {?>
                         <a href="#" class="link-dark btn_edit_ancien"
                             data-id="<?= htmlspecialchars($row["id_ancien_lp"])?>">
@@ -281,6 +299,7 @@ if(isset($_SESSION['toast_message2'])) {
                 </tr>
                 <?php   
                     }
+                }
                  }else{
                     echo '<p class="alert alert-info">Aucun résultat trouvé.</p>';
                  }
@@ -326,6 +345,9 @@ if(isset($_SESSION['toast_message2'])) {
                                 <label for="folio" class="col-form-label">Numéro du folio:</label>
                                 <input type="text" class="form-control" name="folio" id="folio"
                                     placeholder="Numéro du folio" required style="font-size:90%">
+                                <div id="error_message2" style="color: red; display: none;">Le numéro du folio ne doit
+                                    pas
+                                    commencer par "N°" ou "n°".</div>
                             </div>
                         </div>
                         <div class="row">
@@ -333,6 +355,8 @@ if(isset($_SESSION['toast_message2'])) {
                                 <label for="num_lp" class="col-form-label">Numéro du LP:</label>
                                 <input type="text" class="form-control" name="num_lp" id="num_lp"
                                     placeholder="Numéro du Laisser-passer" required style="font-size:90%">
+                                <div id="error_message" style="color: red; display: none;">Le numéro LP ne doit pas
+                                    commencer par "N°" ou "n°".</div>
                             </div>
                             <div class="col">
                                 <label for="nom_titulaire" class="col-form-label">Titulaire:</label>
@@ -427,9 +451,35 @@ if(isset($_SESSION['toast_message2'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
     </script>
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+    document.getElementById("num_lp").addEventListener("input", function() {
+        const factureInput = document.getElementById("num_lp");
+        const errorMessage = document.getElementById("error_message");
+        const value = factureInput.value.trim();
+
+        if (/^(N°|n°)/.test(value)) {
+            errorMessage.style.display = "block";
+            factureInput.setCustomValidity("Le numéro LP ne doit pas commencer par 'N°' ou 'n°'.");
+        } else {
+            errorMessage.style.display = "none";
+            factureInput.setCustomValidity("");
+        }
+    });
+    document.getElementById("folio").addEventListener("input", function() {
+        const factureInput = document.getElementById("folio");
+        const errorMessage = document.getElementById("error_message2");
+        const value = factureInput.value.trim();
+
+        if (/^(N°|n°)/.test(value)) {
+            errorMessage.style.display = "block";
+            factureInput.setCustomValidity("Le numéro du folio ne doit pas commencer par 'N°' ou 'n°'.");
+        } else {
+            errorMessage.style.display = "none";
+            factureInput.setCustomValidity("");
+        }
+    });
+
     function showFields() {
         var typeLP = document.getElementById('type_lp').value;
 
@@ -564,6 +614,40 @@ if(isset($_SESSION['toast_message2'])) {
             keyboard: false
         });
         myModal.hide();
+    }
+
+    function confirmerSuppression(id) {
+        // Utilisation de la fonction confirm pour afficher une boîte de dialogue
+        var confirmation = confirm("Êtes-vous sûr de vouloir supprimer cet élément ?");
+
+        // Si l'utilisateur clique sur "OK", la suppression est effectuée
+        if (confirmation) {
+            $.ajax({
+                url: 'delete.php',
+                method: 'POST', // Utilisez la méthode POST pour la suppression
+                data: {
+                    id: id
+                },
+                dataType: 'json',
+                success: function(response) {
+                    // Traitez la réponse du serveur ici
+                    if (response.success) {
+                        // La suppression a réussi
+                        alert('Suppression réussie.');
+                        // Vous pouvez également effectuer d'autres actions nécessaires après la suppression
+                        location.reload();
+                    } else {
+                        // La suppression a échoué
+                        alert('Erreur lors de la suppression : ' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erreur lors de la suppression : ' + error);
+                }
+            });
+        } else {
+            // Sinon, rien ne se passe
+        }
     }
 
     function validatePDFInput(event) {

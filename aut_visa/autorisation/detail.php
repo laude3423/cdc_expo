@@ -151,7 +151,7 @@ if(isset($_SESSION['toast_message'])) {
         <p class="text-center mb-0">Détails d'une autorisation</p>
         <hr>
         <?php 
-        if((($code_fonction=="A")||($code_fonction=="B"))&&($row['validation_autorisation']!='Validé')){ ?>
+        if(($code_fonction=="A")||($code_fonction=="B")){ ?>
 
         <form action="" method="post">
             <div class="row">
@@ -245,7 +245,7 @@ if(isset($_SESSION['toast_message'])) {
             <div class="alert alert-light" role="alert">
                 <?php
                         // Emplacement du fichier PDF
-                        if($row['validation_autorisation']=='Validé'){
+                        if($row['validation_autorisation']!='Validé'){
                             $pdfFilePath = $row['pj_autorisation'];
                         }else{
                             $pdfFilePath = $row['lien_autorisation'];

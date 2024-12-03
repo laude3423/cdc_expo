@@ -379,8 +379,8 @@ td {
                     <li><a href="https://cdc.minesmada.org/view_user/attestation_valeur/liste_attestation.php"
                             class="nav-link px-2 text-white">Attestation</a>
                     </li>
-                    <li class="nav-item"><a href="https://cdc.minesmada.org/view_user/ancien_lp/lister.php"
-                            class="nav-link">Ancien_lp<?php afficherBadgeNonValid($conn, 'ancien_lp', 'validation_lp', $code_fonction); ?></a>
+                    <li><a href="https://cdc.minesmada.org/view_user/ancien_lp/lister.php"
+                            class="nav-link px-2 text-white">Ancien_lp<?php afficherBadgeNonValid($conn, 'ancien_lp', 'validation_lp', $code_fonction); ?></a>
                     <li><a href="https://cdc.minesmada.org/view_user/pv_controle/lister.php"
                             class="nav-link px-2 text-white">Contrôle<?php afficherBadgeNonValid2($conn, 'data_cc', 'validation_controle', $id_direction, $code_fonction);?></a>
                     </li>
@@ -406,8 +406,8 @@ td {
                     <li><a href="https://cdc.minesmada.org/view_user/attestation_valeur/liste_attestation.php"
                             class="nav-link px-2 text-white">Attestation</a>
                     </li>
-                    <li class="nav-item"><a href="https://cdc.minesmada.org/view_user/ancien_lp/lister.php"
-                            class="nav-link">Ancien_lp<?php afficherBadgeNonValid($conn, 'ancien_lp', 'validation_lp', $code_fonction); ?></a>
+                    <li><a href="https://cdc.minesmada.org/view_user/ancien_lp/lister.php"
+                            class="nav-link px-2 text-white">Ancien_lp<?php afficherBadgeNonValid($conn, 'ancien_lp', 'validation_lp', $code_fonction); ?></a>
                     <li><a href="https://cdc.minesmada.org/view_user/pv_controle_gu/lister.php"
                             class="nav-link px-2 text-white">Contrôle<?php afficherBadgeNonValid2($conn, 'data_cc', 'validation_controle', $id_direction, $code_fonction);?></a>
                     </li>
@@ -440,8 +440,8 @@ td {
                             echo '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">' . $a_corrige . '</span>';
                         }
                 ?></a></li>
-                    <li class="nav-item"><a href="https://cdc.minesmada.org/view_user/ancien_lp/lister.php"
-                            class="nav-link">Ancien_lp<?php afficherBadgeNonValid($conn, 'ancien_lp', 'validation_lp', $code_fonction); ?></a>
+                    <li><a href="https://cdc.minesmada.org/view_user/ancien_lp/lister.php"
+                            class="nav-link px-2 text-white">Ancien_lp<?php afficherBadgeNonValid($conn, 'ancien_lp', 'validation_lp', $code_fonction); ?></a>
                     <li><a href="https://cdc.minesmada.org/view_user/pv_controle/lister.php"
                             class="nav-link px-2 text-white">Contrôle<?php afficherBadgeNonValid($conn, 'data_cc', 'validation_controle', $code_fonction); ?></a>
                     </li>
@@ -557,6 +557,10 @@ td {
                             href="https://cdc.minesmada.org/view_user/ancien_lp/lister.php">Ancien_lp<?php afficherBadgeNonValid($conn, 'ancien_lp', 'validation_lp', $code_fonction); ?></a>
                     </li>
                     <li><a class="dropdown-item" href="https://cdc.minesmada.org/view/gerer_agent/lister.php">Agent</a>
+                    </li>
+                    <li><a class="dropdown-item" href="https://cdc.minesmada.org/histogramme/liste_substance.php">Liste
+                            des
+                            substances</a>
                     </li>
                 </ul>
             </li>

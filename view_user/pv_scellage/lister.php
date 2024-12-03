@@ -34,8 +34,6 @@ $annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
 
         $monde_emballage = htmlspecialchars($rowA["mode_emballage"]);
         $lieu_emb = htmlspecialchars($rowA["lieu_embarquement_pv"]);
-        $numDom = htmlspecialchars($rowA["num_domiciliation"]);
-        $dateDom = $rowA["date_dom"];
         $declaration = htmlspecialchars($rowA["num_fiche_declaration_pv"]);
         $date_declaration = $rowA["date_fiche_declaration_pv"];
         $num_lp3 = htmlspecialchars($rowA["num_lp3e_pv"]);
@@ -208,7 +206,7 @@ if (!empty($edit_societe_id)) {
             INNER JOIN societe_expediteur societe_exp ON datacc.id_societe_expediteur= societe_exp.id_societe_expediteur
             LEFT JOIN users us ON datacc.id_user = us.id_user
             LEFT JOIN direction di ON us.id_direction=di.id_direction
-            WHERE YEAR(dcc.date_modification_pv_scellage) = $annee AND datacc.num_pv_scellage IS NOT NULL AND di.id_direction=$id_direction
+            WHERE YEAR(datacc.date_modification_pv_scellage) = $annee AND datacc.num_pv_scellage IS NOT NULL AND di.id_direction=$id_direction
             ORDER BY datacc.date_modification_pv_scellage DESC";
         }
         

@@ -72,6 +72,9 @@
                                         class="required">*</span></label>
                                 <input type="number" class="form-control" id="num_attestation" name="num_attestation"
                                     required>
+                                <div id="error_message" style="color: red; display: none;">Le numéro d'attestation ne
+                                    doit pas
+                                    commencer par "N°" ou "n°".</div>
                             </div>
                         </div>
                         <div class="col">
@@ -213,5 +216,19 @@ $(document).ready(function() {
             direction: "asc"
         }
     });
+});
+
+document.getElementById("num_attestation").addEventListener("input", function() {
+    const factureInput = document.getElementById("num_attestation");
+    const errorMessage = document.getElementById("error_message");
+    const value = factureInput.value.trim();
+
+    if (/^(N°|n°)/.test(value)) {
+        errorMessage.style.display = "block";
+        factureInput.setCustomValidity("Le numéro d'attestation ne doit pas commencer par 'N°' ou 'n°'.");
+    } else {
+        errorMessage.style.display = "none";
+        factureInput.setCustomValidity("");
+    }
 });
 </script>

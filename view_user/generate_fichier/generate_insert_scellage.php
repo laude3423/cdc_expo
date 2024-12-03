@@ -518,7 +518,7 @@ if ($fraude) {
     $date_format_facture = date('d-m-Y', strtotime($date_facture));
     $date_format_declaration = date('d-m-Y', strtotime($date_declaration));
     $date_format_lp3 = date('d-m-Y', strtotime($date_lp3));
-    $dateDom = date('d-m-Y', strtotime($date_dom));
+    // $dateDom = date('d-m-Y', strtotime($date_dom));
 
     $templateScan->setValue('entete', $entete);
     $templateScan->setValue('num_pv', $num_pv);
@@ -533,8 +533,8 @@ if ($fraude) {
     $templateScan->setValue('date_facture', $date_format_facture);
     $templateScan->setValue('num_fiche_declaration', $declaration);
     $templateScan->setValue('date_fiche_declaration', $date_format_declaration);
-    $templateScan->setValue('num_domiciliation', $numDom);
-    $templateScan->setValue('date_dom', $dateDom);
+    // $templateScan->setValue('num_domiciliation', $numDom);
+    // $templateScan->setValue('date_dom', $dateDom);
     $templateScan->setValue('num_lp3e', $num_lp3);
     $templateScan->setValue('date_lp3e', $date_format_lp3);
     $templateScan->setValue('nombre_colis', $nombre);
@@ -592,8 +592,8 @@ if ($fraude) {
         $template->setValue('date_facture', $date_format_facture);
         $template->setValue('num_fiche_declaration', $declaration);
         $template->setValue('date_fiche_declaration', $date_format_declaration);
-        $template->setValue('num_domiciliation', $numDom);
-        $template->setValue('date_dom', $dateDom);
+        // $template->setValue('num_domiciliation', $numDom);
+        // $template->setValue('date_dom', $dateDom);
         $template->setValue('num_lp3e', $num_lp3);
         $template->setValue('date_lp3e', $date_format_lp3);
         $template->setValue('nombre_colis', $nombre);
@@ -617,56 +617,7 @@ if ($fraude) {
         QRcode::png($lien, $tempDir.''.$qrcode_name.'.png', QR_ECLEVEL_L, 5);
          // Chemin vers le fichier QR code et le logo
         $qrCodePath = $tempDir . $qrcode_name . '.png';
-        $logoPath = '../../logo/logoMine.png';
-
-        // Dimensions souhaitées pour le logo
-        $logoWidth = 40; // Largeur souhaitée du logo
-        $logoHeight = 40; // Hauteur souhaitée du logo
-
-        // Créer une image à partir du QR code (qui est maintenant en PNG)
-        $qrCode = imagecreatefrompng($qrCodePath);
-
-        if ($qrCode === false) {
-            die('Erreur : Impossible de créer une image à partir du QR code.');
-        }
-
-        // Créer une image à partir du logo (qui est en PNG)
-        $logo = imagecreatefrompng($logoPath);
-
-        if ($logo === false) {
-            die('Erreur : Impossible de créer une image à partir du logo.');
-        }
-
-        // Dimensions actuelles du logo
-        $logoActualWidth = imagesx($logo);
-        $logoActualHeight = imagesy($logo);
-
-        // Redimensionner le logo aux dimensions souhaitées
-        $logoResized = imagecreatetruecolor($logoWidth, $logoHeight);
-        imagecopyresampled($logoResized, $logo, 0, 0, 0, 0, $logoWidth, $logoHeight, $logoActualWidth, $logoActualHeight);
-
-        // Dimensions du QR code
-        $qrWidth = imagesx($qrCode);
-        $qrHeight = imagesy($qrCode);
-
-        // Positionnement du logo au centre du QR code
-        $logoX = ($qrWidth / 2) - ($logoWidth / 2);
-        $logoY = ($qrHeight / 2) - ($logoHeight / 2);
-
-        // Fusionner le logo redimensionné sur le QR code
-        imagecopy($qrCode, $logoResized, $logoX, $logoY, 0, 0, $logoWidth, $logoHeight);
-
-        // Chemin pour l'image fusionnée
-        $mergedImagePath = $tempDir . $qrcode_name . '_with_logo.png';
-
-        // Sauvegarder l'image fusionnée
-        imagepng($qrCode, $mergedImagePath);
-
-        // Libérer la mémoire
-        imagedestroy($qrCode);
-        imagedestroy($logo);
-        imagedestroy($logoResized);
-
+        
         // // Mettre le QR Code dans le fichier Word
         $templateProcessor = new TemplateProcessor($outputFilePathQR);
 
@@ -675,9 +626,9 @@ if ($fraude) {
         $templateProcessor->setImageValue(
             'qrcode',
             [
-                'path' => $mergedImagePath,
-                'width' => 150, //=4cm
-                'height' => 150,
+                'path' => $qrCodePath,
+                'width' => 140, //=4cm
+                'height' => 140,
                 
             ]
         );

@@ -3,9 +3,8 @@ require_once('../../scripts/db_connect.php');
 session_start();
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
-    $sql = "SELECT vi.*, dcc.*, vo.*, agent.* FROM `visa` AS vi 
+    $sql = "SELECT vi.*, vo.*, agent.* FROM `visa` AS vi 
             LEFT JOIN vol AS vo ON vo.id_vol = vi.id_vol 
-            LEFT JOIN data_cc AS dcc ON vi.id_data_cc=dcc.id_data_cc
             LEFT JOIN agent_controle AS agent ON agent.id_agent_controle = vi.id_agent_controle
             WHERE id_visa = ?";
     
@@ -16,7 +15,6 @@ if (isset($_GET['id'])) {
     $row = $resu->fetch_assoc();
 
     $stmt->close();
-    $id_data_cc = $row['id_data_cc'];
     $id_vol = $row['id_vol'];
 } else {
     echo "vide";
@@ -80,7 +78,7 @@ if (isset($_GET['id'])) {
                             <label for="scan_passeport_edit" class="col-form-label">Scan du passeport
                                 (facultatif):</label>
                             <input type="file" class="form-control" name="scan_passeport_edit" id="scan_passeport_edit"
-                                placeholder="Scan du passeport" style="font-size:90%" required>
+                                placeholder="Scan du passeport" style="font-size:90%">
                         </div>
                     </div>
                     <div class="row">
@@ -142,10 +140,16 @@ if (isset($_GET['id'])) {
                                 ?>
                             </select>
                         </div>
-                        <div class="col">
+                        <!-- <div class="col">
                             <label for="lieu_depart_edit" class="col-form-label">Lieu de départ:</label>
                             <input type="text" class="form-control" name="lieu_depart_edit" id="lieu_depart_edit"
                                 placeholder="Lieu de départ" style="font-size:90%" readonly>
+                        </div> -->
+                        <div class="col">
+                            <label for="date_depart_edit_fret" class="col-form-label">Date de départ:</label>
+                            <input type="date" class="form-control" name="date_depart_edit_fret"
+                                id="date_depart_edit_fret" value="<?php echo $row['date_depart']; ?>"
+                                style="font-size:90%" required>
                         </div>
                     </div>
                     <?php } ?>
@@ -186,28 +190,32 @@ if (isset($_GET['id'])) {
                                 style="font-size:90%" readonly>
                         </div>
                         <div class="col">
-                            <label for="date_depart_edit_fret" class="col-form-label">Date de départ:</label>
-                            <input type="date" class="form-control" name="date_depart_edit_fret"
-                                id="date_depart_edit_fret" value="<?php echo $row['date_depart']; ?>"
-                                style="font-size:90%" required>
+                            <label for="numero_cc_edit" class="col-form-label">Numéro du C.C:</label>
+                            <input type="text" class="form-control" name="numero_cc_edit" id="numero_cc_edit"
+                                value="<?php echo $row['numero_cc']; ?>" style="font-size:90%" required>
+                            <?php    
+                                    // $query = "SELECT * FROM data_cc";
+                                    // $stmt = $conn->prepare($query);
+                                    // $stmt->execute();
+                                    // $resu = $stmt->get_result();
+                                    // while ($rowSub = $resu->fetch_assoc()) {
+                                    //     $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
+                                    //     echo "<option value='" . $rowSub['id_data_cc'] ."' $selected>". $rowSub['num_cc'] . "</option>";
+                                    // }
+                                    ?>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="id_data_edit" class="col-form-label">Numéro du C.C:</label>
-                        <select id="id_data_edit" name="id_data_edit" placeholder="Choisir ..." autocomplete="off"
-                            style="font-size:90%" required>
-                            <option value="">Choisir ...</option>
-                            <?php    
-                                $query = "SELECT * FROM data_cc";
-                                $stmt = $conn->prepare($query);
-                                $stmt->execute();
-                                $resu = $stmt->get_result();
-                                while ($rowSub = $resu->fetch_assoc()) {
-                                    $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
-                                    echo "<option value='" . $rowSub['id_data_cc'] ."' $selected>". $rowSub['num_cc'] . "</option>";
-                                }
-                                ?>
-                        </select>
+                    <div class="row">
+                        <div class="col">
+                            <label for="date_cc_edit" class="col-form-label">Date du C.C:</label>
+                            <input type="date" class="form-control" name="date_cc_edit" id="date_cc_edit"
+                                value="<?php echo $row['date_cc']; ?>" style="font-size:90%" required>
+                        </div>
+                        <div class="col">
+                            <label for="scan_cc_edit_a" class="col-form-label">Date du C.C (facultatif):</label>
+                            <input type="file" class="form-control" name="scan_cc_edit_a" id="scan_cc_edit_a" ?
+                                style="font-size:90%" required>
+                        </div>
                     </div>
                     <?php }else { ?>
                     <div class="row">
@@ -218,21 +226,44 @@ if (isset($_GET['id'])) {
                                 style="font-size:90%" readonly>
                         </div>
                         <div class="col">
-                            <label for="id_data_edit" class="col-form-label">Numéro du C.C:</label>
-                            <select id="id_data_edit" name="id_data_edit" placeholder="Choisir ..." autocomplete="off"
-                                style="font-size:90%" required>
-                                <option value="">Choisir ...</option>
-                                <?php    
-                                $query = "SELECT * FROM data_cc";
-                                $stmt = $conn->prepare($query);
-                                $stmt->execute();
-                                $resu = $stmt->get_result();
-                                while ($rowSub = $resu->fetch_assoc()) {
-                                    $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
-                                    echo "<option value='" . $rowSub['id_data_cc'] ."' $selected>". $rowSub['num_cc'] . "</option>";
-                                }
+                            <label for="numero_cc_edit" class="col-form-label">Numéro du C.C:</label>
+                            <input type="text" class="form-control" name="numero_cc_edit" id="numero_cc_edit"
+                                value="<?php echo $row['numero_cc']; ?>" style="font-size:90%" required>
+                            <?php    
+                                // $query = "SELECT * FROM data_cc";
+                                // $stmt = $conn->prepare($query);
+                                // $stmt->execute();
+                                // $resu = $stmt->get_result();
+                                // while ($rowSub = $resu->fetch_assoc()) {
+                                //     $selected = ($rowSub["id_data_cc"] == $id_data_cc) ? "selected" : "";
+                                //     echo "<option value='" . $rowSub['id_data_cc'] ."' $selected>". $rowSub['num_cc'] . "</option>";
+                                // }
                                 ?>
-                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="date_cc_edit" class="col-form-label">Date du C.C:</label>
+                            <input type="date" class="form-control" name="date_cc_edit" id="date_cc_edit"
+                                value="<?php echo $row['date_cc']; ?>" style="font-size:90%" required>
+                        </div>
+                        <div class="col">
+                            <label for="scan_cc_edit" class="col-form-label">Scan du C.C(facultatif):</label>
+                            <input type="file" class="form-control" name="scan_cc_edit" id="scan_cc_edit"
+                                style="font-size:90%">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="facture_edit" class="col-form-label">Numero de la facture:</label>
+                            <input type="text" class="form-control" value="<?php echo $row['numero_facture']; ?>"
+                                placeholder="Numéro de la facture" name="facture_edit" id="facture_edit"
+                                style="font-size:90%">
+                        </div>
+                        <div class="col">
+                            <label for="scan_facture_A" class="col-form-label">Scan de la facture(facultatif):</label>
+                            <input type="file" class="form-control" name="scan_facture_A" id="scan_facture_A"
+                                style="font-size:90%" accept=".pdf">
                         </div>
                     </div>
                     <?php } ?>

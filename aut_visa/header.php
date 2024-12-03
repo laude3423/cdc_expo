@@ -258,6 +258,14 @@ a:link {
                     <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/continent/lister.php"
                             class="nav-link px-2 text-white">Continent</a>
                     </li>
+                    <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/agent_controle/lister.php"
+                            class="nav-link px-2 text-white">Agent</a>
+                    </li>
+                    <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/vol/lister.php"
+                            class="nav-link px-2 text-white">Vol</a>
+                    </li>
+                    <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/fret/lister.php"
+                            class="nav-link px-2 text-white">Fret</a>
                     <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/autorisation/lister.php"
                             class="nav-link px-2 text-white">Autorisation
                             <?php
@@ -310,7 +318,8 @@ a:link {
             </div>
         </div>
         <ul class="nav d-none d-md-flex col-md-auto mb-2 justify-content-center mb-md-0">
-            <li class="nav-item"><a href="https://cdc.minesmada.org/home/home.php" class="nav-link">Home</a>
+            <li class="nav-item"><a href="https://cdc.minesmada.org/home/home.php"
+                    class="nav-link px-2 text-white">Home</a>
             </li>
             <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/pays/lister.php"
                     class="nav-link px-2 text-white">Pays</a>
@@ -318,10 +327,20 @@ a:link {
             <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/continent/lister.php"
                     class="nav-link px-2 text-white">Continent</a>
             </li>
-            <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/autorisation/lister.php"
-                    class="nav-link">Autorisation</a>
+            <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/agent_controle/lister.php"
+                    class="nav-link px-2 text-white">Agent</a>
             </li>
-            <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/visa/lister.php" class="nav-link">Visa</a>
+            <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/vol/lister.php"
+                    class="nav-link px-2 text-white">Vol</a>
+            </li>
+            <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/fret/lister.php"
+                    class="nav-link px-2 text-white">Fret</a>
+            </li>
+            <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/autorisation/lister.php"
+                    class="nav-link px-2 text-white">Autorisation</a>
+            </li>
+            <li class="nav-item"><a href="https://cdc.minesmada.org/aut_visa/visa/lister.php"
+                    class="nav-link px-2 text-white">Visa</a>
             </li>
         </ul>
         <div class="col-md-3">

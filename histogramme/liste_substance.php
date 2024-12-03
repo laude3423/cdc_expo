@@ -1,6 +1,9 @@
 <?php 
 require_once('../scripts/db_connect.php');
 require('../scripts/session.php');
+include './insert_logs.php';
+$activite='Consulter les valeurs marchande';
+insertLogs($conn, $userID, $activite);
 ?>
 <!DOCTYPE html>
 <html lang="en">

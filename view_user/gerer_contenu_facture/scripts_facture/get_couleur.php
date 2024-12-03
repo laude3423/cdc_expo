@@ -6,6 +6,7 @@ require '../../../scripts/db_connect.php';
 if (isset($_POST['id_substance'])) {
     $id_substance = $_POST['id_substance'];
     $id_categorie = $_POST['id_categorie'];
+    $id_type = $_POST['id_type'];
     error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -33,22 +34,41 @@ ob_start();
     }
 
     if($id_categorie=="2"){
-        $query_dd = "SELECT DISTINCT dd.* FROM substance_detaille_substance sds 
-        LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre
-        WHERE sds.id_substance = $id_substance AND sds.id_categorie =$id_categorie";
+        if($id_type != '4'){
+            $query_dd = "SELECT DISTINCT dd.* FROM substance_detaille_substance sds 
+            LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre
+            WHERE sds.id_substance = $id_substance AND sds.id_categorie =$id_categorie AND sds.id_dimension_diametre";
 
-        $result_dd = $conn->query($query_dd);
+            $result_dd = $conn->query($query_dd);
 
-        $options_dimension_diametre = "<option value=''>Sélectionner...</option>";
+            $options_dimension_diametre = "<option value=''>Sélectionner...</option>";
 
-        if ($result_dd->num_rows > 0) {
-            while ($row_dd = $result_dd->fetch_assoc()) {
-                $id_dimension_diametre = $row_dd['id_dimension_diametre'];
-                $nom_dimension_diametre = isset($id_dimension_diametre) ? $row_dd['nom_dimension_diametre'] : "Aucune";
+            if ($result_dd->num_rows > 0) {
+                while ($row_dd = $result_dd->fetch_assoc()) {
+                    if (isset($row_dd["id_dimension_diametre"])) {
+                        $options_dimension_diametre .= "<option value='" . $row_dd['id_dimension_diametre'] . "'>" . $row_dd['nom_dimension_diametre'] . "</option>";
+                    }
+                }
+            }
+        }else{
+            $query_dd = "SELECT DISTINCT dd.* FROM substance_detaille_substance sds 
+            LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre
+            WHERE sds.id_substance = $id_substance AND sds.id_categorie =$id_categorie";
 
-                $options_dimension_diametre .= "<option value='" . ($id_dimension_diametre ?? '') . "'>" . $nom_dimension_diametre . "</option>";
+            $result_dd = $conn->query($query_dd);
+
+            $options_dimension_diametre = "<option value=''>Sélectionner...</option>";
+
+            if ($result_dd->num_rows > 0) {
+                while ($row_dd = $result_dd->fetch_assoc()) {
+                    $id_dimension_diametre = $row_dd['id_dimension_diametre'];
+                    $nom_dimension_diametre = isset($id_dimension_diametre) ? $row_dd['nom_dimension_diametre'] : "Aucune";
+
+                    $options_dimension_diametre .= "<option value='" . ($id_dimension_diametre ?? '') . "'>" . $nom_dimension_diametre . "</option>";
+                }
             }
         }
+        
     }else{
         $query_dd = "SELECT DISTINCT dd.* FROM substance_detaille_substance sds 
         LEFT JOIN dimension_diametre dd ON dd.id_dimension_diametre = sds.id_dimension_diametre

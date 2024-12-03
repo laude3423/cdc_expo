@@ -1,6 +1,9 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
+$currentYear = date('Y');
+$years = range($currentYear - 6, $currentYear);
+$annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
 ?>
 <?php 
 if (isset($_POST['submit'])) {
@@ -22,16 +25,22 @@ if (isset($_POST['submit'])) {
         $matricule_fret = $_POST['matricule_fret'] ?? '';
         $date_depart_fret = $_POST['date_depart_fret'] ?? '';
         $id_pays = $_POST['id_pays'] ?? '';
-        $facture = $_POST['facture'] ?? '';
         $id_fret=$_POST['nom_fret'] ?? '';
-        $id_data = $_POST['id_data'] ?? '';
-        $id_data_cc = $_POST['id_data_cc'] ?? '';
+        // $id_data = $_POST['id_data'] ?? '';
+        // $id_data_cc = $_POST['id_data_cc'] ?? '';
+        $facture = $_POST['facture_A'] ?? '';
+        echo $date_cc.$numero_cc;
         $type_decl = $_POST['type_decl'] ?? '';
         $uploadPath_PAS="";$uploadPath_FAC="";$accompagne="";
         if($type_decl=="ACC"){
             $accompagne="OUI";
+            $numero_cc = $_POST['numero_cc_A'] ?? '';
+            $date_cc = $_POST['date_cc_A'] ?? '';
+            
         }else{
             $accompagne='NON';
+            $numero_cc = $_POST['numero_cc_B'] ?? '';
+            $date_cc = $_POST['date_cc_B'] ?? '';
         }
         //date
         $dateFormat = "Y-m-d";
@@ -44,18 +53,23 @@ if (isset($_POST['submit'])) {
         $date_creation = null;
         $num_visa=null;
         $num_visa="";
-        if($type_decl=="ACC"){
-             $codeSql="SELECT date_creation, id_visa, numero_visa FROM visa WHERE id_fret IS NULL";
-            $resultCode = mysqli_query($conn, $codeSql);
-            while ($row = mysqli_fetch_assoc($resultCode)) {
-                // Vérifier si c'est le premier élément ou si l'actuel id_aut est supérieur au max actuel
-                if ($max_id_aut === null || $row['id_visa'] > $max_id_aut) {
-                    $max_id_aut = $row['id_visa'];
-                    $date_creation = $row['date_creation'];
-                    $num_visa = $row['numero_visa'];
 
-                }
+        $codeSql = "
+                SELECT numero_visa, date_modification, id_visa 
+                FROM visa 
+                WHERE id_visa = (SELECT MAX(id_visa) FROM visa)
+            ";
+            $resultCode = mysqli_query($conn, $codeSql);
+
+            if ($resultCode) {
+                $row = mysqli_fetch_assoc($resultCode);
+                $num_visa = $row['numero_visa'];
+                $max_id_aut = $row['id_visa'];
+                $date_creation = $row['date_modification'];
+            } else {
+                echo "Erreur dans la requête : " . mysqli_error($conn);
             }
+
             //code
             if($max_id_aut !== null){
                 $parts = explode("-", $num_visa);
@@ -71,24 +85,26 @@ if (isset($_POST['submit'])) {
                 $moisFacture = date('m', strtotime($date_creation));
                 echo $nouvelle_incrementation_formattee;
                 if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
-                    $num_visa = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GUE/VISA";
+                    $num_visa = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.VISA";
                     
                 }else{
-                    $num_visa = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GUE/VISA";
+                    $num_visa = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.VISA";
                         
                 }
             }else{
-                $num_visa = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GUE/VISA";
+                $num_visa = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.VISA";
                 
             }
+        if($type_decl=="ACC"){
+            
             $uploadDir = '../upload/';
-        if (!empty($_FILES['scan_facture']['name'])) {
+        if (!empty($_FILES['scan_facture_A']['name'])) {
                 $num_facture = preg_replace('/[^a-zA-Z0-9]/', '-', $facture);
                 $fileName_FAC = "SCAN_FACTURE_" .$num_facture.".".
-                pathinfo($_FILES['scan_facture']['name'], PATHINFO_EXTENSION);
+                pathinfo($_FILES['scan_facture_A']['name'], PATHINFO_EXTENSION);
                 $uploadPath_FAC = $uploadDir . $fileName_FAC;
                 //deplacement des fichier
-                if (move_uploaded_file($_FILES['scan_facture']['tmp_name'], $uploadPath_FAC)) {
+                if (move_uploaded_file($_FILES['scan_facture_A']['tmp_name'], $uploadPath_FAC)) {
                 } else {
                 echo "Erreur lors de l'upload du fichier.";
                 }
@@ -104,22 +120,34 @@ if (isset($_POST['submit'])) {
                 echo "Erreur lors de l'upload du fichier.";
                 }
             }
+            if (!empty($_FILES['pj_cc_A']['name'])) {
+                $numero_cc_clean = preg_replace('/[^a-zA-Z0-9]/', '-', $numero_cc);
+                $fileName_CC = "SCAN_CC_" .$numero_cc_clean.".".
+                pathinfo($_FILES['pj_cc_A']['name'], PATHINFO_EXTENSION);
+                $uploadPath_CC = $uploadDir . $fileName_CC;
+                //deplacement des fichier
+                if (move_uploaded_file($_FILES['pj_cc_A']['tmp_name'], $uploadPath_CC)) {
+                } else {
+                echo "Erreur lors de l'upload du fichier.";
+                }
+            }
             $data_visa="OUI";
 
                 $sql = "INSERT INTO `visa`(`date_depart`,`accompagne`,`numero_visa`,`date_creation`,`date_modification`, `nom_porteur`, `prenom_porteur`, `id_agent_controle`, `id_vol`, 
-                `numero_passeport`, `scan_passport`, `numero_facture`, `scan_facture`, `civilite`, `id_data_cc`) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                `numero_passeport`, `scan_passport`, `numero_facture`, `scan_facture`, `civilite`, `numero_cc`, `date_cc`, `scan_cc`) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("sssssssiisssssi", $date_depart, $accompagne, $num_visa, $dateInsert, $dateInsert, $nom, $prenom, $matricule, $id_vol, $passeport, $uploadPath_PAS, $facture, $uploadPath_FAC, $civilite, $id_data);
+                $stmt->bind_param("sssssssiissssssss", $date_depart, $accompagne, $num_visa, $dateInsert, 
+                $dateInsert, $nom, $prenom, $matricule, $id_vol, $passeport, $uploadPath_PAS, $facture, $uploadPath_FAC, $civilite, $numero_cc, $date_cc, $uploadPath_CC);
                 $result = $stmt->execute();
                 if ($result) {
-                    $sql2 = "UPDATE data_cc SET visa=? WHERE id_data_cc=?";
-                    $stmt2 = $conn->prepare($sql2);
-                    $stmt2->bind_param("si",$data_visa, $id_data);
-                    $stmt2->execute();
-                    $stmt2->close();
+                    // $sql2 = "UPDATE data_cc SET visa=? WHERE id_data_cc=?";
+                    // $stmt2 = $conn->prepare($sql2);
+                    // $stmt2->bind_param("si",$data_visa, $id_data);
+                    // $stmt2->execute();
+                    // $stmt2->close();
 
-                    $id = $stmt->insert_id;
+                    // $id = $stmt->insert_id;
                     $_SESSION['toast_message'] = "Insertion réussie.";
                     header("Location: ".$_SERVER['PHP_SELF']);
                     exit();
@@ -128,62 +156,72 @@ if (isset($_POST['submit'])) {
                 }
 
         }else{
-            $codeSql="SELECT date_creation, id_visa, numero_visa FROM visa WHERE id_fret IS NOT NULL";
-            $resultCode = mysqli_query($conn, $codeSql);
+            // $codeSql="SELECT date_creation, id_visa, numero_visa FROM visa";
+            // $resultCode = mysqli_query($conn, $codeSql);
             
-            while ($row = mysqli_fetch_assoc($resultCode)) {
-                // Vérifier si c'est le premier élément ou si l'actuel id_aut est supérieur au max actuel
-                if ($max_id_aut === null || $row['id_visa'] > $max_id_aut) {
-                    $max_id_aut = $row['id_visa'];
-                    $date_creation = $row['date_creation'];
-                    $num_visa = $row['numero_visa'];
+            // while ($row = mysqli_fetch_assoc($resultCode)) {
+            //     // Vérifier si c'est le premier élément ou si l'actuel id_aut est supérieur au max actuel
+            //     if ($max_id_aut === null || $row['id_visa'] > $max_id_aut) {
+            //         $max_id_aut = $row['id_visa'];
+            //         $date_creation = $row['date_creation'];
+            //         $num_visa = $row['numero_visa'];
 
-                }
-            }
-            //code
-            if($max_id_aut !== null){
-                $parts = explode("-", $num_visa);
-                // Si la chaîne a bien été divisée
-                if(count($parts) === 2) {
-                $incrementation = substr($parts[0], 2); // "0001"
-                } else {
-                echo "La chaîne n'a pas pu être divisée comme prévu.";
-                }
-                $nouvelle_incrementation = intval($incrementation) + 1;
-                $nouvelle_incrementation_formattee = sprintf("%03d", $nouvelle_incrementation);
-                $anneeFacture = date('Y', strtotime($date_creation));
-                $moisFacture = date('m', strtotime($date_creation));
-                echo $nouvelle_incrementation_formattee;
-                if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
-                    $num_visa = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GUE/VISA";
+            //     }
+            // }
+            // //code
+            // if($max_id_aut !== null){
+            //     $parts = explode("-", $num_visa);
+            //     // Si la chaîne a bien été divisée
+            //     if(count($parts) === 2) {
+            //     $incrementation = substr($parts[0], 2); // "0001"
+            //     } else {
+            //     echo "La chaîne n'a pas pu être divisée comme prévu.";
+            //     }
+            //     $nouvelle_incrementation = intval($incrementation) + 1;
+            //     $nouvelle_incrementation_formattee = sprintf("%03d", $nouvelle_incrementation);
+            //     $anneeFacture = date('Y', strtotime($date_creation));
+            //     $moisFacture = date('m', strtotime($date_creation));
+            //     echo $nouvelle_incrementation_formattee;
+            //     if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
+            //         $num_visa = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.VISA";
                     
-                }else{
-                    $num_visa = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GUE/VISA";
+            //     }else{
+            //         $num_visa = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.VISA";
                         
-                }
-            }else{
-                $num_visa = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GUE/VISA";
+            //     }
+            // }else{
+            //     $num_visa = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.VISA";
                 
-            }
+            // }
             $uploadDir = '../upload/';
-            
+            if (!empty($_FILES['pj_cc_B']['name'])) {
+                $numero_cc_clean = preg_replace('/[^a-zA-Z0-9]/', '-', $numero_cc);
+                $fileName_CC = "SCAN_CC_" .$numero_cc_clean.".".
+                pathinfo($_FILES['pj_cc_B']['name'], PATHINFO_EXTENSION);
+                $uploadPath_CC = $uploadDir . $fileName_CC;
+                //deplacement des fichier
+                if (move_uploaded_file($_FILES['pj_cc_B']['tmp_name'], $uploadPath_CC)) {
+                } else {
+                echo "Erreur lors de l'upload du fichier.";
+                }
+            }
 
                 $sql = "INSERT INTO `visa`(`date_depart`,`accompagne`,`numero_visa`,`date_creation`,`date_modification`, 
-                `id_agent_controle`, `id_fret`, `civilite`,`id_data_cc`) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                `id_agent_controle`, `id_fret`, `civilite`,`numero_cc`, `date_cc`, `scan_cc`) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)";
                 // Préparation de la requête
                 $stmt = $conn->prepare($sql);
                 // Liaison des variables aux placeholders
-                $stmt->bind_param("sssssiisi",$date_depart_fret,$accompagne, $num_visa, $dateInsert,$dateInsert, 
-                $matricule_fret, $id_fret, $civilite, $id_data_cc);
+                $stmt->bind_param("sssssiissss",$date_depart_fret,$accompagne, $num_visa, $dateInsert,$dateInsert, 
+                $matricule_fret, $id_fret, $civilite, $numero_cc, $date_cc, $uploadPath_CC);
                 $result = $stmt->execute();
                 if ($result) {
                     // Récupérer l'ID de l'enregistrement inséré
-                    $sql2 = "UPDATE data_cc SET visa=? WHERE id_data_cc=?";
-                    $stmt2 = $conn->prepare($sql2);
-                    $stmt2->bind_param("si",$data_visa, $id_data_cc);
-                    $stmt2->execute();
-                    $stmt2->close();
+                    // $sql2 = "UPDATE data_cc SET visa=? WHERE id_data_cc=?";
+                    // $stmt2 = $conn->prepare($sql2);
+                    // $stmt2->bind_param("si",$data_visa, $id_data_cc);
+                    // $stmt2->execute();
+                    // $stmt2->close();
 
                     $_SESSION['toast_message'] = "Insertion réussie.";
                     header("Location: ".$_SERVER['PHP_SELF']);
@@ -214,18 +252,7 @@ if (isset($_POST['submit'])) {
     // Effacer le message du Toast de la variable de session
     unset($_SESSION['toast_message']);
 }
-$edit_societe_details = array();
 
-if (!empty($edit_societe_id)) {
-    $sql_edit = "SELECT * FROM `degre_couleur` WHERE `id_degre_couleur`='$edit_societe_id'";
-    $result_edit = mysqli_query($conn, $sql_edit);
-
-    if ($result_edit) {
-        $edit_societe_details = mysqli_fetch_assoc($result_edit);
-    } else {
-        echo "Erreur lors de la récupération des détails de la société" . mysqli_error($conn);
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -288,14 +315,28 @@ if (!empty($edit_societe_id)) {
             <div class="col">
                 <input type="text" id="search" class="form-control" placeholder="Recherche...">
             </div>
+            <div class="col-2">
+                <form method="GET" action="">
+                    <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
+                        <?php foreach ($years as $year): ?>
+                        <option value="<?php echo $year; ?>" <?php echo ($year == $annee) ? 'selected' : ''; ?>>
+                            <?php echo $year; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
             <div class="col text-end">
                 <a class="btn btn-dark btn-sm rounded-pill px-3 " href="#" onclick="openModal()"><i
                         class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
+                <a class="btn btn-success btn-sm rounded-pill px-3 " href="./exporter.php?"><i
+                        class="fas fa-file-excel"></i> Exporter</a>
             </div>
         </div>
         <hr>
         <?php 
-                $sql="SELECT vi.*, fr.* FROM visa AS vi LEFT JOIN fret AS fr ON vi.id_fret=fr.id_fret ORDER BY date_creation DESC";
+                $sql="SELECT vi.*, fr.* FROM visa AS vi LEFT JOIN fret AS fr ON vi.id_fret=fr.id_fret 
+                WHERE YEAR(vi.date_creation) = $annee ORDER BY date_creation DESC";
                 $result= mysqli_query($conn, $sql);
                 $result= mysqli_query($conn, $sql);
                  if ($result->num_rows > 0) { ?>
@@ -322,8 +363,16 @@ if (!empty($edit_societe_id)) {
                     <td>✅</td>
                     <td><?php echo $row['numero_visa'] ?></td>
                     <td><?php echo date('d/m/Y', strtotime($row['date_creation'])) ?></td>
-                    <td class="masque2"><?php echo $row['nom_porteur'] ?></td>
-                    <td class="masque2"><?php echo $row['nom_fret'] ?></td>
+                    <td class="masque2"><?php if(!empty($row['nom_porteur'])){
+                        echo $row['nom_porteur'];
+                    } else{
+                        echo 'Fret';
+                    } ?></td>
+                    <td class="masque2"><?php if(!empty($row['nom_fret'])){
+                        echo $row['nom_fret'];
+                    } else{
+                        echo 'Accompagné';
+                    }  ?></td>
                     <td>
                         <a class="link-dark" href="./detail.php?id=<?php echo $row['id_visa']; ?>">détails</a>
                         <a href="#" class="link-dark btn_edit_visa" data-id="<?= htmlspecialchars($row["id_visa"])?>">
@@ -489,21 +538,43 @@ if (!empty($edit_societe_id)) {
                                         placeholder="Nom du responsable" style="font-size:90%" readonly>
                                 </div>
                                 <div class="col">
-                                    <label for="id_data" class="col-form-label">Numéro du C.C:</label>
-                                    <select id="id_data" name="id_data" placeholder="Choisir ..." autocomplete="off"
-                                        style="font-size:90%">
-                                        <option value="">Choisir ...</option>
-                                        <?php    
-                                        $query = "SELECT * FROM data_cc WHERE visa !='OUI'";
-                                        $stmt = $conn->prepare($query);
-                                        $stmt->execute();
-                                        $resu = $stmt->get_result();
+                                    <label for="numero_cc_A" class="col-form-label">Numéro du C.C:</label>
+                                    <input type="text" class="form-control" name="numero_cc_A" id="numero_cc_A"
+                                        placeholder="Numéro du certificat de conformité" style="font-size:90%">
+                                    <?php    
+                                        // $query = "SELECT * FROM data_cc WHERE visa !='OUI'";
+                                        // $stmt = $conn->prepare($query);
+                                        // $stmt->execute();
+                                        // $resu = $stmt->get_result();
                                         
-                                        while ($rowSub = $resu->fetch_assoc()) {
-                                            echo "<option value='" . $rowSub['id_data_cc'] ."'>" . $rowSub['num_cc'] . "</option>";
-                                        }
+                                        // while ($rowSub = $resu->fetch_assoc()) {
+                                        //     echo "<option value='" . $rowSub['id_data_cc'] ."'>" . $rowSub['num_cc'] . "</option>";
+                                        // }
                                         ?>
-                                    </select>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="date_cc_A" class="col-form-label">Date du C.C:</label>
+                                        <input type="date" class="form-control" name="date_cc_A" id="date_cc_A"
+                                            style="font-size:90%">
+                                    </div>
+                                    <div class="col">
+                                        <label for="pj_cc_A" class="col-form-label">Scan du C.C:</label>
+                                        <input type="file" class="form-control" name="pj_cc_A" id="pj_cc_A"
+                                            style="font-size:90%" accept=".pdf">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="facture_A" class="col-form-label">Numero de la facture:</label>
+                                        <input type="text" class="form-control" placeholder="Numéro de la facture"
+                                            name="facture_A" id="facture_A" style="font-size:90%">
+                                    </div>
+                                    <div class="col">
+                                        <label for="scan_facture_A" class="col-form-label">Scan de la facture:</label>
+                                        <input type="file" class="form-control" name="scan_facture_A"
+                                            id="scan_facture_A" style="font-size:90%" accept=".pdf">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -574,22 +645,32 @@ if (!empty($edit_societe_id)) {
                                         id="date_depart_fret" placeholder="Nom du responsable" style="font-size:90%">
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="id_data_cc" class="col-form-label">Numéro du C.C:</label>
-                                <select id="id_data_cc" name="id_data_cc" placeholder="Choisir ..." autocomplete="off"
-                                    style="font-size:90%" required>
-                                    <option value="">Choisir ...</option>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="numero_cc_B" class="col-form-label">Numéro du C.C:</label>
+                                    <input type="text" class="form-control" name="numero_cc_B" id="numero_cc_B"
+                                        placeholder="Numéro du certificat de conformité" style="font-size:90%">
                                     <?php    
-                                        $query = "SELECT * FROM data_cc WHERE visa IS NULL";
-                                        $stmt = $conn->prepare($query);
-                                        $stmt->execute();
-                                        $resu = $stmt->get_result();
-                                        
-                                        while ($rowSub = $resu->fetch_assoc()) {
-                                            echo "<option value='" . $rowSub['id_data_cc'] ."'>" . $rowSub['num_cc'] . "</option>";
-                                        }
-                                    ?>
-                                </select>
+                                            // $query = "SELECT * FROM data_cc WHERE visa IS NULL";
+                                            // $stmt = $conn->prepare($query);
+                                            // $stmt->execute();
+                                            // $resu = $stmt->get_result();
+                                            
+                                            // while ($rowSub = $resu->fetch_assoc()) {
+                                            //     echo "<option value='" . $rowSub['id_data_cc'] ."'>" . $rowSub['num_cc'] . "</option>";
+                                            // }
+                                        ?>
+                                </div>
+                                <div class="col">
+                                    <label for="date_cc_B" class="col-form-label">Date du C.C:</label>
+                                    <input type="date" class="form-control" name="date_cc_B" id="date_cc_B"
+                                        style="font-size:90%">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="pj_cc_B" class="col-form-label">Scan du C.C:</label>
+                                <input type="file" class="form-control" name="pj_cc_B" id="pj_cc_B"
+                                    style="font-size:90%" accept=".pdf">
                             </div>
                         </div>
                 </div>

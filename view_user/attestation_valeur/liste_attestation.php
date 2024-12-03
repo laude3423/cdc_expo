@@ -5,6 +5,9 @@
   if($groupeID!==2){
     require_once('../../scripts/session_actif.php');
 }
+$currentYear = date('Y');
+$years = range($currentYear - 6, $currentYear);
+$annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
 if(isset($_SESSION['toast_message'])) {
     echo '
     <div class="toast-container-centered">
@@ -133,6 +136,17 @@ if(isset($_SESSION['toast_message2'])) {
             <div class="col">
                 <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
             </div>
+            <div class="col-2">
+                <form method="GET" action="">
+                    <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
+                        <?php foreach ($years as $year): ?>
+                        <option value="<?php echo $year; ?>" <?php echo ($year == $annee) ? 'selected' : ''; ?>>
+                            <?php echo $year; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
             <div class="col text-end">
                 <a class="btn btn-success rounded-pill px-3" href="./exporter_attestation.php?"
                     style="font-size: 90%;"><i class="fas fa-file-excel"></i> Exporter</a>
@@ -155,7 +169,7 @@ if(isset($_SESSION['toast_message2'])) {
             FROM data_cc dcc
             LEFT JOIN societe_expediteur sexp ON dcc.id_societe_expediteur = sexp.id_societe_expediteur
             LEFT JOIN societe_importateur simp ON dcc.id_societe_importateur = simp.id_societe_importateur
-            LEFT JOIN users u ON dcc.id_user = u.id_user WHERE num_attestation IS NOT NULL
+            LEFT JOIN users u ON dcc.id_user = u.id_user WHERE YEAR(dcc.date_facture) = $annee AND num_attestation IS NOT NULL
             ORDER BY dcc.date_attestation DESC";
 
             $result = $conn->query($query);
@@ -216,7 +230,7 @@ if(isset($_SESSION['toast_message2'])) {
             LEFT JOIN societe_importateur simp ON dcc.id_societe_importateur = simp.id_societe_importateur
             LEFT JOIN users u ON dcc.id_user = u.id_user
             LEFT JOIN direction dir ON dir.id_direction = u.id_direction 
-            WHERE dir.id_direction = $id_direction AND num_attestation IS NOT NULL
+            WHERE dir.id_direction = $id_direction YEAR(dcc.date_facture) = $annee AND num_attestation IS NOT NULL
             ORDER BY dcc.date_attestation DESC";
 
             $result = $conn->query($query);

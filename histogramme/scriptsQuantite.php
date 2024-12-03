@@ -94,7 +94,7 @@ $sql = "SELECT sub.*, dcc.date_cc,
         WHERE YEAR(dcc.date_cc) = $annee
         GROUP BY sub.id_substance
         ORDER BY quantite_kg DESC
-        LIMIT 10";  // Limite les résultats aux 9 substances avec les quantités les plus élevées
+        LIMIT 9";  // Limite les résultats aux 9 substances avec les quantités les plus élevées
 
 $result = $conn->query($sql);
 $quantiteMax = 0; // Variable pour stocker la quantité maximale

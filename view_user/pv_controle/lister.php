@@ -19,14 +19,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mode_emballage = htmlspecialchars($_POST["mode_emballage"]);
         $lieu_controle = htmlspecialchars($_POST["lieu_controle"]);
         $lieu_embarquement = htmlspecialchars($_POST["lieu_emb"]);
-        $num_domiciliation = $_POST["numDom"];
+        // $num_domiciliation = $_POST["numDom"];
         $num_fiche_declaration = htmlspecialchars($_POST["declaration"]);
         $date_declaration = $_POST["date_declaration"];
         $num_lp3e = htmlspecialchars($_POST["num_lp3"]);
         $date_lp3e = $_POST["date_lp3"];
         // $chef = $_POST["chef"];
         // $qualite = $_POST["qualite"];
-        $dateDom=$_POST['date_dom'];
+        // $dateDom=$_POST['date_dom'];
         $dateFormat = "Y-m-d";
         $date = date($dateFormat);
         $dateInsert = date($dateFormat);
@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $codeSql = "SELECT incrementation, date_incrementation 
             FROM incrementation 
             WHERE id_direction = $id_direction 
-            AND incrementation = (SELECT MAX(incrementation) FROM incrementation WHERE id_direction = $id_direction)";
+            AND id_incrementation = (SELECT MAX(id_incrementation) FROM incrementation WHERE id_direction = $id_direction)";
             $resultCode = mysqli_query($conn, $codeSql);
             if ($resultCode) {
                 if (mysqli_num_rows($resultCode) > 0) { // Vérifie s'il y a des résultats
@@ -68,6 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             $num_cc = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."-MIM/SG/DGM/$sigle.CC"; 
                         }
                     }else{
+                        $nouvelle_incrementation=1;
                         if($groupeID ===3){
                             $num_pv = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.PVCC";
                             $num_cc = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.CC";
@@ -76,8 +77,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             $num_cc = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/$sigle.CC";
                         }
                     }
-                    
                 } else {
+                    $nouvelle_incrementation=1;
                     // echo "Aucun résultat trouvé pour cette direction.";
                     if($groupeID===3){
                         $num_pv = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GUE.PVCC";

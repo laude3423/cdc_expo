@@ -1,6 +1,9 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
+$currentYear = date('Y');
+$years = range($currentYear - 6, $currentYear);
+$annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
 ?>
 <?php
 if (isset($_POST['submit'])) {
@@ -73,14 +76,14 @@ if (isset($_POST['submit'])) {
             $moisFacture = date('m', strtotime($date_creation));
             echo $nouvelle_incrementation_formattee;
             if ($anneeFacture == $anneeActuelle && $moisFacture == $moisActuel) {
-                $num_as = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."MIM/SG/DGM/DEV/GUE.AS";
+                $num_as = $moisActuel.$nouvelle_incrementation_formattee."-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.AS";
                    
             }else{
-                $num_as = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GUE.AS";
+                $num_as = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.AS";
                     
             }
         }else{
-            $num_as = $moisActuel."001-".$anneeActuelle."MIM/SG/DGM/DEV/GUE.AS";
+            $num_as = $moisActuel."001-".$anneeActuelle."-MIM/SG/DGM/DEV/GUE.AS";
                
         }
     // Par exemple, vérifier que les champs obligatoires ne sont pas vides
@@ -241,14 +244,28 @@ if (!empty($edit_societe_id)) {
             <div class="col">
                 <input type="text" id="search" class="form-control" placeholder="Recherche...">
             </div>
+            <div class="col-2">
+                <form method="GET" action="">
+                    <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
+                        <?php foreach ($years as $year): ?>
+                        <option value="<?php echo $year; ?>" <?php echo ($year == $annee) ? 'selected' : ''; ?>>
+                            <?php echo $year; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
             <div class="col text-end">
                 <a class="btn btn-dark btn-sm rounded-pill px-3 " href="#" onclick="openModal()"><i
                         class="fa-solid fa-add me-1"></i>Ajouter nouveau</a>
+                <a class="btn btn-success btn-sm rounded-pill px-3 " href="./exporter.php?"><i
+                        class="fas fa-file-excel"></i>Exporter</a>
             </div>
         </div>
         <hr>
         <?php 
-                $sql="SELECT aut.*, py.* FROM `autorisation` AS aut LEFT JOIN pays AS py ON aut.id_pays=py.id_pays ORDER BY date_creation DESC";
+                $sql="SELECT aut.*, py.* FROM `autorisation` AS aut LEFT JOIN pays AS py ON aut.id_pays=py.id_pays
+                WHERE YEAR(aut.date_creation) = $annee ORDER BY date_creation DESC";
                 $result= mysqli_query($conn, $sql);
                 $result= mysqli_query($conn, $sql);
                  if ($result->num_rows > 0) { ?>
@@ -289,18 +306,12 @@ if (!empty($edit_societe_id)) {
                         <a href="#" class="link-dark" data-toggle="tooltip" title="La autorisation est déjà validée">
                             <i class="fa-solid fa-pen-to-square me-3"></i>
                         </a>
-                        <a href="#" data-toggle="tooltip" title="La autorisation est déjà validée" class="link-dark">
-                            <i class="fa-solid fa-trash"></i>
-                        </a>
 
                         <?php } else {?>
                         <a href="#" class="link-dark btn_edit_autorisation"
                             data-id="<?= htmlspecialchars($row["id_autorisation"])?>">
                             <i class="fa-solid fa-pen-to-square me-3"></i>
                         </a>
-                        <a href="#" class="link-dark"
-                            onclick="confirmerSuppression(<?php echo $row['id_autorisation']?>)"><i
-                                class="fa-solid fa-trash "></i></a>
                         <?php }?>
                     </td>
                 </tr>

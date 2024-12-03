@@ -1,6 +1,7 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
+require_once('../../scripts/session_actif.php');
 ?>
 <?php 
 

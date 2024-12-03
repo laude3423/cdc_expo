@@ -239,7 +239,7 @@ if (!empty($edit_societe_id)) {
         <hr>
         <div class="row">
             <div class="col">
-                <h5>Liste des cértificats de conformité</h5>
+                <h5>Liste des CC</h5>
             </div>
             <div class="col">
                 <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
@@ -325,7 +325,22 @@ if (!empty($edit_societe_id)) {
                     <td>
                         <a class="link-dark detail_pv_scellage"
                             href="../pv_controle/detail.php?id=<?php echo $row['id_data_cc']?>">détails</a>
-
+                        <?php if($groupeID !=2){
+                            if (($row['validation_directeur'] != 'Validé') || ($row['validation_chef'] != 'Validé')) {
+                                ?>
+                        <a href="#" class="link-dark btn_edit_cc"
+                            data-id="<?= htmlspecialchars($row["id_data_cc"])?>"><i
+                                class="fa-solid fa-pen-to-square me-3"></i></a>
+                        <?php
+                            } else { ?>
+                        <a href="#" class="link-dark" data-toggle="tooltip"
+                            title="Modification non autorisée : Le CC est déjà validé">
+                            <i class="fa-solid fa-pen-to-square me-3"></i>
+                        </a>
+                        <?php
+                            }
+                        }
+                        ?>
                     </td>
                 </tr>
                 <?php   
@@ -346,6 +361,7 @@ if (!empty($edit_societe_id)) {
                 include('../../shared/pied_page.php');
             ?>
         </div>
+        <div id="edit_cc_form"></div>
     </div>
 
 
@@ -361,7 +377,26 @@ if (!empty($edit_societe_id)) {
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+    <script>
+    $(document).ready(function() {
+        $('.toast').toast('show');
+        $('[data-toggle="tooltip"]').tooltip();
 
+        $(".btn_edit_cc").click(function() {
+            var id_data_cc = $(this).data('id');
+            showEditForm('edit_cc_form', './edit_cc.php?id=' + id_data_cc,
+                'staticBackdrop');
+
+        });
+
+        function showEditForm(editFormId, scriptPath, modalId) {
+            $("#" + editFormId).load(scriptPath, function() {
+                // Après le chargement du contenu, initialisez le modal manuellement
+                $("#" + modalId).modal('show');
+            });
+        }
+    });
+    </script>
 </body>
 
 </html>

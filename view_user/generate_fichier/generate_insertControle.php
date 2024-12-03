@@ -39,7 +39,7 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
     $rowC = mysqli_fetch_assoc($resultC);
     $num_facture = $rowC['num_facture'];
     $date_facture = $rowC['date_facture'];
-    $date_format_dom = date('d-m-Y', strtotime($dateDom));
+    // $date_format_dom = date('d-m-Y', strtotime($dateDom));
     $date_format_facture = date('d-m-Y', strtotime($date_facture));
     $date_format_declaration = date('d-m-Y', strtotime($date_declaration));
     $date_format_lp3e = date('d-m-Y', strtotime($date_lp3e));
@@ -167,6 +167,7 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
             'pimb' => $afficheWord_pimb,
             'mpb' => $afficheWord_mpb,
             'pfb' => $afficheWord_pfb,
+            'boit' => $afficheWord_boite,
         ];
 
         foreach ($wordArrays as $key => $wordArray) {
@@ -180,9 +181,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }elseif(!empty($ppt)){
         $affiche_word=$afficheWord_ppt;
         $wordArrays = [
@@ -194,6 +195,7 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
             'pimb' => $afficheWord_pimb,
             'mpb' => $afficheWord_mpb,
             'pfb' => $afficheWord_pfb,
+            'boit' => $afficheWord_boite,
         ];
 
         foreach ($wordArrays as $key => $wordArray) {
@@ -206,9 +208,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }elseif(!empty($pimt)){
         $affiche_word=$afficheWord_pimt;
         $wordArrays = [
@@ -219,6 +221,7 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
             'pimb' => $afficheWord_pimb,
             'mpb' => $afficheWord_mpb,
             'pfb' => $afficheWord_pfb,
+            'boit' => $afficheWord_boite,
         ];
 
         foreach ($wordArrays as $key => $wordArray) {
@@ -231,9 +234,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }elseif(!empty($mpt)){
         $affiche_word=$afficheWord_mpt;
 
@@ -256,9 +259,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }else if(!empty($pa)){
         $affiche_word=$afficheWord_pa;
 
@@ -280,9 +283,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }else if(!empty($ft)){
         $affiche_word=$afficheWord_ft;
 
@@ -303,9 +306,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }else if(!empty($pfb)){
         $affiche_word=$afficheWord_pfb;
         $wordArrays = [
@@ -325,8 +328,8 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
         $remplace = generat_file($affiche_word);
 
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }else if(!empty($ppb)){
         $affiche_word=$afficheWord_ppb;
 
@@ -345,9 +348,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }else if(!empty($pimb)){
         $affiche_word=$afficheWord_pimb;
 
@@ -365,9 +368,9 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }else if(!empty($mpb)){
         $affiche_word=$afficheWord_mpb;
 
@@ -375,14 +378,14 @@ $date_maintenant = str_replace($mois_anglais, $mois_francais, $date_maintenant);
         $templateScan->cloneBlock('block_name', 0, true, false, $remplace1);
         $template->cloneBlock('block_name', 0, true, false, $remplace1);
 
-        $remplace = generat_file($affiche_word);
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = generat_file($affiche_word);
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     }else{
-        $remplace = array();
-        $remplace[] = array('substance'=>'');
-        $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
-        $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
+        // $remplace = array();
+        // $remplace[] = array('substance'=>'');
+        // $templateCdcScan->cloneBlock('block_name', 0, true, false, $remplace);
+        // $templateCdc->cloneBlock('block_name', 0, true, false, $remplace);
     
         $remplace1 = array();
         $remplace1[] = array('substance'=>'');
@@ -444,8 +447,8 @@ if($groupeID === 1){
     $templateScan->setValue('date_facture', $date_format_facture);
     $templateScan->setValue('num_fiche_declaration', $num_fiche_declaration);
     $templateScan->setValue('date_fiche_declaration', $date_format_declaration);
-    $templateScan->setValue('num_domiciliation', $num_domiciliation);
-    $templateScan->setValue('date_dom', $date_format_dom);
+    // $templateScan->setValue('num_domiciliation', $num_domiciliation);
+    // $templateScan->setValue('date_dom', $date_format_dom);
     $templateScan->setValue('num_lp3e', $num_lp3e);
     //
     $templateScan->setValue('date_lp3e', $date_format_lp3e);
@@ -514,8 +517,8 @@ if($groupeID === 1){
     $template->setValue('date_facture', $date_format_facture);
     $template->setValue('num_fiche_declaration', $num_fiche_declaration);
     $template->setValue('date_fiche_declaration', $date_format_declaration);
-    $template->setValue('num_domiciliation', $num_domiciliation);
-    $template->setValue('date_dom', $date_format_dom);
+    // $template->setValue('num_domiciliation', $num_domiciliation);
+    // $template->setValue('date_dom', $date_format_dom);
     $template->setValue('num_lp3e', $num_lp3e);
     $template->setValue('date_lp3e', $date_format_lp3e);
     $template->setValue('lieu_embarquement', $lieu_embarquement);
@@ -542,64 +545,16 @@ if($groupeID === 1){
 
         // Chemin vers le fichier QR code et le logo
         $qrCodePath = $tempDir . $qrcode_name . '.png';
-        $logoPath = '../../logo/logoMine.png';
-
-        // Dimensions souhaitées pour le logo
-        $logoWidth = 40; // Largeur souhaitée du logo
-        $logoHeight = 40; // Hauteur souhaitée du logo
-
-        // Créer une image à partir du QR code (qui est maintenant en PNG)
-        $qrCode = imagecreatefrompng($qrCodePath);
-
-        if ($qrCode === false) {
-            die('Erreur : Impossible de créer une image à partir du QR code.');
-        }
-
-        // Créer une image à partir du logo (qui est en PNG)
-        $logo = imagecreatefrompng($logoPath);
-
-        if ($logo === false) {
-            die('Erreur : Impossible de créer une image à partir du logo.');
-        }
-
-        // Dimensions actuelles du logo
-        $logoActualWidth = imagesx($logo);
-        $logoActualHeight = imagesy($logo);
-
-        // Redimensionner le logo aux dimensions souhaitées
-        $logoResized = imagecreatetruecolor($logoWidth, $logoHeight);
-        imagecopyresampled($logoResized, $logo, 0, 0, 0, 0, $logoWidth, $logoHeight, $logoActualWidth, $logoActualHeight);
-
-        // Dimensions du QR code
-        $qrWidth = imagesx($qrCode);
-        $qrHeight = imagesy($qrCode);
-
-        // Positionnement du logo au centre du QR code
-        $logoX = ($qrWidth / 2) - ($logoWidth / 2);
-        $logoY = ($qrHeight / 2) - ($logoHeight / 2);
-
-        // Fusionner le logo redimensionné sur le QR code
-        imagecopy($qrCode, $logoResized, $logoX, $logoY, 0, 0, $logoWidth, $logoHeight);
-
-        // Chemin pour l'image fusionnée
-        $mergedImagePath = $tempDir . $qrcode_name . '_with_logo.png';
-
-        // Sauvegarder l'image fusionnée
-        imagepng($qrCode, $mergedImagePath);
-
-        // Libérer la mémoire
-        imagedestroy($qrCode);
-        imagedestroy($logo);
-        imagedestroy($logoResized);
+        
 
         // Utiliser PHPWord pour insérer l'image fusionnée dans un fichier Word
         $templateProcessor = new TemplateProcessor($outputFilePathQR);
         $templateProcessor->setImageValue(
             'qrcode',
             [
-                'path' => $mergedImagePath,
-                'width' => 150,
-                'height' => 150,
+                'path' => $qrCodePath,
+                'width' => 140,
+                'height' => 140,
             ]
         );
 
@@ -625,150 +580,151 @@ if($groupeID === 1){
         
     //-------------------------------------------------------
     //generate file certificat de conformité
-    $templateCdcScan->setValue('entete', $entete);
-    $templateCdcScan->setValue('num_cc', $num_cc);
-    $templateCdcScan->setValue('date_maintenant', $date_maintenant);
-    $templateCdcScan->setValue('num_declaration', $num_fiche_declaration);
-    $templateCdcScan->setValue('date_declaration', $date_format_declaration);
-    $templateCdcScan->setValue('num_pv_controle', $num_pv);
-    $templateCdcScan->setValue('num_lp3e', $num_lp3e);
-    $templateCdcScan->setValue('date_lp3e', $date_format_lp3e);
-    $templateCdcScan->setValue('num_facture', $num_facture);
-    $templateCdcScan->setValue('date_facture', $date_format_facture);
-    $templateCdcScan->setValue('num_dom', $num_domiciliation);
-    $templateCdcScan->setValue('total_general', $poidsTotal);
-    $templateCdcScan->setValue('date_pv_controle', $dateMaintenant);
-    $templateCdcScan->setValue('nom_societe_exp', $nom_societe_expediteur);
-    $templateCdcScan->setValue('addresse_societe_exp', $adresse_societe_expediteur);
-    $templateCdcScan->setValue('nom_societe_imp', $nom_societe_importateur);
-    $templateCdcScan->setValue('adresse_societe_imp', $adresse_societe_importateur);
-    $templateCdcScan->setValue('nom_responsable', $nom_responsable);
-    $templateCdcScan->setValue('destination_finale', $pays_destination);
-    $templateCdcScan->setValue('nom_entete', $nom_entete);//$lieu_emission
-    $templateCdcScan->setValue('nom_emplacement', $lieu_emission);
-    $templateCdcScan->setValue('vrai_nom_direction', $vrai_nom_direction);
+    // $templateCdcScan->setValue('entete', $entete);
+    // $templateCdcScan->setValue('num_cc', $num_cc);
+    // $templateCdcScan->setValue('date_maintenant', $date_maintenant);
+    // $templateCdcScan->setValue('num_declaration', $num_fiche_declaration);
+    // $templateCdcScan->setValue('date_declaration', $date_format_declaration);
+    // $templateCdcScan->setValue('num_pv_controle', $num_pv);
+    // $templateCdcScan->setValue('num_lp3e', $num_lp3e);
+    // $templateCdcScan->setValue('date_lp3e', $date_format_lp3e);
+    // $templateCdcScan->setValue('num_facture', $num_facture);
+    // $templateCdcScan->setValue('date_facture', $date_format_facture);
+    // // $templateCdcScan->setValue('num_dom', $num_domiciliation);
+    // $templateCdcScan->setValue('total_general', $poidsTotal);
+    // $templateCdcScan->setValue('date_pv_controle', $dateMaintenant);
+    // $templateCdcScan->setValue('nom_societe_exp', $nom_societe_expediteur);
+    // $templateCdcScan->setValue('addresse_societe_exp', $adresse_societe_expediteur);
+    // $templateCdcScan->setValue('nom_societe_imp', $nom_societe_importateur);
+    // $templateCdcScan->setValue('adresse_societe_imp', $adresse_societe_importateur);
+    // $templateCdcScan->setValue('nom_responsable', $nom_responsable);
+    // $templateCdcScan->setValue('destination_finale', $pays_destination);
+    // $templateCdcScan->setValue('nom_entete', $nom_entete);//$lieu_emission
+    // $templateCdcScan->setValue('nom_emplacement', $lieu_emission);
+    // $templateCdcScan->setValue('vrai_nom_direction', $vrai_nom_direction);
     $numCCClear=preg_replace('/[^a-zA-Z0-9]/', '-', $num_cc);
-    $destinationFolder =  '../fichier/';
-    $numCCClear=preg_replace('/[^a-zA-Z0-9]/', '-', $num_cc);
-    $nouveau_nom = $numCCClear . '.docx';
+    // $destinationFolder =  '../fichier/';
+    // $nouveau_nom = $numCCClear . '.docx';
 
-    $outputFilePathCC = $destinationFolder . $nouveau_nom;
-    $templateCdcScan->saveAs($outputFilePathCC);
+    // $outputFilePathCC = $destinationFolder . $nouveau_nom;
+    // $templateCdcScan->saveAs($outputFilePathCC);
 
     $directory = "../fichier";
     $lien_cc = $directory . '/' . $numCCClear . '.pdf';
 
-    $commande = 'soffice --headless --convert-to pdf --outdir "' . $directory . '" "' . $outputFilePathCC . '"';
-    shell_exec($commande);
+    // $commande = 'soffice --headless --convert-to pdf --outdir "' . $directory . '" "' . $outputFilePathCC . '"';
+    // shell_exec($commande);
 
-    echo 'Le publipostage a été généré avec succès : <a href="' . $lien_cc . '" download>Télécharger ici PDF</a>';
-    echo 'Le publipostage a ét généré avec succès : <a href="' . $outputFilePathCC . '" download>Télécharger ici DOCX 1 </a>';
-    unlink($outputFilePathCC);
+    // echo 'Le publipostage a été généré avec succès : <a href="' . $lien_cc . '" download>Télécharger ici PDF</a>';
+    // echo 'Le publipostage a ét généré avec succès : <a href="' . $outputFilePathCC . '" download>Télécharger ici DOCX 1 </a>';
+    // unlink($outputFilePathCC);
+    // unlink($lien_cc);
         //deuxième fichier
-    $templateCdc->setValue('entete', $entete);
-    $templateCdc->setValue('num_cc', $num_cc);
-    $templateCdc->setValue('date_maintenant', $date_maintenant);
-    $templateCdc->setValue('num_declaration', $num_fiche_declaration);
-    $templateCdc->setValue('date_declaration', $date_format_declaration);
-    $templateCdc->setValue('num_pv_controle', $num_pv);
-    $templateCdc->setValue('num_lp3e', $num_lp3e);
-    $templateCdc->setValue('date_lp3e', $date_format_lp3e);
-    $templateCdc->setValue('num_facture', $num_facture);
-    $templateCdc->setValue('date_facture', $date_format_facture);
-    $templateCdc->setValue('num_dom', $num_domiciliation);
-    $templateCdc->setValue('total_general', $poidsTotal);
-    $templateCdc->setValue('date_pv_controle', $dateMaintenant);
-    $templateCdc->setValue('nom_societe_exp', $nom_societe_expediteur);
-    $templateCdc->setValue('addresse_societe_exp', $adresse_societe_expediteur);
-    $templateCdc->setValue('nom_societe_imp', $nom_societe_importateur);
-    $templateCdc->setValue('adresse_societe_imp', $adresse_societe_importateur);
-    $templateCdc->setValue('nom_responsable', $nom_responsable);
-    $templateCdc->setValue('nom_responsable_imp', $nom_societe_importateur);
-    $templateCdc->setValue('destination_finale', $pays_destination);
-    $templateCdc->setValue('nom_entete', $nom_entete);
-    $templateCdc->setValue('vrai_nom_direction', $vrai_nom_direction);
-    $templateCdc->setValue('nom_emplacement', $lieu_emission);
-    $nouveau_nom2 = $numCCClear  . '.docx';
-    $fileCdc = $destinationFolder . $nouveau_nom2;
-    $templateCdc->saveAs($fileCdc);
+    // $templateCdc->setValue('entete', $entete);
+    // $templateCdc->setValue('num_cc', $num_cc);
+    // $templateCdc->setValue('date_maintenant', $date_maintenant);
+    // $templateCdc->setValue('num_declaration', $num_fiche_declaration);
+    // $templateCdc->setValue('date_declaration', $date_format_declaration);
+    // $templateCdc->setValue('num_pv_controle', $num_pv);
+    // $templateCdc->setValue('num_lp3e', $num_lp3e);
+    // $templateCdc->setValue('date_lp3e', $date_format_lp3e);
+    // $templateCdc->setValue('num_facture', $num_facture);
+    // $templateCdc->setValue('date_facture', $date_format_facture);
+    // $templateCdc->setValue('num_dom', $num_domiciliation);
+    // $templateCdc->setValue('total_general', $poidsTotal);
+    // $templateCdc->setValue('date_pv_controle', $dateMaintenant);
+    // $templateCdc->setValue('nom_societe_exp', $nom_societe_expediteur);
+    // $templateCdc->setValue('addresse_societe_exp', $adresse_societe_expediteur);
+    // $templateCdc->setValue('nom_societe_imp', $nom_societe_importateur);
+    // $templateCdc->setValue('adresse_societe_imp', $adresse_societe_importateur);
+    // $templateCdc->setValue('nom_responsable', $nom_responsable);
+    // $templateCdc->setValue('nom_responsable_imp', $nom_societe_importateur);
+    // $templateCdc->setValue('destination_finale', $pays_destination);
+    // $templateCdc->setValue('nom_entete', $nom_entete);
+    // $templateCdc->setValue('vrai_nom_direction', $vrai_nom_direction);
+    // $templateCdc->setValue('nom_emplacement', $lieu_emission);
+    // $nouveau_nom2 = $numCCClear  . '.docx';
+    // $fileCdc = $destinationFolder . $nouveau_nom2;
+    // $templateCdc->saveAs($fileCdc);
 
-    $tempDir = '../fichier_scan/';
-    $lien = 'https://cdc.minesmada.org/view_user/generate_fichier/scriptsCdc.php?id_data_cc='.$id_data;
-    $qrcode_name = 'qrcode_test';
-    QRcode::png($lien, $tempDir.''.$qrcode_name.'.png', QR_ECLEVEL_L, 5);
-    $qrCodePath2 = $tempDir . $qrcode_name . '.png';
-    $logoWidth = 40; // Largeur souhaitée du logo
-    $logoHeight = 40; // Hauteur souhaitée du logo
-    $qrCode = imagecreatefrompng($qrCodePath2);
+    // $tempDir = '../fichier_scan/';
+    // $lien = 'https://cdc.minesmada.org/view_user/generate_fichier/scriptsCdc.php?id_data_cc='.$id_data;
+    // $qrcode_name = 'qrcode_test';
+    // QRcode::png($lien, $tempDir.''.$qrcode_name.'.png', QR_ECLEVEL_L, 5);
+    // $qrCodePath2 = $tempDir . $qrcode_name . '.png';
+    // $logoWidth = 40; // Largeur souhaitée du logo
+    // $logoHeight = 40; // Hauteur souhaitée du logo
+    // $qrCode = imagecreatefrompng($qrCodePath2);
 
-    if ($qrCode === false) {
-            die('Erreur : Impossible de créer une image à partir du QR code.');
-        }
+    // if ($qrCode === false) {
+    //         die('Erreur : Impossible de créer une image à partir du QR code.');
+    //     }
 
-        // Créer une image à partir du logo (qui est en PNG)
-        $logo = imagecreatefrompng($logoPath);
+    //     // Créer une image à partir du logo (qui est en PNG)
+    //     $logo = imagecreatefrompng($logoPath);
 
-        if ($logo === false) {
-            die('Erreur : Impossible de créer une image à partir du logo.');
-        }
+    //     if ($logo === false) {
+    //         die('Erreur : Impossible de créer une image à partir du logo.');
+    //     }
 
-        // Dimensions actuelles du logo
-        $logoActualWidth = imagesx($logo);
-        $logoActualHeight = imagesy($logo);
+    //     // Dimensions actuelles du logo
+    //     $logoActualWidth = imagesx($logo);
+    //     $logoActualHeight = imagesy($logo);
 
-        // Redimensionner le logo aux dimensions souhaitées
-        $logoResized = imagecreatetruecolor($logoWidth, $logoHeight);
-        imagecopyresampled($logoResized, $logo, 0, 0, 0, 0, $logoWidth, $logoHeight, $logoActualWidth, $logoActualHeight);
+    //     // Redimensionner le logo aux dimensions souhaitées
+    //     $logoResized = imagecreatetruecolor($logoWidth, $logoHeight);
+    //     imagecopyresampled($logoResized, $logo, 0, 0, 0, 0, $logoWidth, $logoHeight, $logoActualWidth, $logoActualHeight);
 
-        // Dimensions du QR code
-        $qrWidth = imagesx($qrCode);
-        $qrHeight = imagesy($qrCode);
+    //     // Dimensions du QR code
+    //     $qrWidth = imagesx($qrCode);
+    //     $qrHeight = imagesy($qrCode);
 
-        // Positionnement du logo au centre du QR code
-        $logoX = ($qrWidth / 2) - ($logoWidth / 2);
-        $logoY = ($qrHeight / 2) - ($logoHeight / 2);
+    //     // Positionnement du logo au centre du QR code
+    //     $logoX = ($qrWidth / 2) - ($logoWidth / 2);
+    //     $logoY = ($qrHeight / 2) - ($logoHeight / 2);
 
-        // Fusionner le logo redimensionné sur le QR code
-        imagecopy($qrCode, $logoResized, $logoX, $logoY, 0, 0, $logoWidth, $logoHeight);
+    //     // Fusionner le logo redimensionné sur le QR code
+    //     imagecopy($qrCode, $logoResized, $logoX, $logoY, 0, 0, $logoWidth, $logoHeight);
 
-        // Chemin pour l'image fusionnée
-        $mergedImagePath = $tempDir . $qrcode_name . '_with_logo.png';
+    //     // Chemin pour l'image fusionnée
+    //     $mergedImagePath = $tempDir . $qrcode_name . '_with_logo.png';
 
-        // Sauvegarder l'image fusionnée
-        imagepng($qrCode, $mergedImagePath);
+    //     // Sauvegarder l'image fusionnée
+    //     imagepng($qrCode, $mergedImagePath);
 
-        // Libérer la mémoire
-        imagedestroy($qrCode);
-        imagedestroy($logo);
-        imagedestroy($logoResized);
+    //     // Libérer la mémoire
+    //     imagedestroy($qrCode);
+    //     imagedestroy($logo);
+    //     imagedestroy($logoResized);
 
-    $templateProcessor2 = new TemplateProcessor($fileCdc);
+    // $templateProcessor2 = new TemplateProcessor($fileCdc);
 
-    $templateProcessor2->setImageValue(
-        'qrcode',
-        [
-            'path' => $mergedImagePath,
-            'width' => 150, //=4cm
-            'height' => 150,
+    // $templateProcessor2->setImageValue(
+    //     'qrcode',
+    //     [
+    //         'path' => $qrCodePath2,
+    //         'width' => 140, //=4cm
+    //         'height' => 140,
             
-        ]
-    );
+    //     ]
+    // );
 
-    $nomQr = $numCCClear . '_QR.docx';
-    $pathToSaveNewCC = $destinationFolder . $nomQr;
-    $templateProcessor2->saveAs($pathToSaveNewCC);
+    //$nomQr = $numCCClear . '_QR.docx';
+    // $pathToSaveNewCC = $destinationFolder . $nomQr;
+    // $templateProcessor2->saveAs($pathToSaveNewCC);
     // // Nom du fichier PDF résultant
     $pdfFileName = $numCCClear . '_QR.pdf';
     $pj_cc = $directory . '/' . $pdfFileName;
 
     // Convertir le fichier Word en PDF en utilisant la commande "soffice"
-    $command2 = 'soffice --headless --convert-to pdf --outdir "' . $directory . '" "' . $pathToSaveNewCC . '"';
-    shell_exec($command2);
+    // $command2 = 'soffice --headless --convert-to pdf --outdir "' . $directory . '" "' . $pathToSaveNewCC . '"';
+    // shell_exec($command2);
 
-    echo 'Le publipostage a été généré avec succès : <a href="' . $pj_cc . '" download>Télécharger scan CDC ici PDF</a>';
-    echo 'Le publipostage a ét généré avec succès : <a href="' . $pathToSaveNewCC . '" download>Télécharger ici DOCX 1 </a>';
-    unlink($pathToSaveNewCC);
-    unlink($fileCdc);
+    // echo 'Le publipostage a été généré avec succès : <a href="' . $pj_cc . '" download>Télécharger scan CDC ici PDF</a>';
+    // echo 'Le publipostage a ét généré avec succès : <a href="' . $pathToSaveNewCC . '" download>Télécharger ici DOCX 1 </a>';
+    // unlink($pathToSaveNewCC);
+    // unlink($pj_cc);
+    // unlink($fileCdc);
     function generat_file($affiche) {
         $replacements = array();
         foreach ($affiche as $valeur) {

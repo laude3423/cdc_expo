@@ -26,6 +26,7 @@ $afficheWord_pa=array();
 $afficheWord_pfb_kg=array();
 $afficheWord_pft_kg=array();
 $nom_substance_kg=array();
+$afficheWord_boite=array();
 
 
 if(count($id_sub)> 0){
@@ -307,15 +308,18 @@ if(count($id_sub)> 0){
         $result5= mysqli_query($conn, $queryR5);
         if(mysqli_num_rows($result5)> 0){
             $pimt="existe";$unite =""; $unite2 ="";
-            $sommePoids_ct_pimt = 0;$sommePoids_kg_pimt = 0;$sommePoids_g_pimt=0;
+            $sommePoids_ct_pimt = 0;$sommePoids_kg_pimt = 0;$sommePoids_g_pimt=0;$sommePoids_boite=0;
             while($row5 = mysqli_fetch_assoc($result5)){
                 $unite_poids_facture = floatval($row5['poids_facture']);
                 if($row5['unite_poids_facture']=='g'){
                     $sommePoids_g_pimt  += $unite_poids_facture;
                     $unite ="grammes"; $unite2 = "g";
-                }else{
+                }else if($row5['unite_poids_facture']=='kg'){
                     $sommePoids_kg_pimt += $unite_poids_facture;
                     $unite ="kilogrammes"; $unite2 = "kg";
+                }else{
+                    $sommePoids_boite += $unite_poids_facture;
+                    $unite_boite ="Boites"; $unite_boite2 = "boites";
                 }
                 $nom_substance_pimt [] = $row5['nom_substance'];
                 if(empty($row5['nom_couleur_substance'])){
@@ -327,6 +331,9 @@ if(count($id_sub)> 0){
             }
             $categorie='Taillées';
             $sommePoids = $sommePoids_g_pimt + $sommePoids_kg_pimt;
+            if($sommePoids_boite !=0){
+                $afficheWord_boite[] = generateAfficheWord($nom_type,$categorie, $nom_substance_pimt,$sommePoids_boite,$unite_boite,$unite_boite2, $couleur_substance_pimt);
+            }
             $afficheWord_pimt[] = generateAfficheWord($nom_type,$categorie, $nom_substance_pimt,$sommePoids,$unite,$unite2, $couleur_substance_pimt);
         }
         //MP brute

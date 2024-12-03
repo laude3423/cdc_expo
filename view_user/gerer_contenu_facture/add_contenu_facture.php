@@ -15,6 +15,10 @@
     display: none;
 }
 
+.hidden2 {
+    visibility: hidden;
+}
+
 .btn {
     font-size: small;
     /* Vous pouvez remplacer "small" par une taille spécifique, par exemple "12px" ou "0.8em" */
@@ -127,11 +131,19 @@ $(document).ready(function() {
                     console.log("Parsed response: ", data); // Log parsed response
                     if (data.status === 'success') {
                         var prix_unitaire = parseFloat(data.prix_substance);
+                        console.log(prix_unitaire);
                         var prix_unitaire_facture = parseFloat($('#prix_unitaire_facture')
                             .val());
                         var unite_poids = $('#unite_poids_facture').val();
                         var id_categorie = parseInt($('#id_categorie').val());
+                        var id_substance = parseInt($('#id_substance').val());
+                        // var id_degre_couleur = parseInt($('#id_degre_couleur').val());
+                        // var id_couleur_substance = parseInt($('#id_couleur_substance').val());
+                        // var id_transparence = parseInt($('#id_transparence').val());
                         var typeSubstance = parseInt($('#typeSubstance').val());
+                        // console.log('Valeur' + typeSubstance + id_categorie + id_substance +
+                        //     'Dc' + id_degre_couleur + 'C' + id_couleur_substance + 'T' +
+                        //     id_transparence);
                         var unite_monetaire = $('#unite_monetaire').val();
                         switch (unite_monetaire) {
                             case 'yen':
@@ -157,8 +169,6 @@ $(document).ready(function() {
                         console.log(typeSubstance);
                         console.log(unite_poids);
                         if (prix_unitaire_facture >= prix_unitaire) {
-                            console.log(prix_unitaire_facture);
-                            console.log(prix_unitaire);
                             $.ajax({
                                 url: 'scripts_facture/insert_contenu_facture.php',
                                 method: 'POST',
@@ -451,7 +461,11 @@ $(document).ready(function() {
     $('#btn_annuler').hide();
     $('#label-qualite').hide();
     $('#label-purite').hide();
-    $('#dimension_diametre').hide();
+    //$('#id_dimension_diametre').blur();
+    //$('#dimension_diametre').hide();
+    //$('#id_dimension_diametre').hide(); // Masquer visuellement
+    // $('#dimension_diametre').focus(); // Le focus fonctionne toujours
+
     //selectTom2();
     // Event handler for the "Autre Laissez passer" button
     $('#btn_autre_lp').click(function() {
@@ -488,10 +502,12 @@ $(document).ready(function() {
             $('#label-purite').show();
             $('#label-qualite').hide();
             $('#label-transparence').show();
+            //$('#id_dimension_diametre').blur();
+            // $('#dimension_diametre').hide();
         } else if (type == 4) {
             $('#row1').show();
             $('#enregistre').show();
-            $('#dimension_diametre').show();
+            $('#dimension_diametre').show(); // Affiche la div parent
             $('#label-degre').show();
             $('#label-qualite').show();
             $('#label-transparence').hide();
@@ -500,13 +516,14 @@ $(document).ready(function() {
             $('#label-qualite').hide();
             $('#row1').show();
             $('#label-degre').show();
-            $('#dimension_diametre').hide();
+            // $('#dimension_diametre').hide();
         }
 
     });
     // Lorsqu'une option est sélectionne dans le premier menu
     $("#id_categorie").change(function() {
         var id_categorie = $(this).val();
+        var type_substance = $('#typeSubstance').val();
         if (id_categorie == 3) {
             id_categorie = 2;
         }
@@ -529,7 +546,8 @@ $(document).ready(function() {
                 method: "POST",
                 data: {
                     id_substance: id_substance,
-                    id_categorie: id_categorie
+                    id_categorie: id_categorie,
+                    id_type: type_substance
                 },
                 dataType: "json",
                 success: function(data) {

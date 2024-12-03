@@ -1,6 +1,7 @@
 <?php 
 require_once('../../scripts/db_connect.php');
 require('../../scripts/session.php');
+require_once('../../scripts/session_actif.php');
 $countries = [
     ['name' => 'Afghanistan', 'code' => '+93', 'length' => 9],
     ['name' => 'Albania', 'code' => '+355', 'length' => 9],

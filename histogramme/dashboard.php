@@ -4,10 +4,20 @@ require('../scripts/session.php');
 $currentYear = date('Y');
 $years = range($currentYear - 6, $currentYear);
 $annee = isset($_GET['id']) ? (int)$_GET['id'] : $currentYear;
-
+include '../scripts/exchangeAPI.php';
+include '../scripts/exchangeScraping.php';
+$taux_clean = str_replace([' ', ','], ['', '.'], $tauxScraping);
+$tauxScraping = floatval($taux_clean);
+$tauxAPI = floatval($tauxAPI);
+if($tauxScraping != 0){
+    $taux_conversion = $tauxScraping;
+}else if ($tauxAPI != 0){
+   $taux_conversion = $tauxAPI; 
+}else{
+    $taux_conversion = 4800;
+}
 include './scriptsCount.php';
 include './scriptBenefice.php';
-include './scriptsDroit.php';
 include './scriptsDroit.php';
 include './scriptsQuantite.php';
 
@@ -186,7 +196,6 @@ $nombre_users= $row['nb_users_connectes'];
             <div class="col">
                 <div class="charts">
                     <form method="GET" action="">
-                        <label for="yearSelect">Sélectionnez une année :</label>
                         <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
                             <?php foreach ($years as $year): ?>
                             <option value="<?php echo $year; ?>" <?php echo ($year == $annee) ? 'selected' : ''; ?>>
@@ -196,6 +205,9 @@ $nombre_users= $row['nb_users_connectes'];
                         </select>
                     </form>
                 </div>
+            </div>
+            <div class="col">
+                Taux de conversion: 1$ = <?php echo $taux_conversion; ?>MGA
             </div>
             <div class="col text-center">
                 <div class="card-enLigne">

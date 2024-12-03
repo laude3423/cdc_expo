@@ -58,8 +58,8 @@ if (isset($_GET['id'])) {
                         </div>
                         <div class="col">
                             <label for="date_depart_edit" class="col-form-label">Date de départ:</label>
-                            <input type="date" class="form-control" name="date_depart_edit" id="date_depart_edit"
-                                style="font-size:90%">
+                            <input type="date" class="form-control" value="<?php echo $row['date_depart']; ?>"
+                                name="date_depart_edit" id="date_depart_edit" style="font-size:90%">
                         </div>
                     </div>
 

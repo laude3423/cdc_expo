@@ -87,11 +87,14 @@ require(__DIR__ . '/../../scripts/session.php');
                                     ?>
                             </select>
                         </div> -->
-                        <div class="col">
+                        <!-- <div class="col">
                             <label for="numDom" name="numDom" class="col-form-label">Numéro de
                                 domiciliation:</label>
                             <input type="text" class="form-control" name="numDom" id="numDom"
                                 placeholder="Numéro de domiciliation" required style="font-size:90%">
+                            <div id="error_message" style="color: red; display: none;">Le numéro de domiciliation ne
+                                doit pas
+                                commencer par "N°" ou "n°".</div>
                         </div>
                         <div class="col">
                             <label for="date_dom" name="date_dom" class="col-form-label">Date de création DOM</label>
@@ -99,20 +102,19 @@ require(__DIR__ . '/../../scripts/session.php');
                                 placeholder="Date de départ de l'exportation" required style="font-size:90%">
                             <div id="date_error1" style="color: red; display: none;">Veuillez entrer une date valide.
                             </div>
-                        </div>
+                        </div> -->
                     </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="mode_emballage" name="mode_emballage" class="col-form-label">Nombre et mode
-                                d'emballage:</label>
-                            <input type="text" class="form-control" name="mode_emballage" id="mode_emballage"
-                                placeholder="Nombre et mode d'emballage" required style="font-size:90%">
-                        </div>
-                        <div class="col">
+                    <div class="mb-3">
+                        <label for="mode_emballage" name="mode_emballage" class="col-form-label">Nombre et mode
+                            d'emballage:</label>
+                        <input type="text" class="form-control" name="mode_emballage" id="mode_emballage"
+                            placeholder="Nombre et mode d'emballage" required style="font-size:90%">
+
+                        <!-- <div class="col">
                             <label for="pj_dom" name="pj_dom" class="col-form-label">Pièce joint de DOM:</label>
                             <input type="file" class="form-control" name="pj_dom" id="pj_dom" accept=".pdf"
                                 placeholder="Nombre de colis" style="font-size:90%" required>
-                        </div>
+                        </div> -->
                     </div>
                     <div class="row">
                         <div class="col">
@@ -134,6 +136,8 @@ require(__DIR__ . '/../../scripts/session.php');
                                 déclaration:</label>
                             <input type="text" class="form-control" name="declaration" id="declaration"
                                 placeholder="Numéro de fiche de déclaration" required style="font-size:90%">
+                            <div id="error_message2" style="color: red; display: none;">Le numéro de fiche de
+                                déclaration ne doit pas commencer par "N°" ou "n°".</div>
                         </div>
                         <div class="col">
                             <label for="date_declaration" name="date_declaration" class="col-form-label">Date de
@@ -157,6 +161,8 @@ require(__DIR__ . '/../../scripts/session.php');
                             <label for="num_lp3" name="num_lp3" class="col-form-label">Numéro de LP III E:</label>
                             <input type="text" placeholder="Numéro de LP III E" class="form-control" name="num_lp3"
                                 id="num_lp3" required style="font-size:90%">
+                            <div id="error_message3" style="color: red; display: none;">Le numéro LP3 E ne doit pas
+                                commencer par "N°" ou "n°".</div>
                         </div>
                     </div>
                     <div class="row">
@@ -223,38 +229,38 @@ require(__DIR__ . '/../../scripts/session.php');
 <script>
 $(document).ready(function() {
 
-    selectTom();
+    //selectTom();
     console.log("Correct");
 
 });
 
-function selectTom() {
-    // Initialisez TomSelect pour chaque élément select
-    var selectOptions = {
-        create: false,
-        sortField: {
-            field: "text",
-            direction: "asc"
-        }
-    };
-    new TomSelect("#expediteur", selectOptions);
-    new TomSelect("#importateur", selectOptions);
-    new TomSelect("#chef", selectOptions);
-    new TomSelect("#qualite", selectOptions);
-    new TomSelect("#police", selectOptions);
-    new TomSelect("#douane", selectOptions);
-    new TomSelect("#agent_scellage", selectOptions);
+// function selectTom() {
+//     // Initialisez TomSelect pour chaque élément select
+//     var selectOptions = {
+//         create: false,
+//         sortField: {
+//             field: "text",
+//             direction: "asc"
+//         }
+//     };
+//     new TomSelect("#expediteur", selectOptions);
+//     new TomSelect("#importateur", selectOptions);
+//     new TomSelect("#chef", selectOptions);
+//     new TomSelect("#qualite", selectOptions);
+//     new TomSelect("#police", selectOptions);
+//     new TomSelect("#douane", selectOptions);
+//     new TomSelect("#agent_scellage", selectOptions);
 
-};
-document.getElementById('date_depart').addEventListener('input', function() {
-    const dateInput = this.value;
-    const dateError = document.getElementById('date_error1');
-    if (isValidDate(dateInput)) {
-        dateError.style.display = 'none';
-    } else {
-        dateError.style.display = 'block';
-    }
-});
+// };
+// document.getElementById('date_depart').addEventListener('input', function() {
+//     const dateInput = this.value;
+//     const dateError = document.getElementById('date_error1');
+//     if (isValidDate(dateInput)) {
+//         dateError.style.display = 'none';
+//     } else {
+//         dateError.style.display = 'block';
+//     }
+// });
 document.getElementById('date_declaration').addEventListener('input', function() {
     const dateInput = this.value;
     const dateError = document.getElementById('date_error2');
@@ -262,6 +268,46 @@ document.getElementById('date_declaration').addEventListener('input', function()
         dateError.style.display = 'none';
     } else {
         dateError.style.display = 'block';
+    }
+});
+// document.getElementById("numDom").addEventListener("input", function() {
+//     console.log('consulter');
+//     const factureInput = document.getElementById("numDom");
+//     const errorMessage = document.getElementById("error_message");
+//     const value = factureInput.value.trim();
+
+//     if (/^(N°|n°)/.test(value)) {
+//         errorMessage.style.display = "block";
+//         factureInput.setCustomValidity("Le numéro de domiciliation ne doit pas commencer par 'N°' ou 'n°'.");
+//     } else {
+//         errorMessage.style.display = "none";
+//         factureInput.setCustomValidity("");
+//     }
+// });
+document.getElementById("declaration").addEventListener("input", function() {
+    const factureInput = document.getElementById("declaration");
+    const errorMessage = document.getElementById("error_message2");
+    const value = factureInput.value.trim();
+
+    if (/^(N°|n°)/.test(value)) {
+        errorMessage.style.display = "block";
+        factureInput.setCustomValidity("Le numéro de déclaration ne doit pas commencer par 'N°' ou 'n°'.");
+    } else {
+        errorMessage.style.display = "none";
+        factureInput.setCustomValidity("");
+    }
+});
+document.getElementById("num_lp3").addEventListener("input", function() {
+    const factureInput = document.getElementById("num_lp3");
+    const errorMessage = document.getElementById("error_message3");
+    const value = factureInput.value.trim();
+
+    if (/^(N°|n°)/.test(value)) {
+        errorMessage.style.display = "block";
+        factureInput.setCustomValidity("Le numéro LP3 E ne doit pas commencer par 'N°' ou 'n°'.");
+    } else {
+        errorMessage.style.display = "none";
+        factureInput.setCustomValidity("");
     }
 });
 document.getElementById('date_lp3').addEventListener('input', function() {
@@ -310,7 +356,7 @@ function validatePDFInput(event) {
     }
 }
 
-document.getElementById('pj_dom').addEventListener('change', validatePDFInput);
+// document.getElementById('pj_dom').addEventListener('change', validatePDFInput);
 document.getElementById('pj_declaration').addEventListener('change', validatePDFInput);
 document.getElementById('pj_lp3e').addEventListener('change', validatePDFInput);
 </script>

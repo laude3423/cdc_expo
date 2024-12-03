@@ -359,6 +359,7 @@ if(isset($_SESSION['toast_message2'])) {
 
 <body>
     <div class="info  container">
+        <?php if(!empty($num_domiciliation)){?>
         <p class="text-center mb-0">Détails du certificat de conformité</p>
         <hr>
         <div class="partie1">
@@ -910,7 +911,7 @@ if(isset($_SESSION['toast_message2'])) {
                         echo '</br> POIDS: '.$ecrit_b;
                     }
                     if(count($afficheWord) > 0) {
-                        echo "Catégorie Taillée ou Travaillée : ";
+                        echo "</br>Catégorie Taillée ou Travaillée :";
                         for ($i = 0; $i < count($afficheWord); $i++) {
                             if($i == count($afficheWord) - 1){
                                 echo $afficheWord[$i];
@@ -1010,6 +1011,13 @@ if(isset($_SESSION['toast_message2'])) {
         <div id="nouveau_scan_form_nc"></div>
         <div id="nouveau_form_ov"></div>
         <div id="modifier_form_ov"></div>
+        <?php }else {
+        echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-cc"
+                data-id="' . $id_data_cc . '">Ajouter une nouvelle attestation de domiciliation</a>';
+                // echo '<a class="btn btn-dark rounded-pill px-3  btn-nouveau-scan_nc"
+                // data-id="' . $id_data_cc . '">Insérer scan</a>';
+                ?><div id="nouveau_form_cdc"></div>
+        <?php  }?>
     </div>
     <?php
     
@@ -1051,6 +1059,13 @@ if(isset($_SESSION['toast_message2'])) {
             showEditForm('modifier_form_ov', './modifier_ov.php?id=' +
                 id_data_cc,
                 'staticBackdrop_ov2');
+
+        });
+        $(".btn-nouveau-cc").click(function() {
+            var id_data_cc = $(this).data('id');
+            showEditForm('nouveau_form_cdc', '../cdc/nouveau_cc.php?id=' +
+                id_data_cc,
+                'staticBackdrop_cc');
 
         });
         $(".btn-nouveau-scan_nc").click(function() {

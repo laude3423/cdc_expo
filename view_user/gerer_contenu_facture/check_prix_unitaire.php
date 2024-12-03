@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id_forme_substance = isset($_POST["id_forme_substance"]) ? intval($_POST["id_forme_substance"]) : null;
     $id_dimension_diametre = isset($_POST["id_dimension_diametre"]) ? intval($_POST["id_dimension_diametre"]) : null;
     if($id_categorie==3){
-        $id_categorie=2;
+        $id_categorie=1;
     }
     $query_detail_substance = "SELECT * FROM substance_detaille_substance 
         WHERE id_substance = ? 

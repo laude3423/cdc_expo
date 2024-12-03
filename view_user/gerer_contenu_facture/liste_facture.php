@@ -165,10 +165,10 @@ if(isset($_SESSION['toast_message2'])) {
             <div class="col">
                 <h5>Liste des factures enregistrée</h5>
             </div>
-            <div class="col">
+            <div class="col-2">
                 <input type="text" id="search" class="form-control" placeholder="Recherche par numéro...">
             </div>
-            <div class="col">
+            <div class="col-2">
                 <form method="GET" action="">
                     <select id="yearSelect" class="form-select" name="id" onchange="this.form.submit()">
                         <?php foreach ($years as $year): ?>
@@ -265,7 +265,7 @@ if(isset($_SESSION['toast_message2'])) {
             LEFT JOIN societe_importateur simp ON dcc.id_societe_importateur = simp.id_societe_importateur
             LEFT JOIN users u ON dcc.id_user = u.id_user
             LEFT JOIN direction dir ON dir.id_direction = u.id_direction 
-            WHERE dir.id_direction = $id_direction YEAR(dcc.date_facture) = $annee AND num_facture IS NOT NULL
+            WHERE dir.id_direction = $id_direction AND YEAR(dcc.date_facture) = $annee AND num_facture IS NOT NULL
             ORDER BY dcc.date_modification_facture DESC";
 
             $result = $conn->query($query);

@@ -297,6 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
          ?>
     <?php if($groupeID===4){ ?>
+    <?php if($userID !=26){ ?>
     <main>
         <div class="container">
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
@@ -414,6 +415,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
 
     </main>
+    <?php } else{
+                include '../aut_visa/home_aut_visa/home.php';
+                ?>
+    <?php } ?>
     <?php }else {?>
     </main>
     <div class="container">
